@@ -138,6 +138,64 @@ for (let i = 0; i < 18; i++) {
   }
 }
 
+// Reusable obstacle and relic pools keep the scene bounded during long runs.
+const obstaclePool = []
+const relicPool = []
+const obstacleMaterial = new THREE.MeshStandardMaterial({ color: '#d94b35', roughness: 0.75 })
+const obstacleStripeMaterial = new THREE.MeshStandardMaterial({ color: '#ffb15c', roughness: 0.6 })
+const relicMaterial = new THREE.MeshStandardMaterial({ color: '#ffd45c', emissive: '#a66a00', emissiveIntensity: 1.15, metalness: 0.55, roughness: 0.28 })
+function createObstacle() {
+  const group = new THREE.Group()
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.95, 0.7), obstacleMaterial)
+  body.position.y = 0.6
+  body.castShadow = true
+  body.receiveShadow = true
+  group.add(body)
+  const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.94, 0.13, 0.72), obstacleStripeMaterial)
+  stripe.position.y = 0.68
+  stripe.castShadow = true
+  group.add(stripe)
+  group.visible = false
+  scene.add(group)
+  return { group, lane: 1, active: false }
+}
+function createRelic() {
+  const mesh = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.11, 8, 16), relicMaterial)
+  mesh.position.y = 1.15
+  mesh.rotation.x = Math.PI / 2
+  mesh.castShadow = true
+  mesh.visible = false
+  scene.add(mesh)
+  return { mesh, lane: 1, active: false, phase: Math.random() * Math.PI * 2 }
+}
+for (let i = 0; i < 7; i++) obstaclePool.push(createObstacle())
+for (let i = 0; i < 12; i++) relicPool.push(createRelic())
+
+function placeObstacle(item, z) {
+  item.lane = Math.floor(Math.random() * 3)
+  item.group.position.set(LANE_X[item.lane], 0.12, z)
+  item.group.visible = true
+  item.active = true
+}
+function placeRelic(item, z, lane = Math.floor(Math.random() * 3)) {
+  item.lane = lane
+  item.mesh.position.set(LANE_X[lane], 1.15, z)
+  item.mesh.visible = true
+  item.active = true
+}
+function hideWorldObjects() {
+  for (const item of obstaclePool) { item.active = false; item.group.visible = false }
+  for (const item of relicPool) { item.active = false; item.mesh.visible = false }
+}
+function seedWorldObjects() {
+  hideWorldObjects()
+  obstaclePool.forEach((item, i) => placeObstacle(item, -28 - i * 15))
+  relicPool.forEach((item, i) => placeRelic(item, -20 - i * 8, i % 3))
+}
+function resetWorldObjects() {
+  seedWorldObjects()
+}
+
 const resize = () => {
   const width = Math.max(container.clientWidth, 1)
   const height = Math.max(container.clientHeight, 1)
@@ -150,7 +208,7 @@ resizeObserver.observe(container)
 resize()
 
 const LANE_X = [-2.46, 0, 2.46]
-const state = { mode: 'ready', lane: 1, elapsed: 0, score: 0, relics: 0 }
+const state = { mode: 'ready', lane: 1, elapsed: 0, score: 0, relics: 0, speed: 13 }
 const startOverlay = app.querySelector('#start-overlay')
 const pauseOverlay = app.querySelector('#pause-overlay')
 const gameoverOverlay = app.querySelector('#gameover-overlay')
@@ -187,11 +245,13 @@ function resetRun() {
   state.elapsed = 0
   state.score = 0
   state.relics = 0
+  state.speed = 13
   player.position.x = 0
   player.position.y = 0.16
   camera.position.x = 0
   for (let i = 0; i < markings.length; i++) markings[i].position.z = 10 - i % 20 * 5.6
   for (let i = 0; i < scenery.length; i++) scenery[i].position.z = -Math.floor(i / 2) * 6.7 - 5
+  resetWorldObjects()
   updateHud()
 }
 function startRun() {
@@ -237,20 +297,50 @@ container.addEventListener('touchend', (event) => {
   touchStart = null
 }, { passive: true })
 setMode('ready')
+seedWorldObjects()
 
 const clock = new THREE.Clock()
 function animate() {
   const delta = Math.min(clock.getDelta(), 0.05)
   if (state.mode === 'running') {
     state.elapsed += delta
+    // Speed ramps up gradually, with a sensible cap to keep late-game control possible.
+    state.speed = Math.min(13 + state.elapsed * 0.22, 25)
     state.score = Math.floor(state.elapsed * 10) + state.relics * 100
     for (const mark of markings) {
-      mark.position.z += delta * 13
+      mark.position.z += delta * state.speed
       if (mark.position.z > 12) mark.position.z -= 112
     }
     for (const item of scenery) {
-      item.position.z += delta * 13
+      item.position.z += delta * state.speed
       if (item.position.z > 12) item.position.z -= 121
+    }
+
+    for (const item of obstaclePool) {
+      if (!item.active) continue
+      item.group.position.z += delta * state.speed
+      if (item.group.position.z > 8) {
+        placeObstacle(item, -90 - Math.random() * 35)
+      } else if (item.lane === state.lane && item.group.position.z > 1.45 && item.group.position.z < 3.15) {
+        setMode('gameover')
+        break
+      }
+    }
+    if (state.mode === 'running') {
+      for (const item of relicPool) {
+        if (!item.active) continue
+        item.mesh.position.z += delta * state.speed
+        item.mesh.rotation.z += delta * 2.5
+        item.mesh.position.y = 1.15 + Math.sin(clock.elapsedTime * 4 + item.phase) * 0.12
+        if (item.mesh.position.z > 8) {
+          placeRelic(item, -85 - Math.random() * 35)
+        } else if (item.lane === state.lane && item.mesh.position.z > 1.25 && item.mesh.position.z < 3.2) {
+          item.active = false
+          item.mesh.visible = false
+          state.relics += 1
+          state.score += 100
+        }
+      }
     }
     updateHud()
   }
