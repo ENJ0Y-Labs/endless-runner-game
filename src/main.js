@@ -11,11 +11,17 @@ app.innerHTML = `
       <button class="pause-button" id="pause-button" type="button" hidden>Pause</button>
     </header>
     <div class="scene-container" aria-label="Three-dimensional endless runner game">
+      <div class="scene-loading" id="scene-loading" role="status" aria-live="polite"><span class="loading-indicator" aria-hidden="true"></span> Preparing your track…</div>
       <section class="game-overlay" id="start-overlay">
         <p class="eyebrow">Start.ng game</p><h1>Relic Rush <span>3D</span></h1>
         <p>Switch lanes, dodge danger, and collect relics.</p>
+        <div class="instruction-grid" aria-label="How to play">
+          <div class="instruction-card"><span class="instruction-icon" aria-hidden="true">← →</span><strong>Switch lanes</strong><small>Arrow keys or A / D</small></div>
+          <div class="instruction-card"><span class="instruction-icon" aria-hidden="true">✦</span><strong>Collect relics</strong><small>Each relic adds 100 points</small></div>
+          <div class="instruction-card"><span class="instruction-icon" aria-hidden="true">!</span><strong>Avoid obstacles</strong><small>One collision ends the run</small></div>
+        </div>
         <button class="primary-button" id="play-button" type="button">Start running</button>
-        <p class="overlay-hint">Keyboard: ← / → or A / D · Mobile: swipe left or right</p>
+        <p class="overlay-hint">On mobile, swipe left or right or use the on-screen arrows.</p>
       </section>
       <section class="game-overlay" id="pause-overlay" hidden>
         <p class="eyebrow">Run paused</p><h2>Take a breather.</h2>
@@ -546,6 +552,7 @@ function updateHud() {
 function setMode(mode) {
   const previousMode = state.mode
   state.mode = mode
+  container.dataset.mode = mode
   hideOverlays()
   pauseButton.hidden = mode !== 'running'
   if (mode === 'ready') startOverlay.hidden = false
@@ -692,6 +699,8 @@ function animate() {
   camera.position.x += (player.position.x * 0.22 - camera.position.x) * Math.min(delta * 2.2, 1)
   camera.lookAt(player.position.x * 0.18, 1.15, -5)
   renderer.render(scene, camera)
+  const loadingStatus = app.querySelector('#scene-loading')
+  if (loadingStatus && !loadingStatus.hidden) loadingStatus.hidden = true
   requestAnimationFrame(animate)
 }
 animate()
