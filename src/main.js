@@ -35,6 +35,21 @@ app.innerHTML = `
       </div>
     </div>
     <footer class="scene-help"><span class="help-key">A</span><span class="help-key">D</span><span>Move between lanes · Swipe or use the arrows on mobile</span></footer>
+    <section class="leaderboard-panel" aria-labelledby="leaderboard-title">
+      <div class="leaderboard-heading">
+        <div><p class="eyebrow">Community best runs</p><h2 id="leaderboard-title">Leaderboard</h2></div>
+        <button class="secondary-button leaderboard-refresh" id="leaderboard-refresh" type="button">Refresh</button>
+      </div>
+      <p id="leaderboard-message" class="leaderboard-message" role="status" aria-live="polite">Loading Start.ng leaderboard…</p>
+      <p id="score-save-message" class="score-save-message" role="status" aria-live="polite">Finish a run to submit your score.</p>
+      <div class="leaderboard-table-wrap">
+        <table class="leaderboard-table">
+          <thead><tr><th scope="col">Rank</th><th scope="col">Player</th><th scope="col">Score</th><th scope="col">Distance</th><th scope="col">Relics</th></tr></thead>
+          <tbody id="leaderboard-entries"><tr><td colspan="5">Loading scores…</td></tr></tbody>
+        </table>
+      </div>
+      <p class="leaderboard-note">Ranked by score, then distance and relics. Start.ng stores each signed-in player’s best run.</p>
+    </section>
   </main>`
 
 const container = app.querySelector('.scene-container')
@@ -352,30 +367,16 @@ const playerAccountElement = app.querySelector('#player-account')
 const playerSignInButton = app.querySelector('#player-sign-in')
 let currentStartNgPlayer = null
 let identityRefresh = false
-function applyPlayerIdentity(reply) {
-  const signedInUser = reply?.user ?? null
-  const platformPlayer = signedInUser ?? reply?.guest ?? {
-    name: 'Guest',
-    style: DEFAULT_STYLE,
-  }
-  currentStartNgPlayer = platformPlayer
-  rebuildPlayer(platformPlayer.style)
-  playerNameElement.textContent = typeof platformPlayer.name === 'string' && platformPlayer.name.trim()
-    ? platformPlayer.name
-    : 'Guest'
-  playerAccountElement.textContent = signedInUser?.account
-    ? `@${signedInUser.account}`
-    : 'Guest player'
-  playerSignInButton.hidden = Boolean(signedInUser)
-  app.querySelector('.player-avatar').textContent = signedInUser ? '★' : 'G'
-  playerSignInButton.setAttribute('aria-label', 'Sign in to Start.ng')
-}
+let isStartNgSignedIn = false
 async function refreshStartNgPlayer() {
   if (identityRefresh || document.visibilityState === 'hidden') return
   identityRefresh = true
   try {
     const reply = await askStartNg({ type: 'startng:whoami' }, 'startng:user')
-    if (reply) applyPlayerIdentity(reply)
+    if (reply) {
+      applyPlayerIdentity(reply)
+      void refreshLeaderboard()
+    }
   } catch (error) {
     // Local previews and unavailable platform connections keep the safe guest appearance.
     console.info('Start.ng player connection is not available in this context.')
@@ -393,6 +394,103 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') void refreshStartNgPlayer()
 })
 window.addEventListener('focus', () => void refreshStartNgPlayer())
+
+const leaderboardMessage = app.querySelector('#leaderboard-message')
+const scoreSaveMessage = app.querySelector('#score-save-message')
+const leaderboardEntries = app.querySelector('#leaderboard-entries')
+function refreshLeaderboard() {
+  leaderboardMessage.textContent = 'Loading Start.ng leaderboard…'
+  return askStartNg({ type: 'startng:leaderboard', limit: 10 }, 'startng:leaderboardData')
+    .then((reply) => {
+      if (!reply?.ok || !Array.isArray(reply.entries)) {
+        leaderboardEntries.replaceChildren()
+        const row = document.createElement('tr')
+        const cell = document.createElement('td')
+        cell.colSpan = 5
+        cell.textContent = 'Leaderboard is unavailable right now.'
+        row.append(cell)
+        leaderboardEntries.append(row)
+        leaderboardMessage.textContent = reply?.error || 'Could not load scores. Try refreshing.'
+        return
+      }
+      leaderboardEntries.replaceChildren()
+      if (reply.entries.length === 0) {
+        const row = document.createElement('tr')
+        const cell = document.createElement('td')
+        cell.colSpan = 5
+        cell.textContent = 'No scores yet. Be the first to finish a run!'
+        row.append(cell)
+        leaderboardEntries.append(row)
+      }
+      for (const entry of reply.entries) {
+        const row = document.createElement('tr')
+        if (isStartNgSignedIn && currentStartNgPlayer?.id != null &&
+            String(entry.player_id) === String(currentStartNgPlayer.id)) {
+          row.classList.add('current-player-row')
+        }
+        const values = [
+          `#${Number.isInteger(entry.rank) ? entry.rank : '—'}`,
+          typeof entry.name === 'string' && entry.name.trim() ? entry.name : 'Player',
+          entry.stats?.score ?? entry.score ?? 0,
+          entry.stats?.distance ?? 0,
+          entry.stats?.relics ?? 0,
+        ]
+        for (const [index, value] of values.entries()) {
+          const cell = document.createElement('td')
+          cell.textContent = String(value)
+          if (index === 1) cell.className = 'leaderboard-player-name'
+          row.append(cell)
+        }
+        leaderboardEntries.append(row)
+      }
+      leaderboardMessage.textContent = isStartNgSignedIn
+        ? 'Showing the top 10 best runs. Your row is highlighted when it appears.'
+        : 'Guests can view scores. Sign in to save your own best run.'
+    })
+    .catch(() => {
+      leaderboardMessage.textContent = 'Could not contact Start.ng. Check your connection and try again.'
+      console.info('Start.ng leaderboard is not available in this context.')
+    })
+}
+async function saveCompletedRun(result) {
+  if (!isStartNgSignedIn) {
+    scoreSaveMessage.textContent = 'Guest run not saved. Sign in to Start.ng to save your best score.'
+    return
+  }
+  scoreSaveMessage.textContent = 'Saving your completed run…'
+  let saved
+  try {
+    saved = await askStartNg({
+      type: 'startng:score',
+      stats: { score: result.score, distance: result.distance, relics: result.relics },
+    }, 'startng:scoreSaved')
+  } catch {
+    scoreSaveMessage.textContent = 'Could not contact Start.ng. Your run is complete, but the score was not confirmed.'
+    return
+  }
+  if (!saved) {
+    scoreSaveMessage.textContent = 'Score save timed out. Your run is still playable; try again after reconnecting.'
+    return
+  }
+  if (!saved.ok) {
+    scoreSaveMessage.textContent = saved.error || 'Start.ng could not save this score. Try again later.'
+    if (saved.error?.toLowerCase().includes('sign in')) {
+      isStartNgSignedIn = false
+      playerSignInButton.hidden = false
+    }
+    return
+  }
+  const outcome = saved.result
+  scoreSaveMessage.textContent = outcome?.improved
+    ? `New personal best! ${Number.isInteger(outcome.rank) ? `Leaderboard rank #${outcome.rank}.` : 'Your score was saved.'}`
+    : `Run submitted. ${Number.isInteger(outcome?.rank) ? `Current leaderboard rank: #${outcome.rank}.` : 'Your best score is kept on the leaderboard.'}`
+  await refreshLeaderboard()
+}
+app.querySelector('#leaderboard-refresh').addEventListener('click', () => void refreshLeaderboard())
+window.addEventListener('relicrush:run-finished', (event) => {
+  void saveCompletedRun(event.detail)
+})
+void refreshLeaderboard()
 
 const resize = () => {
   const width = Math.max(container.clientWidth, 1)
