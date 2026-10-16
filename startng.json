@@ -1,0 +1,21 @@
+{
+  "leaderboard": {
+    "stats": [
+      {
+        "key": "score",
+        "label": "Score",
+        "order": "highest"
+      },
+      {
+        "key": "distance",
+        "label": "Distance (m)",
+        "order": "highest"
+      },
+      {
+        "key": "relics",
+        "label": "Relics",
+        "order": "highest"
+      }
+    ]
+  }
+}
