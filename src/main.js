@@ -341,8 +341,15 @@ function connectFrame() {
       frame.hidden = true
       frame.title = 'Start.ng player connection'
       frame.onload = () => resolve(frame)
-      frame.onerror = () => reject(new Error('Could not load Start.ng connection'))
+      frame.onerror = () => {
+        frame.remove()
+        reject(new Error('Could not load Start.ng connection'))
+      }
       document.body.append(frame)
+    }).catch((error) => {
+      // A failed iframe must not poison every later retry for this page session.
+      startNgFramePromise = undefined
+      throw error
     })
   }
   return startNgFramePromise
@@ -499,9 +506,10 @@ async function saveCompletedRun(result) {
   }
   if (!saved.ok) {
     scoreSaveMessage.textContent = saved.error || 'Start.ng could not save this score. Try again later.'
-    if (saved.error?.toLowerCase().includes('sign in')) {
-      isStartNgSignedIn = false
-      playerSignInButton.hidden = false
+    if (typeof saved.error === 'string' && saved.error.toLowerCase().includes('sign in')) {
+      // An expired session must not leave a signed-in identity displayed as authenticated.
+      applyPlayerIdentity(null)
+      void refreshLeaderboard()
     }
     return
   }
