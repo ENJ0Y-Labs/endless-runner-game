@@ -18,7 +18,10 @@ app.innerHTML = `
       </section>
       <section class="game-overlay" id="pause-overlay" hidden>
         <p class="eyebrow">Run paused</p><h2>Take a breather.</h2>
-        <button class="primary-button" id="resume-button" type="button">Resume</button>
+        <div class="overlay-actions">
+          <button class="primary-button" id="resume-button" type="button">Resume</button>
+          <button class="secondary-button" id="pause-restart-button" type="button">Restart run</button>
+        </div>
       </section>
       <section class="game-overlay" id="gameover-overlay" hidden>
         <p class="eyebrow">Run complete</p><h2>Game over</h2>
@@ -292,6 +295,7 @@ window.relicRushGetBestRun = () => state.bestRun ? { ...state.bestRun } : null
 app.querySelector('#play-button').addEventListener('click', startRun)
 app.querySelector('#restart-button').addEventListener('click', startRun)
 app.querySelector('#resume-button').addEventListener('click', togglePause)
+app.querySelector('#pause-restart-button').addEventListener('click', startRun)
 pauseButton.addEventListener('click', togglePause)
 app.querySelector('#left-button').addEventListener('click', () => moveLane(-1))
 app.querySelector('#right-button').addEventListener('click', () => moveLane(1))
