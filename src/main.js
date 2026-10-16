@@ -6,6 +6,7 @@ app.innerHTML = `
   <main class="game-shell">
     <header class="game-hud">
       <span class="game-brand">RELIC RUSH <b>3D</b></span>
+      <div class="player-identity" id="player-identity" aria-live="polite"><span class="player-avatar" aria-hidden="true">R</span><span class="player-identity-copy"><strong id="player-name">Guest</strong><small id="player-account">Guest player</small></span><button class="sign-in-button" id="player-sign-in" type="button">Sign in</button></div>
       <div class="hud-stats"><span>SCORE <strong id="score">0</strong></span><span>DISTANCE <strong id="distance">0 m</strong></span><span>RELICS <strong id="relics">0</strong></span><span>BEST <strong id="best-score">0</strong></span></div>
       <button class="pause-button" id="pause-button" type="button" hidden>Pause</button>
     </header>
@@ -93,30 +94,139 @@ for (const x of [-1.23, 1.23]) {
   }
 }
 
-// Temporary geometric placeholder. Start.ng appearance mapping is a later phase.
+// Character geometry is rebuilt from Start.ng style data; unknown values use safe defaults.
 const player = new THREE.Group()
 player.position.set(0, 0.16, 2.2)
 scene.add(player)
-const skin = new THREE.MeshStandardMaterial({ color: '#c98961', roughness: 0.82 })
-const shirt = new THREE.MeshStandardMaterial({ color: '#ff7a00', roughness: 0.72 })
-const trousers = new THREE.MeshStandardMaterial({ color: '#202735', roughness: 0.8 })
-const shoes = new THREE.MeshStandardMaterial({ color: '#f2f2f2', roughness: 0.65 })
-function addPart(geometry, material, position) {
-  const mesh = new THREE.Mesh(geometry, material)
-  mesh.position.set(...position)
-  mesh.castShadow = true
-  mesh.receiveShadow = true
-  player.add(mesh)
-  return mesh
+
+const DEFAULT_STYLE = {
+  body: 'male',
+  primaryColor: '#ff7a00',
+  secondaryColor: '#202735',
+  skinColor: '#c98961',
+  hairColor: '#17120f',
+  hair: 'short',
+  hat: 'none',
+  accessory: 'none',
 }
-addPart(new THREE.BoxGeometry(0.55, 0.7, 0.32), shirt, [0, 1.18, 0])
-addPart(new THREE.SphereGeometry(0.25, 20, 16), skin, [0, 1.77, 0])
-addPart(new THREE.BoxGeometry(0.16, 0.52, 0.18), skin, [-0.39, 1.19, 0])
-addPart(new THREE.BoxGeometry(0.16, 0.52, 0.18), skin, [0.39, 1.19, 0])
-addPart(new THREE.BoxGeometry(0.2, 0.58, 0.22), trousers, [-0.16, 0.55, 0])
-addPart(new THREE.BoxGeometry(0.2, 0.58, 0.22), trousers, [0.16, 0.55, 0])
-addPart(new THREE.BoxGeometry(0.22, 0.13, 0.36), shoes, [-0.16, 0.22, -0.04])
-addPart(new THREE.BoxGeometry(0.22, 0.13, 0.36), shoes, [0.16, 0.22, -0.04])
+const STYLE_OPTIONS = {
+  body: ['female', 'male'],
+  hair: ['short', 'afro', 'braids', 'bun', 'ponytail', 'dreads', 'bald'],
+  hat: ['none', 'cap', 'beanie', 'tophat', 'crown'],
+  accessory: ['none', 'glasses', 'earrings', 'beard', 'scarf', 'backpack'],
+}
+function safeColor(value, fallback) {
+  return typeof value === 'string' && /^#?[0-9a-f]{6}$/i.test(value.trim())
+    ? `#${value.trim().replace(/^#/, '')}`
+    : fallback
+}
+function safeOption(value, allowed, fallback) {
+  return typeof value === 'string' && allowed.includes(value.toLowerCase()) ? value.toLowerCase() : fallback
+}
+function normalizeStyle(style) {
+  const value = style && typeof style === 'object' ? style : {}
+  return {
+    body: safeOption(value.body, STYLE_OPTIONS.body, DEFAULT_STYLE.body),
+    primaryColor: safeColor(value.primaryColor, DEFAULT_STYLE.primaryColor),
+    secondaryColor: safeColor(value.secondaryColor, DEFAULT_STYLE.secondaryColor),
+    skinColor: safeColor(value.skinColor, DEFAULT_STYLE.skinColor),
+    hairColor: safeColor(value.hairColor, DEFAULT_STYLE.hairColor),
+    hair: safeOption(value.hair, STYLE_OPTIONS.hair, DEFAULT_STYLE.hair),
+    hat: safeOption(value.hat, STYLE_OPTIONS.hat, DEFAULT_STYLE.hat),
+    accessory: safeOption(value.accessory, STYLE_OPTIONS.accessory, DEFAULT_STYLE.accessory),
+  }
+}
+function rebuildPlayer(rawStyle) {
+  const style = normalizeStyle(rawStyle)
+  for (const child of [...player.children]) {
+    player.remove(child)
+    child.geometry?.dispose()
+    if (Array.isArray(child.material)) child.material.forEach((material) => material.dispose())
+    else child.material?.dispose()
+  }
+  const material = (color, roughness = 0.78, metalness = 0) =>
+    new THREE.MeshStandardMaterial({ color, roughness, metalness })
+  const skin = material(style.skinColor)
+  const shirt = material(style.primaryColor, 0.72)
+  const trousers = material(style.secondaryColor, 0.8)
+  const hair = material(style.hairColor)
+  const shoes = material('#f2f2f2', 0.65)
+  const dark = material('#171a20', 0.55)
+  const gold = material('#ffd45c', 0.3, 0.55)
+  const addPart = (geometry, partMaterial, position, scale) => {
+    const mesh = new THREE.Mesh(geometry, partMaterial)
+    mesh.position.set(...position)
+    if (scale) mesh.scale.set(...scale)
+    mesh.castShadow = true
+    mesh.receiveShadow = true
+    player.add(mesh)
+    return mesh
+  }
+  const female = style.body === 'female'
+  addPart(new THREE.BoxGeometry(female ? 0.48 : 0.57, 0.68, 0.32), shirt, [0, 1.18, 0])
+  addPart(new THREE.SphereGeometry(0.245, 8, 6), skin, [0, 1.77, 0])
+  addPart(new THREE.BoxGeometry(0.15, 0.5, 0.17), skin, [-0.37, 1.18, 0])
+  addPart(new THREE.BoxGeometry(0.15, 0.5, 0.17), skin, [0.37, 1.18, 0])
+  if (female) {
+    addPart(new THREE.CylinderGeometry(0.22, 0.37, 0.42, 7), trousers, [0, 0.68, 0])
+    addPart(new THREE.BoxGeometry(0.17, 0.42, 0.19), skin, [-0.14, 0.31, 0])
+    addPart(new THREE.BoxGeometry(0.17, 0.42, 0.19), skin, [0.14, 0.31, 0])
+  } else {
+    addPart(new THREE.BoxGeometry(0.2, 0.58, 0.22), trousers, [-0.16, 0.55, 0])
+    addPart(new THREE.BoxGeometry(0.2, 0.58, 0.22), trousers, [0.16, 0.55, 0])
+  }
+  addPart(new THREE.BoxGeometry(0.22, 0.13, 0.36), shoes, [-0.16, 0.22, -0.04])
+  addPart(new THREE.BoxGeometry(0.22, 0.13, 0.36), shoes, [0.16, 0.22, -0.04])
+
+  if (style.hair !== 'bald') {
+    if (style.hair === 'afro') {
+      addPart(new THREE.SphereGeometry(0.3, 8, 6), hair, [0, 1.94, -0.015])
+    } else {
+      addPart(new THREE.SphereGeometry(0.255, 8, 5, 0, Math.PI * 2, 0, Math.PI / 2), hair, [0, 1.83, 0])
+      if (style.hair === 'braids' || style.hair === 'dreads') {
+        for (let i = -2; i <= 2; i++) {
+          addPart(new THREE.CylinderGeometry(0.035, 0.045, style.hair === 'dreads' ? 0.5 : 0.42, 5), hair, [i * 0.075, 1.62, -0.03])
+        }
+      } else if (style.hair === 'bun') {
+        addPart(new THREE.SphereGeometry(0.11, 7, 5), hair, [0, 2.02, -0.13])
+      } else if (style.hair === 'ponytail') {
+        addPart(new THREE.CylinderGeometry(0.045, 0.06, 0.42, 5), hair, [0, 1.62, -0.2], [1, 1, 0.8])
+      }
+    }
+  }
+  if (style.hat === 'cap') {
+    addPart(new THREE.SphereGeometry(0.27, 8, 5, 0, Math.PI * 2, 0, Math.PI / 2), shirt, [0, 1.96, 0])
+    addPart(new THREE.BoxGeometry(0.3, 0.035, 0.2), shirt, [0, 1.9, 0.18])
+  } else if (style.hat === 'beanie') {
+    addPart(new THREE.SphereGeometry(0.265, 8, 5, 0, Math.PI * 2, 0, Math.PI / 2), shirt, [0, 1.94, 0])
+    addPart(new THREE.CylinderGeometry(0.24, 0.24, 0.08, 8), shirt, [0, 1.86, 0])
+  } else if (style.hat === 'tophat') {
+    addPart(new THREE.CylinderGeometry(0.16, 0.16, 0.28, 8), dark, [0, 2.04, 0])
+    addPart(new THREE.CylinderGeometry(0.26, 0.26, 0.045, 8), dark, [0, 1.9, 0])
+  } else if (style.hat === 'crown') {
+    addPart(new THREE.CylinderGeometry(0.2, 0.23, 0.13, 5), gold, [0, 1.98, 0])
+    for (let i = 0; i < 5; i++) {
+      const angle = (i / 5) * Math.PI * 2
+      addPart(new THREE.ConeGeometry(0.045, 0.13, 4), gold, [Math.cos(angle) * 0.17, 2.09, Math.sin(angle) * 0.17])
+    }
+  }
+  if (style.accessory === 'glasses') {
+    addPart(new THREE.BoxGeometry(0.18, 0.1, 0.035), dark, [-0.105, 1.79, 0.225])
+    addPart(new THREE.BoxGeometry(0.18, 0.1, 0.035), dark, [0.105, 1.79, 0.225])
+    addPart(new THREE.BoxGeometry(0.07, 0.025, 0.035), dark, [0, 1.8, 0.225])
+  } else if (style.accessory === 'earrings') {
+    addPart(new THREE.TorusGeometry(0.055, 0.018, 5, 8), gold, [-0.24, 1.68, 0.08])
+    addPart(new THREE.TorusGeometry(0.055, 0.018, 5, 8), gold, [0.24, 1.68, 0.08])
+  } else if (style.accessory === 'beard') {
+    addPart(new THREE.SphereGeometry(0.15, 7, 5), hair, [0, 1.61, 0.12], [1, 0.7, 0.65])
+  } else if (style.accessory === 'scarf') {
+    addPart(new THREE.TorusGeometry(0.18, 0.065, 5, 8), trousers, [0, 1.48, 0])
+    addPart(new THREE.BoxGeometry(0.1, 0.3, 0.08), trousers, [0.13, 1.31, 0.19])
+  } else if (style.accessory === 'backpack') {
+    addPart(new THREE.BoxGeometry(0.32, 0.42, 0.15), trousers, [0, 1.15, -0.24])
+  }
+}
+rebuildPlayer(DEFAULT_STYLE)
 
 const scenery = []
 const trunkMaterial = new THREE.MeshStandardMaterial({ color: '#62452f', roughness: 1 })
@@ -198,6 +308,91 @@ function seedWorldObjects() {
 function resetWorldObjects() {
   seedWorldObjects()
 }
+
+// Start.ng's documented connect-page protocol. No credentials are handled by the game.
+const START_NG_ORIGIN = 'https://start.ng'
+let startNgFramePromise
+function connectFrame() {
+  if (!startNgFramePromise) {
+    startNgFramePromise = new Promise((resolve, reject) => {
+      const frame = document.createElement('iframe')
+      frame.src = `${START_NG_ORIGIN}/connect`
+      frame.hidden = true
+      frame.title = 'Start.ng player connection'
+      frame.onload = () => resolve(frame)
+      frame.onerror = () => reject(new Error('Could not load Start.ng connection'))
+      document.body.append(frame)
+    })
+  }
+  return startNgFramePromise
+}
+async function askStartNg(message, replyType, timeoutMs = 5000) {
+  const frame = await connectFrame()
+  return new Promise((resolve) => {
+    const requestId = Math.random().toString(36).slice(2)
+    let settled = false
+    const finish = (reply) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      window.removeEventListener('message', onMessage)
+      resolve(reply)
+    }
+    const onMessage = (event) => {
+      if (event.origin !== START_NG_ORIGIN || event.source !== frame.contentWindow) return
+      if (event.data?.type === replyType && event.data.requestId === requestId) finish(event.data)
+    }
+    const timer = window.setTimeout(() => finish(null), timeoutMs)
+    window.addEventListener('message', onMessage)
+    frame.contentWindow.postMessage({ ...message, requestId }, START_NG_ORIGIN)
+  })
+}
+const playerNameElement = app.querySelector('#player-name')
+const playerAccountElement = app.querySelector('#player-account')
+const playerSignInButton = app.querySelector('#player-sign-in')
+let currentStartNgPlayer = null
+let identityRefresh = false
+function applyPlayerIdentity(reply) {
+  const signedInUser = reply?.user ?? null
+  const platformPlayer = signedInUser ?? reply?.guest ?? {
+    name: 'Guest',
+    style: DEFAULT_STYLE,
+  }
+  currentStartNgPlayer = platformPlayer
+  rebuildPlayer(platformPlayer.style)
+  playerNameElement.textContent = typeof platformPlayer.name === 'string' && platformPlayer.name.trim()
+    ? platformPlayer.name
+    : 'Guest'
+  playerAccountElement.textContent = signedInUser?.account
+    ? `@${signedInUser.account}`
+    : 'Guest player'
+  playerSignInButton.hidden = Boolean(signedInUser)
+  app.querySelector('.player-avatar').textContent = signedInUser ? '★' : 'G'
+  playerSignInButton.setAttribute('aria-label', 'Sign in to Start.ng')
+}
+async function refreshStartNgPlayer() {
+  if (identityRefresh || document.visibilityState === 'hidden') return
+  identityRefresh = true
+  try {
+    const reply = await askStartNg({ type: 'startng:whoami' }, 'startng:user')
+    if (reply) applyPlayerIdentity(reply)
+  } catch (error) {
+    // Local previews and unavailable platform connections keep the safe guest appearance.
+    console.info('Start.ng player connection is not available in this context.')
+  } finally {
+    identityRefresh = false
+  }
+}
+playerSignInButton.addEventListener('click', () => {
+  const returnTo = `${location.origin}${location.pathname}`
+  location.href = `${START_NG_ORIGIN}/?return_to=${encodeURIComponent(returnTo)}`
+})
+applyPlayerIdentity(null)
+void refreshStartNgPlayer()
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') void refreshStartNgPlayer()
+})
+window.addEventListener('focus', () => void refreshStartNgPlayer())
 
 const resize = () => {
   const width = Math.max(container.clientWidth, 1)
