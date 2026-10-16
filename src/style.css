@@ -25,6 +25,10 @@ h1 { margin: 0; font-size: clamp(2.6rem, 8vw, 5rem); line-height: 1; letter-spac
 h2 { margin: 0; font-size: clamp(2rem, 6vw, 3.5rem); }
 .game-overlay p:not(.eyebrow) { max-width: 38ch; color: #c5cdd3; line-height: 1.6; }
 .primary-button { margin-top: 1rem; min-width: 160px; }
+.overlay-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; }
+.overlay-actions .primary-button, .overlay-actions .secondary-button { margin-top: 1rem; }
+.secondary-button { min-width: 160px; border: 1px solid #73818b; border-radius: 999px; padding: .7rem 1.2rem; color: #f5f5f5; background: rgb(255 255 255 / 5%); font-weight: 800; }
+.secondary-button:hover { background: rgb(255 255 255 / 12%); }
 .primary-button:hover { background: #ff9133; }
 .overlay-hint { font-size: .8rem; }
 .best-run-summary { margin-top: 0; font-size: .9rem; }
