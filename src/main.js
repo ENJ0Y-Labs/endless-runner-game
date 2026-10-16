@@ -552,6 +552,7 @@ function updateHud() {
 function setMode(mode) {
   const previousMode = state.mode
   state.mode = mode
+  container.dataset.mode = mode
   hideOverlays()
   pauseButton.hidden = mode !== 'running'
   if (mode === 'ready') startOverlay.hidden = false
