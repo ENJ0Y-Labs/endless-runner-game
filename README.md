@@ -1,108 +1,100 @@
 # Relic Rush 3D
 
-A 3D endless runner for Start.ng, built with JavaScript, Three.js, and Vite.
+Relic Rush 3D is a Three.js endless runner built for Start.ng. The runner moves automatically along a three-lane track. Switch lanes to avoid obstacles, collect relics, increase your score, and compete on the Start.ng leaderboard.
 
-Players run automatically along a three-lane track, dodge obstacles, collect relics, and try to beat their previous score. The game is designed to use the player's existing Start.ng identity and character appearance instead of creating a separate account system.
+## Features
 
-## Project status
+- Three-dimensional track, third-person camera, and low-poly player character.
+- Automatic forward movement with gradually increasing difficulty.
+- Three lanes with keyboard, swipe, and on-screen touch controls.
+- Obstacles, relic collection, collision-based game over, and restart.
+- Score, distance, relic count, and best run display.
+- Start.ng identity and shared character-style integration, with guest play and safe fallback behaviour.
+- Start.ng score submission and top-10 leaderboard using the documented platform message protocol.
+- Responsive interface for desktop and mobile.
+- Custom leaderboard stat configuration in `startng.json`.
 
-**Current stage:** Initial project structure.
+## Controls
 
-The project is being built in small, testable phases. The starter interface is scaffolding, not finished gameplay.
+| Action | Desktop | Mobile |
+| --- | --- | --- |
+| Move left | Left Arrow or A | Swipe left or tap the left control |
+| Move right | Right Arrow or D | Swipe right or tap the right control |
+| Pause / resume | Use the on-screen Pause/Resume button | Use the on-screen Pause/Resume button |
+| Start / restart | Use the on-screen button | Use the on-screen button |
 
-## Technology
+The character runs automatically. The aim is to avoid obstacles and collect relics. Each relic adds 100 points; distance also contributes to the score. A collision ends the current run.
 
-- **JavaScript** for game logic
-- **Three.js** for 3D rendering
-- **Vite** for local development and production builds
-- **HTML and CSS** for the interface
-- **Start.ng integration** for user identity and character appearance
-
-## Getting started
-
-### Requirements
+## Requirements
 
 - Node.js 20.19+ or 22.12+
 - npm
-- Git
 
-### Install dependencies
+## Run locally
 
-```bash
+```powershell
 npm install
-npm install three
-```
-
-### Run locally
-
-```bash
 npm run dev
 ```
 
-Open the local URL printed by Vite in your browser.
+Open the local URL printed by Vite.
 
-### Create a production build
+## Build and preview the production site
 
-```bash
+```powershell
 npm run build
-```
-
-Vite writes the production site to `dist/`.
-
-### Preview the production build
-
-```bash
 npm run preview
 ```
 
-## Initial project structure
+Vite writes the production site to `dist/`. Open the preview URL printed by Vite and check the browser console and Network panel for errors or missing assets.
+
+## Start.ng submission
+
+Start.ng hosts a static site and does not install npm dependencies or build the source. Before submitting:
+
+1. Run `npm install` and `npm run build`.
+2. Verify the production build with `npm run preview`.
+3. Commit the generated `dist/` directory so the ready-built `dist/index.html` and its assets are present in the repository. The repository's `.gitignore` is configured to allow `dist/` to be committed.
+4. Include `cover.png` at the repository root for the game listing.
+5. Keep `startng.json` at the repository root. Its configured leaderboard stats are `score`, `distance`, and `relics`.
+6. Test identity, character styling, score saving, and leaderboard behaviour on the published `*.start.ng` game. Local preview cannot confirm live platform data or score saving.
+
+The expected submission layout includes:
 
 ```text
-endless-runner-game/
-├── index.html
-├── package.json
-├── package-lock.json
-├── PRD.md
-├── README.md
-├── public/
-└── src/
-    ├── main.js
-    ├── style.css
-    ├── game/
-    │   └── config.js
-    ├── platform/
-    │   └── startng.js
-    └── ui/
-        └── renderStartScreen.js
+index.html
+startng.json
+cover.png
+dist/
+  index.html
+  assets/
+src/
+package.json
+package-lock.json
+README.md
 ```
 
-- `src/main.js`: application entry point.
+Do not submit a build as verified until `npm run build` and the production preview have actually been tested. Live Start.ng score and leaderboard checks must be done on the published game.
+
+## Project structure
+
+- `src/main.js`: application entry point, gameplay loop, UI wiring, and platform event handling.
+- `src/style.css`: responsive interface styling.
+- `src/platform/`: Start.ng integration adapters.
 - `src/game/`: gameplay configuration and systems.
-- `src/platform/`: Start.ng integration code.
-- `src/ui/`: menus, HUD, and game-over interface.
-- `public/`: static files copied to the production build.
-- `PRD.md`: MVP scope and acceptance criteria.
+- `public/`: static assets copied into the build.
+- `startng.json`: leaderboard stat configuration.
+- `PRD.md`: product requirements and acceptance criteria.
+- `AGENT.md`: contributor instructions.
 
-## Planned MVP
+## Development commands
 
-1. Create the Three.js scene, camera, lighting, and three-lane track.
-2. Add automatic running and lane controls.
-3. Add relics, obstacles, collision detection, and increasing difficulty.
-4. Add score, game-over, and restart flow.
-5. Connect Start.ng identity and character appearance.
-6. Polish controls and responsive UI, then test the production build.
-7. Validate and publish the game on Start.ng.
+- `npm run dev`: start the local development server.
+- `npm run build`: create the static production build.
+- `npm run preview`: serve the production build locally.
 
-Multiplayer, a skin shop, purchases, multiple worlds, and complex physics are outside the MVP.
+There is currently no configured automated test runner. Manually test keyboard and touch controls, collision and relic collection, repeated restarts, mobile layouts, console/network errors, and Start.ng integration before release.
 
-## Testing checklist
+## License
 
-- [ ] `npm install` completes successfully.
-- [ ] `npm run dev` starts the development server.
-- [ ] The app loads without browser-console errors.
-- [ ] `npm run build` completes and creates `dist/`.
-- [ ] The production preview works independently of the development server.
-
-## Project requirements
-
-See [PRD.md](./PRD.md) for the full product requirements and definition of done.
+MIT. See [LICENSE](./LICENSE).
