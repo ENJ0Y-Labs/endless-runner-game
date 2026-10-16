@@ -332,8 +332,10 @@ function animate() {
         item.mesh.position.z += delta * state.speed
         item.mesh.rotation.z += delta * 2.5
         item.mesh.position.y = 1.15 + Math.sin(clock.elapsedTime * 4 + item.phase) * 0.12
+        // Relics are finite per run: missed relics disappear instead of respawning.
         if (item.mesh.position.z > 8) {
-          placeRelic(item, -85 - Math.random() * 35)
+          item.active = false
+          item.mesh.visible = false
         } else if (item.lane === state.lane && item.mesh.position.z > 1.25 && item.mesh.position.z < 3.2) {
           item.active = false
           item.mesh.visible = false
