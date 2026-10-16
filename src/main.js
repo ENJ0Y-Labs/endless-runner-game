@@ -4,9 +4,33 @@ import './style.css'
 const app = document.querySelector('#app')
 app.innerHTML = `
   <main class="game-shell">
-    <header class="game-hud"><span class="game-brand">RELIC RUSH <b>3D</b></span><span class="phase-label">ENVIRONMENT PROTOTYPE</span></header>
-    <div class="scene-container" aria-label="Three-dimensional endless runner environment"></div>
-    <footer class="scene-help"><span class="help-key">A</span><span class="help-key">D</span><span>Environment preview · movement controls arrive in the next phase</span></footer>
+    <header class="game-hud">
+      <span class="game-brand">RELIC RUSH <b>3D</b></span>
+      <div class="hud-stats"><span>SCORE <strong id="score">0</strong></span><span>RELICS <strong id="relics">0</strong></span></div>
+      <button class="pause-button" id="pause-button" type="button" hidden>Pause</button>
+    </header>
+    <div class="scene-container" aria-label="Three-dimensional endless runner game">
+      <section class="game-overlay" id="start-overlay">
+        <p class="eyebrow">Start.ng game</p><h1>Relic Rush <span>3D</span></h1>
+        <p>Switch lanes, dodge danger, and collect relics.</p>
+        <button class="primary-button" id="play-button" type="button">Start running</button>
+        <p class="overlay-hint">Keyboard: ← / → or A / D · Mobile: swipe left or right</p>
+      </section>
+      <section class="game-overlay" id="pause-overlay" hidden>
+        <p class="eyebrow">Run paused</p><h2>Take a breather.</h2>
+        <button class="primary-button" id="resume-button" type="button">Resume</button>
+      </section>
+      <section class="game-overlay" id="gameover-overlay" hidden>
+        <p class="eyebrow">Run complete</p><h2>Game over</h2>
+        <p>Final score: <strong id="final-score">0</strong> · Relics: <strong id="final-relics">0</strong></p>
+        <button class="primary-button" id="restart-button" type="button">Run again</button>
+      </section>
+      <div class="touch-controls" aria-label="Lane controls">
+        <button type="button" id="left-button" aria-label="Move left">←</button>
+        <button type="button" id="right-button" aria-label="Move right">→</button>
+      </div>
+    </div>
+    <footer class="scene-help"><span class="help-key">A</span><span class="help-key">D</span><span>Move between lanes · Swipe or use the arrows on mobile</span></footer>
   </main>`
 
 const container = app.querySelector('.scene-container')
@@ -125,18 +149,114 @@ const resizeObserver = new ResizeObserver(resize)
 resizeObserver.observe(container)
 resize()
 
+const LANE_X = [-2.46, 0, 2.46]
+const state = { mode: 'ready', lane: 1, elapsed: 0, score: 0, relics: 0 }
+const startOverlay = app.querySelector('#start-overlay')
+const pauseOverlay = app.querySelector('#pause-overlay')
+const gameoverOverlay = app.querySelector('#gameover-overlay')
+const pauseButton = app.querySelector('#pause-button')
+const scoreElement = app.querySelector('#score')
+const relicsElement = app.querySelector('#relics')
+const hideOverlays = () => {
+  startOverlay.hidden = true
+  pauseOverlay.hidden = true
+  gameoverOverlay.hidden = true
+}
+function updateHud() {
+  scoreElement.textContent = String(state.score)
+  relicsElement.textContent = String(state.relics)
+}
+function setMode(mode) {
+  state.mode = mode
+  hideOverlays()
+  pauseButton.hidden = mode !== 'running'
+  if (mode === 'ready') startOverlay.hidden = false
+  if (mode === 'paused') pauseOverlay.hidden = false
+  if (mode === 'gameover') {
+    gameoverOverlay.hidden = false
+    app.querySelector('#final-score').textContent = String(state.score)
+    app.querySelector('#final-relics').textContent = String(state.relics)
+  }
+}
+function moveLane(direction) {
+  if (state.mode !== 'running') return
+  state.lane = Math.max(0, Math.min(2, state.lane + direction))
+}
+function resetRun() {
+  state.lane = 1
+  state.elapsed = 0
+  state.score = 0
+  state.relics = 0
+  player.position.x = 0
+  player.position.y = 0.16
+  camera.position.x = 0
+  for (let i = 0; i < markings.length; i++) markings[i].position.z = 10 - i % 20 * 5.6
+  for (let i = 0; i < scenery.length; i++) scenery[i].position.z = -Math.floor(i / 2) * 6.7 - 5
+  updateHud()
+}
+function startRun() {
+  resetRun()
+  setMode('running')
+}
+function togglePause() {
+  if (state.mode === 'running') setMode('paused')
+  else if (state.mode === 'paused') setMode('running')
+}
+// Collision systems in the next phase can end a run through this explicit hook.
+window.relicRushEndRun = () => {
+  if (state.mode === 'running') setMode('gameover')
+}
+app.querySelector('#play-button').addEventListener('click', startRun)
+app.querySelector('#restart-button').addEventListener('click', startRun)
+app.querySelector('#resume-button').addEventListener('click', togglePause)
+pauseButton.addEventListener('click', togglePause)
+app.querySelector('#left-button').addEventListener('click', () => moveLane(-1))
+app.querySelector('#right-button').addEventListener('click', () => moveLane(1))
+window.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase()
+  if (['arrowleft', 'arrowright', ' '].includes(key)) event.preventDefault()
+  if (key === 'arrowleft' || key === 'a') moveLane(-1)
+  if (key === 'arrowright' || key === 'd') moveLane(1)
+  if (key === 'escape' || key === 'p') togglePause()
+  if ((key === 'enter' || key === ' ') && state.mode === 'ready') startRun()
+  if ((key === 'enter' || key === ' ') && state.mode === 'gameover') startRun()
+})
+let touchStart = null
+container.addEventListener('touchstart', (event) => {
+  if (event.changedTouches.length) {
+    const touch = event.changedTouches[0]
+    touchStart = { x: touch.clientX, y: touch.clientY }
+  }
+}, { passive: true })
+container.addEventListener('touchend', (event) => {
+  if (!touchStart || !event.changedTouches.length) return
+  const touch = event.changedTouches[0]
+  const dx = touch.clientX - touchStart.x
+  const dy = touch.clientY - touchStart.y
+  if (Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy)) moveLane(dx < 0 ? -1 : 1)
+  touchStart = null
+}, { passive: true })
+setMode('ready')
+
 const clock = new THREE.Clock()
 function animate() {
   const delta = Math.min(clock.getDelta(), 0.05)
-  for (const mark of markings) {
-    mark.position.z += delta * 13
-    if (mark.position.z > 12) mark.position.z -= 112
+  if (state.mode === 'running') {
+    state.elapsed += delta
+    state.score = Math.floor(state.elapsed * 10) + state.relics * 100
+    for (const mark of markings) {
+      mark.position.z += delta * 13
+      if (mark.position.z > 12) mark.position.z -= 112
+    }
+    for (const item of scenery) {
+      item.position.z += delta * 13
+      if (item.position.z > 12) item.position.z -= 121
+    }
+    updateHud()
   }
-  for (const item of scenery) {
-    item.position.z += delta * 13
-    if (item.position.z > 12) item.position.z -= 121
-  }
-  player.position.y = 0.16 + Math.sin(clock.elapsedTime * 7) * 0.035
+  const targetX = LANE_X[state.lane]
+  player.position.x += (targetX - player.position.x) * Math.min(delta * 12, 1)
+  player.position.y = 0.16 + (state.mode === 'running' ? Math.sin(clock.elapsedTime * 7) * 0.035 : 0)
   camera.position.x += (player.position.x * 0.22 - camera.position.x) * Math.min(delta * 2.2, 1)
   camera.lookAt(player.position.x * 0.18, 1.15, -5)
   renderer.render(scene, camera)
