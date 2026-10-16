@@ -368,6 +368,25 @@ const playerSignInButton = app.querySelector('#player-sign-in')
 let currentStartNgPlayer = null
 let identityRefresh = false
 let isStartNgSignedIn = false
+function applyPlayerIdentity(reply) {
+  const signedInUser = reply?.user ?? null
+  isStartNgSignedIn = Boolean(signedInUser)
+  const platformPlayer = signedInUser ?? reply?.guest ?? {
+    name: 'Guest',
+    style: DEFAULT_STYLE,
+  }
+  currentStartNgPlayer = platformPlayer
+  rebuildPlayer(platformPlayer.style)
+  playerNameElement.textContent = typeof platformPlayer.name === 'string' && platformPlayer.name.trim()
+    ? platformPlayer.name
+    : 'Guest'
+  playerAccountElement.textContent = signedInUser?.account
+    ? `@${signedInUser.account}`
+    : 'Guest player'
+  playerSignInButton.hidden = Boolean(signedInUser)
+  app.querySelector('.player-avatar').textContent = signedInUser ? '★' : 'G'
+  playerSignInButton.setAttribute('aria-label', 'Sign in to Start.ng')
+}
 async function refreshStartNgPlayer() {
   if (identityRefresh || document.visibilityState === 'hidden') return
   identityRefresh = true
