@@ -6,7 +6,7 @@ app.innerHTML = `
   <main class="game-shell">
     <header class="game-hud">
       <span class="game-brand">RELIC RUSH <b>3D</b></span>
-      <div class="hud-stats"><span>SCORE <strong id="score">0</strong></span><span>RELICS <strong id="relics">0</strong></span></div>
+      <div class="hud-stats"><span>SCORE <strong id="score">0</strong></span><span>DISTANCE <strong id="distance">0 m</strong></span><span>RELICS <strong id="relics">0</strong></span><span>BEST <strong id="best-score">0</strong></span></div>
       <button class="pause-button" id="pause-button" type="button" hidden>Pause</button>
     </header>
     <div class="scene-container" aria-label="Three-dimensional endless runner game">
@@ -22,7 +22,7 @@ app.innerHTML = `
       </section>
       <section class="game-overlay" id="gameover-overlay" hidden>
         <p class="eyebrow">Run complete</p><h2>Game over</h2>
-        <p>Final score: <strong id="final-score">0</strong> · Relics: <strong id="final-relics">0</strong></p>
+        <p>Final score: <strong id="final-score">0</strong> · Distance: <strong id="final-distance">0 m</strong> · Relics: <strong id="final-relics">0</strong></p><p class="best-run-summary">Best run: <strong id="final-best-score">0</strong></p>
         <button class="primary-button" id="restart-button" type="button">Run again</button>
       </section>
       <div class="touch-controls" aria-label="Lane controls">
@@ -208,13 +208,15 @@ resizeObserver.observe(container)
 resize()
 
 const LANE_X = [-2.46, 0, 2.46]
-const state = { mode: 'ready', lane: 1, elapsed: 0, score: 0, relics: 0, speed: 13 }
+const state = { mode: 'ready', lane: 1, elapsed: 0, distance: 0, score: 0, relics: 0, speed: 13, lastRun: null, bestRun: null }
 const startOverlay = app.querySelector('#start-overlay')
 const pauseOverlay = app.querySelector('#pause-overlay')
 const gameoverOverlay = app.querySelector('#gameover-overlay')
 const pauseButton = app.querySelector('#pause-button')
 const scoreElement = app.querySelector('#score')
+const distanceElement = app.querySelector('#distance')
 const relicsElement = app.querySelector('#relics')
+const bestScoreElement = app.querySelector('#best-score')
 const hideOverlays = () => {
   startOverlay.hidden = true
   pauseOverlay.hidden = true
@@ -222,9 +224,12 @@ const hideOverlays = () => {
 }
 function updateHud() {
   scoreElement.textContent = String(state.score)
+  distanceElement.textContent = `${Math.floor(state.distance)} m`
   relicsElement.textContent = String(state.relics)
+  bestScoreElement.textContent = String(state.bestRun?.score ?? 0)
 }
 function setMode(mode) {
+  const previousMode = state.mode
   state.mode = mode
   hideOverlays()
   pauseButton.hidden = mode !== 'running'
@@ -232,8 +237,22 @@ function setMode(mode) {
   if (mode === 'paused') pauseOverlay.hidden = false
   if (mode === 'gameover') {
     gameoverOverlay.hidden = false
+    if (previousMode === 'running') {
+      const result = {
+        score: state.score,
+        relics: state.relics,
+        distance: Math.floor(state.distance),
+        timestamp: new Date().toISOString(),
+      }
+      state.lastRun = result
+      if (!state.bestRun || result.score > state.bestRun.score) state.bestRun = result
+      window.dispatchEvent(new CustomEvent('relicrush:run-finished', { detail: { ...result } }))
+    }
     app.querySelector('#final-score').textContent = String(state.score)
+    app.querySelector('#final-distance').textContent = `${Math.floor(state.distance)} m`
     app.querySelector('#final-relics').textContent = String(state.relics)
+    app.querySelector('#final-best-score').textContent = String(state.bestRun?.score ?? state.score)
+    updateHud()
   }
 }
 function moveLane(direction) {
@@ -243,6 +262,7 @@ function moveLane(direction) {
 function resetRun() {
   state.lane = 1
   state.elapsed = 0
+  state.distance = 0
   state.score = 0
   state.relics = 0
   state.speed = 13
@@ -266,6 +286,9 @@ function togglePause() {
 window.relicRushEndRun = () => {
   if (state.mode === 'running') setMode('gameover')
 }
+// Stable result adapters for future Start.ng leaderboard wiring. No platform API is assumed here.
+window.relicRushGetLastRun = () => state.lastRun ? { ...state.lastRun } : null
+window.relicRushGetBestRun = () => state.bestRun ? { ...state.bestRun } : null
 app.querySelector('#play-button').addEventListener('click', startRun)
 app.querySelector('#restart-button').addEventListener('click', startRun)
 app.querySelector('#resume-button').addEventListener('click', togglePause)
@@ -306,7 +329,8 @@ function animate() {
     state.elapsed += delta
     // Speed ramps up gradually, with a sensible cap to keep late-game control possible.
     state.speed = Math.min(13 + state.elapsed * 0.22, 25)
-    state.score = Math.floor(state.elapsed * 10) + state.relics * 100
+    state.distance += delta * state.speed
+    state.score = Math.floor(state.distance) + state.relics * 100
     for (const mark of markings) {
       mark.position.z += delta * state.speed
       if (mark.position.z > 12) mark.position.z -= 112
