@@ -21,8 +21,9 @@ app.innerHTML = `
         <p>Switch lanes, dodge danger, and collect relics.</p>
         <div class="instruction-grid" aria-label="How to play">
           <div class="instruction-card"><span class="instruction-icon" aria-hidden="true">← →</span><strong>Switch lanes</strong><small>Arrow keys or A / D</small></div>
+          <div class="instruction-card"><span class="instruction-icon" aria-hidden="true">↑</span><strong>Jump</strong><small>Space, Up Arrow, or swipe up</small></div>
           <div class="instruction-card"><span class="instruction-icon" aria-hidden="true">✦</span><strong>Collect relics</strong><small>Each relic adds 100 points</small></div>
-          <div class="instruction-card"><span class="instruction-icon" aria-hidden="true">!</span><strong>Avoid obstacles</strong><small>One collision ends the run</small></div>
+          <div class="instruction-card"><span class="instruction-icon" aria-hidden="true">!</span><strong>Avoid obstacles</strong><small>Jump over crates</small></div>
         </div>
         <button class="primary-button" id="play-button" type="button">Start running</button>
         <p class="overlay-hint">On mobile, swipe left or right or use the on-screen arrows.</p>
@@ -39,12 +40,13 @@ app.innerHTML = `
         <p>Final score: <strong id="final-score">0</strong> · Distance: <strong id="final-distance">0 m</strong> · Relics: <strong id="final-relics">0</strong></p><p class="best-run-summary">Best run: <strong id="final-best-score">0</strong></p>
         <button class="primary-button" id="restart-button" type="button">Run again</button>
       </section>
-      <div class="touch-controls" aria-label="Lane controls">
+      <div class="touch-controls" aria-label="Movement and jump controls">
         <button type="button" id="left-button" aria-label="Move left">←</button>
+        <button type="button" id="jump-button" aria-label="Jump">↑</button>
         <button type="button" id="right-button" aria-label="Move right">→</button>
       </div>
     </div>
-    <footer class="scene-help"><span class="help-key">A</span><span class="help-key">D</span><span>Move between lanes · Swipe or use the arrows on mobile</span></footer>
+    <footer class="scene-help"><span class="help-key">A</span><span class="help-key">D</span><span class="help-key">Space / ↑</span><span>Move between lanes and jump · Swipe on mobile</span></footer>
     <section class="leaderboard-panel" aria-labelledby="leaderboard-title">
       <div class="leaderboard-heading">
         <div><p class="eyebrow">Community best runs</p><h2 id="leaderboard-title">Leaderboard</h2></div>
@@ -980,7 +982,19 @@ resize()
 // ---------------------------------------------------------------------------
 // Game state
 // ---------------------------------------------------------------------------
-const state = { mode: 'ready', lane: 1, elapsed: 0, distance: 0, score: 0, relics: 0, speed: CFG.initialSpeed, lastRun: null, bestRun: null }
+const state = {
+  mode: 'ready',
+  lane: 1,
+  elapsed: 0,
+  distance: 0,
+  score: 0,
+  relics: 0,
+  speed: CFG.initialSpeed,
+  jumpHeight: 0,
+  jumpVelocity: 0,
+  lastRun: null,
+  bestRun: null,
+}
 let audioContext = null
 let soundMuted = false
 const soundButton = app.querySelector('#sound-toggle')
@@ -1117,6 +1131,11 @@ function moveLane(direction) {
   playSound('lane')
   triggerHaptic('lane')
 }
+function jump() {
+  // A grounded-state check prevents a second jump before landing.
+  if (state.mode !== 'running' || state.jumpHeight > 0 || state.jumpVelocity > 0) return
+  state.jumpVelocity = CFG.jumpInitialVelocity
+}
 function resetRun() {
   state.lane = 1
   state.elapsed = 0
@@ -1124,6 +1143,8 @@ function resetRun() {
   state.score = 0
   state.relics = 0
   state.speed = CFG.initialSpeed
+  state.jumpHeight = 0
+  state.jumpVelocity = 0
   player.position.x = 0
   player.position.y = 0.16
   camera.position.x = 0
@@ -1160,15 +1181,17 @@ app.querySelector('#resume-button').addEventListener('click', togglePause)
 app.querySelector('#pause-restart-button').addEventListener('click', startRun)
 pauseButton.addEventListener('click', togglePause)
 app.querySelector('#left-button').addEventListener('click', () => moveLane(-1))
+app.querySelector('#jump-button').addEventListener('click', jump)
 app.querySelector('#right-button').addEventListener('click', () => moveLane(1))
 window.addEventListener('keydown', (event) => {
   unlockAudio()
   const key = event.key.toLowerCase()
-  if (['arrowleft', 'arrowright', ' '].includes(key)) event.preventDefault()
+  if (['arrowleft', 'arrowright', 'arrowup', ' '].includes(key)) event.preventDefault()
   // Held keys auto-repeat; without this guard one long press skips straight across the track.
   if (event.repeat) return
   if (key === 'arrowleft' || key === 'a') moveLane(-1)
   if (key === 'arrowright' || key === 'd') moveLane(1)
+  if ((key === 'arrowup' || key === ' ') && state.mode === 'running') jump()
   if (key === 'escape' || key === 'p') togglePause()
   if ((key === 'enter' || key === ' ') && (state.mode === 'ready' || state.mode === 'gameover')) {
     // Stop the focused overlay button from also firing its own click and restarting twice.
@@ -1192,7 +1215,11 @@ container.addEventListener('touchend', (event) => {
   const touch = event.changedTouches[0]
   const dx = touch.clientX - touchStart.x
   const dy = touch.clientY - touchStart.y
-  if (Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy)) moveLane(dx < 0 ? -1 : 1)
+  if (Math.abs(dy) > 35 && Math.abs(dy) > Math.abs(dx)) {
+    if (dy < 0) jump()
+  } else if (Math.abs(dx) > 35) {
+    moveLane(dx < 0 ? -1 : 1)
+  }
   touchStart = null
 }, { passive: true })
 setMode('ready')
@@ -1213,6 +1240,14 @@ function animate() {
     // Speed ramps up gradually, with a sensible cap to keep late-game control possible.
     state.speed = Math.min(CFG.initialSpeed + state.elapsed * CFG.speedIncreasePerSecond, CFG.maximumSpeed)
     state.distance += delta * state.speed
+    if (state.jumpHeight > 0 || state.jumpVelocity > 0) {
+      state.jumpVelocity -= CFG.jumpGravity * delta
+      state.jumpHeight += state.jumpVelocity * delta
+      if (state.jumpHeight <= 0) {
+        state.jumpHeight = 0
+        state.jumpVelocity = 0
+      }
+    }
   }
   // The world also scrolls slowly behind the start screen; paused and game-over freeze it.
   const worldSpeed = running ? state.speed : attract ? CFG.attractSpeed : 0
@@ -1245,7 +1280,8 @@ function animate() {
     if (running) {
       const relativeZ = z - CFG.playerZ
       if (relativeZ > CFG.obstacleHitZ[0] && relativeZ < CFG.obstacleHitZ[1] &&
-          Math.abs(item.mesh.position.x - playerX) < CFG.obstacleHitX) {
+          Math.abs(item.mesh.position.x - playerX) < CFG.obstacleHitX &&
+          state.jumpHeight < CFG.jumpObstacleClearance) {
         setMode('gameover')
         break
       }
@@ -1285,7 +1321,8 @@ function animate() {
   player.position.x += (targetX - player.position.x) * Math.min(delta * 12, 1)
   const moving = running || attract
   const stride = animTime * 11
-  player.position.y = 0.16 + (moving ? Math.abs(Math.sin(stride)) * 0.07 : 0)
+  const runBob = moving && state.jumpHeight === 0 ? Math.abs(Math.sin(stride)) * 0.07 : 0
+  player.position.y = 0.16 + state.jumpHeight + runBob
   const swing = moving ? Math.sin(stride) * 0.95 : 0
   limbs.legL.rotation.x = swing
   limbs.legR.rotation.x = -swing
