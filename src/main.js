@@ -174,7 +174,6 @@ function mergeParts(parts) {
     return geometry
   })
   const merged = mergeGeometries(prepared)
-  if (merged?.getAttribute('color')) merged.userData.baseVertexColors = merged.getAttribute('color').array.slice()
   prepared.forEach((geometry) => geometry.dispose())
   return merged
 }
@@ -288,6 +287,11 @@ for (const x of [-(CFG.trackWidth / 2 + 0.3), CFG.trackWidth / 2 + 0.3]) {
 // Seasonal color variants reuse the same merged geometry to keep mobile draw calls low.
 // ---------------------------------------------------------------------------
 const seasonalMeshes = []
+function registerSeasonalMesh(mesh) {
+  const colors = mesh.geometry.getAttribute('color')
+  if (colors) mesh.geometry.userData.baseVertexColors = colors.array.slice()
+  seasonalMeshes.push(mesh)
+}
 function buildBackdrop() {
   const parts = []
   const rand = seeded(21)
@@ -334,7 +338,7 @@ function buildBackdrop() {
   }
   const mesh = new THREE.Mesh(mergeParts(parts), vertexMaterial)
   scene.add(mesh)
-  seasonalMeshes.push(mesh)
+  registerSeasonalMesh(mesh)
 }
 buildBackdrop()
 
@@ -617,7 +621,7 @@ function buildSegment(side, index) {
   mesh.castShadow = true
   mesh.receiveShadow = true
   group.add(mesh)
-  seasonalMeshes.push(mesh)
+  registerSeasonalMesh(mesh)
   if (index % 3 === 0) {
     const holder = new THREE.Mesh(mergeParts([part(box(0.16, 0.5, 0.16), PAL.stoneDeep, [inward * 0.85, 2.8, 0]), part(box(0.34, 0.12, 0.34), '#2b1b10', [inward * 0.85, 3.08, 0])]), vertexMaterial)
     group.add(holder)
