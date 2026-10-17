@@ -14,6 +14,11 @@ export const GAME_CONFIG = Object.freeze({
   relicScore: 100,
   playerZ: 2.2,
 
+  // Single-jump tuning. Adjust after testing the jump against real obstacle timing.
+  jumpInitialVelocity: 9.5,
+  jumpGravity: 25,
+  jumpObstacleClearance: 1.05,
+
   // World streaming: rows are generated just inside the fog and recycled once behind the camera.
   spawnDistance: 120,
   despawnZ: 8,
