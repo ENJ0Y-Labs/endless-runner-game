@@ -635,21 +635,35 @@ window.addEventListener('keydown', (event) => {
   if ((key === 'enter' || key === ' ') && state.mode === 'ready') startRun()
   if ((key === 'enter' || key === ' ') && state.mode === 'gameover') startRun()
 })
-let touchStart = null
-container.addEventListener('touchstart', (event) => {
-  if (event.changedTouches.length) {
-    const touch = event.changedTouches[0]
-    touchStart = { x: touch.clientX, y: touch.clientY }
+let swipeStart = null
+container.addEventListener('pointerdown', (event) => {
+  if (!event.isPrimary || event.button !== 0) return
+  swipeStart = {
+    pointerId: event.pointerId,
+    x: event.clientX,
+    y: event.clientY,
+    handled: false,
   }
-}, { passive: true })
-container.addEventListener('touchend', (event) => {
-  if (!touchStart || !event.changedTouches.length) return
-  const touch = event.changedTouches[0]
-  const dx = touch.clientX - touchStart.x
-  const dy = touch.clientY - touchStart.y
-  if (Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy)) moveLane(dx < 0 ? -1 : 1)
-  touchStart = null
-}, { passive: true })
+})
+container.addEventListener('pointermove', (event) => {
+  if (!swipeStart || swipeStart.pointerId !== event.pointerId || swipeStart.handled) return
+
+  const dx = event.clientX - swipeStart.x
+  const dy = event.clientY - swipeStart.y
+  const horizontalDistance = Math.abs(dx)
+  const verticalDistance = Math.abs(dy)
+
+  // React as soon as the gesture is clearly horizontal; let vertical page scrolling work normally.
+  if (horizontalDistance < 24 || horizontalDistance <= verticalDistance * 1.25) return
+
+  swipeStart.handled = true
+  moveLane(dx < 0 ? -1 : 1)
+})
+const clearSwipe = (event) => {
+  if (swipeStart?.pointerId === event.pointerId) swipeStart = null
+}
+container.addEventListener('pointerup', clearSwipe)
+container.addEventListener('pointercancel', clearSwipe)
 setMode('ready')
 seedWorldObjects()
 
@@ -702,7 +716,8 @@ function animate() {
     updateHud()
   }
   const targetX = LANE_X[state.lane]
-  player.position.x += (targetX - player.position.x) * Math.min(delta * 12, 1)
+  // Shorten lane-transition easing so the character catches up to input sooner.
+  player.position.x += (targetX - player.position.x) * Math.min(delta * 18, 1)
   player.position.y = 0.16 + (state.mode === 'running' ? Math.sin(clock.elapsedTime * 7) * 0.035 : 0)
   camera.position.x += (player.position.x * 0.22 - camera.position.x) * Math.min(delta * 2.2, 1)
   camera.lookAt(player.position.x * 0.18, 1.15, -5)
