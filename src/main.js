@@ -731,6 +731,9 @@ const SEASONS = [
 ]
 const seasonIndicator = app.querySelector('#season-indicator')
 let activeSeasonIndex = -1
+let lastSkySeasonIndex = -1
+const seasonColorTarget = new THREE.Color()
+const seasonColorMix = new THREE.Color()
 const seasonalColor = (from, to, amount) => new THREE.Color(from).lerp(new THREE.Color(to), amount)
 function recolorSeasonalMeshes(season) {
   for (const mesh of seasonalMeshes) {
@@ -780,13 +783,16 @@ function updateSeasonEnvironment(distance) {
   const current = SEASONS[seasonIndex]
   const next = SEASONS[nextIndex]
   const visualSeasonIndex = blend >= 0.5 ? nextIndex : seasonIndex
-  const mix = (key) => seasonalColor(current[key], next[key], blend)
-  const colorHex = (from, to) => `#${seasonalColor(from, to, blend).getHexString()}`
+  const mix = (key) => seasonColorMix.set(current[key]).lerp(seasonColorTarget.set(next[key]), blend)
+  const colorHex = (from, to) => `#${seasonColorMix.set(from).lerp(seasonColorTarget.set(to), blend).getHexString()}`
   const sky = current.sky.map(([offset, color], index) => [
     offset,
     colorHex(color, next.sky[index][1]),
   ])
-  drawSeasonSky(sky)
+  if (blend > 0 || lastSkySeasonIndex !== seasonIndex) {
+    drawSeasonSky(sky)
+    lastSkySeasonIndex = seasonIndex
+  }
   scene.fog.color.copy(mix('fog'))
   groundMaterial.color.copy(mix('ground'))
   trackTop.color.copy(mix('track'))
