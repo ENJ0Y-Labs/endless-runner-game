@@ -719,8 +719,10 @@ function updateSeasonEnvironment(distance) {
   const blend = progress > transitionStart
     ? (progress - transitionStart) / CFG.seasonTransitionDistance
     : 0
+  const nextIndex = (seasonIndex + 1) % SEASONS.length
   const current = SEASONS[seasonIndex]
-  const next = SEASONS[(seasonIndex + 1) % SEASONS.length]
+  const next = SEASONS[nextIndex]
+  const visualSeasonIndex = blend >= 0.5 ? nextIndex : seasonIndex
   const mix = (key) => seasonalColor(current[key], next[key], blend)
   const colorHex = (from, to) => `#${seasonalColor(from, to, blend).getHexString()}`
   const sky = current.sky.map(([offset, color], index) => [
@@ -741,11 +743,12 @@ function updateSeasonEnvironment(distance) {
   sun.intensity = THREE.MathUtils.lerp(current.sunIntensity, next.sunIntensity, blend)
   sunGlowMaterial.opacity = THREE.MathUtils.lerp(current.glowOpacity, next.glowOpacity, blend)
   shaftMaterial.opacity = THREE.MathUtils.lerp(current.shaftOpacity, next.shaftOpacity, blend)
-  if (seasonIndex !== activeSeasonIndex) {
-    activeSeasonIndex = seasonIndex
-    seasonIndicator.textContent = current.name.toUpperCase()
-    seasonIndicator.dataset.season = current.name.toLowerCase()
-    recolorSeasonalMeshes(current)
+  if (visualSeasonIndex !== activeSeasonIndex) {
+    activeSeasonIndex = visualSeasonIndex
+    const visualSeason = SEASONS[visualSeasonIndex]
+    seasonIndicator.textContent = visualSeason.name.toUpperCase()
+    seasonIndicator.dataset.season = visualSeason.name.toLowerCase()
+    recolorSeasonalMeshes(visualSeason)
   }
 }
 updateSeasonEnvironment(0)
