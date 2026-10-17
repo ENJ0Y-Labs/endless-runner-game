@@ -8,6 +8,7 @@ app.innerHTML = `
       <span class="game-brand">RELIC RUSH <b>3D</b></span>
       <div class="player-identity" id="player-identity" aria-live="polite"><span class="player-avatar" aria-hidden="true">R</span><span class="player-identity-copy"><strong id="player-name">Guest</strong><small id="player-account">Guest player</small></span><button class="sign-in-button" id="player-sign-in" type="button">Sign in</button></div>
       <div class="hud-stats"><span>SCORE <strong id="score">0</strong></span><span>DISTANCE <strong id="distance">0 m</strong></span><span>RELICS <strong id="relics">0</strong></span><span>BEST <strong id="best-score">0</strong></span></div>
+      <button class="sound-button" id="sound-toggle" type="button" aria-label="Mute sound" aria-pressed="false">Sound on</button>
       <button class="pause-button" id="pause-button" type="button" hidden>Pause</button>
     </header>
     <div class="scene-container" aria-label="Three-dimensional endless runner game">
@@ -538,6 +539,61 @@ resize()
 
 const LANE_X = [-2.46, 0, 2.46]
 const state = { mode: 'ready', lane: 1, elapsed: 0, distance: 0, score: 0, relics: 0, speed: 13, lastRun: null, bestRun: null }
+let audioContext = null
+let soundMuted = false
+const soundButton = app.querySelector('#sound-toggle')
+function syncSoundButton() {
+  soundButton.textContent = soundMuted ? 'Sound off' : 'Sound on'
+  soundButton.setAttribute('aria-label', soundMuted ? 'Unmute sound' : 'Mute sound')
+  soundButton.setAttribute('aria-pressed', String(soundMuted))
+}
+function unlockAudio() {
+  if (soundMuted) return
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext
+    if (!AudioContextClass) return
+    if (!audioContext) audioContext = new AudioContextClass()
+    if (audioContext.state === 'suspended') void audioContext.resume().catch(() => {})
+  } catch {
+    // Audio is optional; unsupported or blocked audio must never interrupt gameplay.
+  }
+}
+function playSound(kind) {
+  if (soundMuted) return
+  unlockAudio()
+  if (!audioContext || audioContext.state !== 'running') return
+
+  const sounds = {
+    lane: { start: 420, end: 590, duration: 0.075, type: 'sine', volume: 0.045 },
+    relic: { start: 740, end: 1180, duration: 0.18, type: 'triangle', volume: 0.075 },
+    crash: { start: 190, end: 55, duration: 0.28, type: 'sawtooth', volume: 0.09 },
+  }
+  const sound = sounds[kind]
+  if (!sound) return
+
+  try {
+    const now = audioContext.currentTime
+    const oscillator = audioContext.createOscillator()
+    const gain = audioContext.createGain()
+    oscillator.type = sound.type
+    oscillator.frequency.setValueAtTime(sound.start, now)
+    oscillator.frequency.exponentialRampToValueAtTime(sound.end, now + sound.duration)
+    gain.gain.setValueAtTime(0.0001, now)
+    gain.gain.exponentialRampToValueAtTime(sound.volume, now + 0.012)
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + sound.duration)
+    oscillator.connect(gain)
+    gain.connect(audioContext.destination)
+    oscillator.start(now)
+    oscillator.stop(now + sound.duration + 0.01)
+    oscillator.addEventListener('ended', () => {
+      oscillator.disconnect()
+      gain.disconnect()
+    }, { once: true })
+  } catch {
+    // A browser audio restriction should not break the current run.
+  }
+}
+syncSoundButton()
 const startOverlay = app.querySelector('#start-overlay')
 const pauseOverlay = app.querySelector('#pause-overlay')
 const gameoverOverlay = app.querySelector('#gameover-overlay')
@@ -560,6 +616,7 @@ function updateHud() {
 function setMode(mode) {
   const previousMode = state.mode
   state.mode = mode
+  if (mode === 'gameover' && previousMode === 'running') playSound('crash')
   container.dataset.mode = mode
   hideOverlays()
   pauseButton.hidden = mode !== 'running'
@@ -587,7 +644,10 @@ function setMode(mode) {
 }
 function moveLane(direction) {
   if (state.mode !== 'running') return
-  state.lane = Math.max(0, Math.min(2, state.lane + direction))
+  const nextLane = Math.max(0, Math.min(2, state.lane + direction))
+  if (nextLane === state.lane) return
+  state.lane = nextLane
+  playSound('lane')
 }
 function resetRun() {
   state.lane = 1
@@ -619,6 +679,12 @@ window.relicRushEndRun = () => {
 // Stable result adapters for future Start.ng leaderboard wiring. No platform API is assumed here.
 window.relicRushGetLastRun = () => state.lastRun ? { ...state.lastRun } : null
 window.relicRushGetBestRun = () => state.bestRun ? { ...state.bestRun } : null
+soundButton.addEventListener('click', () => {
+  soundMuted = !soundMuted
+  syncSoundButton()
+  if (!soundMuted) unlockAudio()
+})
+window.addEventListener('pointerdown', unlockAudio)
 app.querySelector('#play-button').addEventListener('click', startRun)
 app.querySelector('#restart-button').addEventListener('click', startRun)
 app.querySelector('#resume-button').addEventListener('click', togglePause)
@@ -627,6 +693,7 @@ pauseButton.addEventListener('click', togglePause)
 app.querySelector('#left-button').addEventListener('click', () => moveLane(-1))
 app.querySelector('#right-button').addEventListener('click', () => moveLane(1))
 window.addEventListener('keydown', (event) => {
+  unlockAudio()
   const key = event.key.toLowerCase()
   if (['arrowleft', 'arrowright', ' '].includes(key)) event.preventDefault()
   if (key === 'arrowleft' || key === 'a') moveLane(-1)
@@ -710,6 +777,7 @@ function animate() {
           item.mesh.visible = false
           state.relics += 1
           state.score += 100
+          playSound('relic')
         }
       }
     }
