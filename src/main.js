@@ -26,7 +26,7 @@ app.innerHTML = `
           <div class="instruction-card"><span class="instruction-icon" aria-hidden="true">!</span><strong>Avoid obstacles</strong><small>Jump over crates</small></div>
         </div>
         <button class="primary-button" id="play-button" type="button">Start running</button>
-        <p class="overlay-hint">On mobile, swipe left or right or use the on-screen arrows.</p>
+        <p class="overlay-hint">On mobile, swipe to move or use the on-screen controls to move and jump.</p>
       </section>
       <section class="game-overlay" id="pause-overlay" hidden>
         <p class="eyebrow">Run paused</p><h2>Take a breather.</h2>
