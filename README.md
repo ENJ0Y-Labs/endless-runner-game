@@ -55,7 +55,7 @@ Start.ng hosts a static site and does not install npm dependencies or build the 
 1. Run `npm install` and `npm run build`.
 2. Verify the production build with `npm run preview`.
 3. Commit the generated `dist/` directory so the ready-built `dist/index.html` and its assets are present in the repository. The repository's `.gitignore` is configured to allow `dist/` to be committed.
-4. Include `cover.png` at the repository root for the game listing.
+4. Keep the source `cover.png` at the repository root and a 16:10 `public/cover.png`; Vite copies the latter beside `dist/index.html` for the game listing.
 5. Keep `startng.json` at the repository root. Its configured leaderboard stats are `score`, `distance`, and `relics`.
 6. Test identity, character styling, score saving, and leaderboard behaviour on the published `*.start.ng` game. Local preview cannot confirm live platform data or score saving.
 
@@ -66,6 +66,7 @@ index.html
 startng.json
 cover.png
 dist/
+  cover.png
   index.html
   assets/
 src/
