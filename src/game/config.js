@@ -19,6 +19,10 @@ export const GAME_CONFIG = Object.freeze({
   jumpGravity: 25,
   jumpObstacleClearance: 1.05,
 
+  // Seasonal scenery cycles by distance; transitions begin before each season boundary.
+  seasonLength: 360,
+  seasonTransitionDistance: 48,
+
   // World streaming: rows are generated just inside the fog and recycled once behind the camera.
   spawnDistance: 120,
   despawnZ: 8,
