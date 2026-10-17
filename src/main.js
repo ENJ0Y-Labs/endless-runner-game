@@ -342,6 +342,59 @@ function buildBackdrop() {
 }
 buildBackdrop()
 
+// Low-poly tree lines add distinct seasonal silhouettes without external assets.
+// Each season is one merged mesh; only the active backdrop is rendered.
+const seasonalBackdropMeshes = []
+const seasonalTreeTrunk = new THREE.CylinderGeometry(0.28, 0.42, 1, 5)
+const seasonalCanopy = new THREE.DodecahedronGeometry(1, 0)
+const seasonalPine = new THREE.ConeGeometry(1, 1, 6)
+const seasonalBlossom = new THREE.DodecahedronGeometry(0.5, 0)
+function buildSeasonalBackdrop(kind, colors, seed) {
+  const parts = []
+  const rand = seeded(seed)
+  for (const side of [-1, 1]) {
+    for (let i = 0; i < 5; i++) {
+      const x = side * (10 + rand() * 15)
+      const z = -38 - rand() * 92
+      const trunkHeight = 3.2 + rand() * 1.5
+      parts.push(part(seasonalTreeTrunk, colors.trunk, [x, trunkHeight / 2, z], [0, rand() * 0.25, 0], [1, trunkHeight, 1]))
+      if (kind === 'winter') {
+        parts.push(part(seasonalPine, colors.foliage, [x, trunkHeight + 1.1, z], [0, 0, 0], [2.6, 3.4, 2.6]))
+        parts.push(part(seasonalPine, colors.foliage, [x, trunkHeight + 2.9, z], [0, 0, 0], [2.05, 3, 2.05]))
+        parts.push(part(seasonalPine, colors.foliage, [x, trunkHeight + 4.4, z], [0, 0, 0], [1.45, 2.4, 1.45]))
+        parts.push(part(seasonalPine, colors.snow, [x, trunkHeight + 2.1, z], [0, 0, 0], [1.85, 0.8, 1.85]))
+        parts.push(part(seasonalPine, colors.snow, [x, trunkHeight + 3.8, z], [0, 0, 0], [1.35, 0.65, 1.35]))
+      } else {
+        const crownY = trunkHeight + 1.25
+        parts.push(part(seasonalCanopy, colors.foliage, [x, crownY, z], [0, rand() * 3, 0], [2.4, 2.25, 2.3]))
+        parts.push(part(seasonalCanopy, colors.foliage, [x - 1.45, crownY - 0.2, z + 0.25], [0, rand() * 3, 0], [1.65, 1.65, 1.7]))
+        parts.push(part(seasonalCanopy, colors.foliage, [x + 1.4, crownY - 0.15, z - 0.2], [0, rand() * 3, 0], [1.7, 1.75, 1.65]))
+        if (kind === 'spring') {
+          for (let blossom = 0; blossom < 5; blossom++) {
+            const angle = (blossom / 5) * Math.PI * 2
+            parts.push(part(
+              seasonalBlossom, colors.blossom,
+              [x + Math.cos(angle) * (1.2 + rand() * 0.8), crownY + (rand() - 0.2) * 1.5, z + Math.sin(angle) * 1.5],
+              [rand(), rand() * 3, rand()],
+              [0.55, 0.45, 0.5],
+            ))
+          }
+        }
+      }
+    }
+  }
+  const mesh = new THREE.Mesh(mergeParts(parts), vertexMaterial)
+  mesh.visible = kind === 'spring'
+  mesh.castShadow = false
+  mesh.receiveShadow = false
+  scene.add(mesh)
+  seasonalBackdropMeshes.push(mesh)
+}
+buildSeasonalBackdrop('spring', { trunk: '#72513a', foliage: '#69a95b', blossom: '#f3bfd9' }, 410)
+buildSeasonalBackdrop('summer', { trunk: '#6b4b30', foliage: '#347a35' }, 420)
+buildSeasonalBackdrop('autumn', { trunk: '#68452f', foliage: '#d47735' }, 430)
+buildSeasonalBackdrop('winter', { trunk: '#62564e', foliage: '#31555a', snow: '#e2edf2' }, 440)
+
 // Sun glow and light shafts. Additive, unfogged and cheap.
 function radialTexture() {
   const canvas = document.createElement('canvas')
@@ -753,6 +806,9 @@ function updateSeasonEnvironment(distance) {
     seasonIndicator.textContent = visualSeason.name.toUpperCase()
     seasonIndicator.dataset.season = visualSeason.name.toLowerCase()
     recolorSeasonalMeshes(visualSeason)
+    seasonalBackdropMeshes.forEach((mesh, index) => {
+      mesh.visible = index === visualSeasonIndex
+    })
   }
 }
 updateSeasonEnvironment(0)
