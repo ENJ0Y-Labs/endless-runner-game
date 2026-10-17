@@ -734,7 +734,6 @@ let activeSeasonIndex = -1
 let lastSkySeasonIndex = -1
 const seasonColorTarget = new THREE.Color()
 const seasonColorMix = new THREE.Color()
-const seasonalColor = (from, to, amount) => new THREE.Color(from).lerp(new THREE.Color(to), amount)
 function recolorSeasonalMeshes(season) {
   for (const mesh of seasonalMeshes) {
     const geometry = mesh.geometry
