@@ -1,5 +1,7 @@
 import * as THREE from 'three'
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import './style.css'
+import { GAME_CONFIG as CFG } from './game/config.js'
 
 const app = document.querySelector('#app')
 app.innerHTML = `
@@ -14,7 +16,8 @@ app.innerHTML = `
     <div class="scene-container" aria-label="Three-dimensional endless runner game">
       <div class="scene-loading" id="scene-loading" role="status" aria-live="polite"><span class="loading-indicator" aria-hidden="true"></span> Preparing your track…</div>
       <section class="game-overlay" id="start-overlay">
-        <p class="eyebrow">Start.ng game</p><h1>Relic Rush <span>3D</span></h1>
+        <p class="eyebrow">Start.ng game</p>
+        <h1 class="title-art" aria-label="Relic Rush 3D"><span class="t-line" aria-hidden="true">Relic</span><span class="t-line" aria-hidden="true">Rush <span class="t-3d">3D</span></span></h1>
         <p>Switch lanes, dodge danger, and collect relics.</p>
         <div class="instruction-grid" aria-label="How to play">
           <div class="instruction-card"><span class="instruction-icon" aria-hidden="true">← →</span><strong>Switch lanes</strong><small>Arrow keys or A / D</small></div>
@@ -60,13 +63,53 @@ app.innerHTML = `
   </main>`
 
 const container = app.querySelector('.scene-container')
-const scene = new THREE.Scene()
-scene.background = new THREE.Color('#101820')
-scene.fog = new THREE.Fog('#101820', 24, 115)
+const LANE_X = CFG.laneX
 
-const camera = new THREE.PerspectiveCamera(58, 1, 0.1, 180)
-camera.position.set(0, 5.3, 10.5)
-camera.lookAt(0, 1.2, -5)
+// ---------------------------------------------------------------------------
+// Palette: sampled from the cover art (golden-hour temple ruins).
+// ---------------------------------------------------------------------------
+const PAL = {
+  fog: '#e3b070',
+  skyTop: '#d6bd96',
+  skyMid: '#f6d4a0',
+  skyLow: '#ffc27a',
+  stone: '#a98760',
+  stoneDark: '#6a5039',
+  stoneDeep: '#4a3626',
+  stoneBand: '#c97a2c',
+  stoneLight: '#d2ae7a',
+  gold: '#f2b73c',
+  crate: '#d4432c',
+  crateBand: '#e8b25a',
+  leafDark: '#2c4a2a',
+  leafMid: '#3d6430',
+  leafLight: '#557a35',
+}
+
+const scene = new THREE.Scene()
+scene.fog = new THREE.Fog(PAL.fog, 30, 190)
+
+// Screen-space gradient sky (cheap: no sky dome to render or fog).
+function gradientTexture(stops, width = 4, height = 256) {
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+  const gradient = ctx.createLinearGradient(0, 0, 0, height)
+  for (const [offset, color] of stops) gradient.addColorStop(offset, color)
+  ctx.fillStyle = gradient
+  ctx.fillRect(0, 0, width, height)
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  return texture
+}
+scene.background = gradientTexture([[0, PAL.skyTop], [0.38, PAL.skyMid], [0.56, PAL.skyLow], [1, PAL.fog]])
+
+const camera = new THREE.PerspectiveCamera(56, 1, 0.1, 260)
+const cameraRig = { y: 4, z: 8.4 }
+let menuShift = 0 // slides the camera sideways on the start screen so the runner sits clear of the title, as on the cover
+camera.position.set(0, cameraRig.y, cameraRig.z)
+camera.lookAt(0, 1.9, -7)
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -74,62 +117,295 @@ renderer.shadowMap.enabled = true
 renderer.shadowMap.type = THREE.PCFSoftShadowMap
 renderer.outputColorSpace = THREE.SRGBColorSpace
 renderer.toneMapping = THREE.ACESFilmicToneMapping
-renderer.toneMappingExposure = 1.15
+renderer.toneMappingExposure = 1.05
 container.appendChild(renderer.domElement)
 
-scene.add(new THREE.HemisphereLight('#c9e7ff', '#26303a', 2.1))
-const sun = new THREE.DirectionalLight('#fff0d5', 3.2)
-sun.position.set(-7, 14, 5)
+// Warm golden-hour light: low sun from the upper right, like the cover.
+scene.add(new THREE.HemisphereLight('#ffe2b4', '#5a4330', 1.55))
+const sun = new THREE.DirectionalLight('#ffd08a', 3.4)
+sun.position.set(9, 13, -2)
+sun.target.position.set(0, 0, -8)
 sun.castShadow = true
 sun.shadow.mapSize.set(1024, 1024)
 sun.shadow.camera.left = -12
 sun.shadow.camera.right = 12
-sun.shadow.camera.top = 18
-sun.shadow.camera.bottom = -18
-scene.add(sun)
+sun.shadow.camera.top = 20
+sun.shadow.camera.bottom = -20
+sun.shadow.bias = -0.0004
+scene.add(sun, sun.target)
 
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(180, 180), new THREE.MeshStandardMaterial({ color: '#17232b', roughness: 0.95 }))
-ground.rotation.x = -Math.PI / 2
-ground.position.set(0, -0.13, -30)
-ground.receiveShadow = true
-scene.add(ground)
-
-const track = new THREE.Mesh(new THREE.BoxGeometry(7.4, 0.22, 120), new THREE.MeshStandardMaterial({ color: '#303b46', roughness: 0.9 }))
-track.position.set(0, 0, -42)
-track.receiveShadow = true
-scene.add(track)
-
-const edgeMaterial = new THREE.MeshStandardMaterial({ color: '#ff7a00', emissive: '#6b2b00', emissiveIntensity: 0.6 })
-for (const x of [-3.62, 3.62]) {
-  const edge = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.035, 120), edgeMaterial)
-  edge.position.set(x, 0.135, -42)
-  scene.add(edge)
+// ---------------------------------------------------------------------------
+// Geometry helpers. Static decor is merged into vertex-coloured meshes so the
+// whole scene stays at a few dozen draw calls, which matters on phones.
+// ---------------------------------------------------------------------------
+const tmpMatrix = new THREE.Matrix4()
+const tmpQuat = new THREE.Quaternion()
+const tmpEuler = new THREE.Euler()
+const tmpPos = new THREE.Vector3()
+const tmpScale = new THREE.Vector3()
+const tmpColor = new THREE.Color()
+function part(geometry, color, position = [0, 0, 0], rotation = [0, 0, 0], scale = [1, 1, 1]) {
+  return { geometry, color, position, rotation, scale }
 }
-const markings = []
-const markingMaterial = new THREE.MeshStandardMaterial({ color: '#9caab5', roughness: 0.8 })
-for (const x of [-1.23, 1.23]) {
-  for (let i = 0; i < 20; i++) {
-    const mark = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.018, 2.1), markingMaterial)
-    mark.position.set(x, 0.125, 10 - i * 5.6)
-    scene.add(mark)
-    markings.push(mark)
+function mergeParts(parts) {
+  const prepared = parts.map((entry) => {
+    const geometry = entry.geometry.index ? entry.geometry.toNonIndexed() : entry.geometry.clone()
+    tmpMatrix.compose(
+      tmpPos.set(...entry.position),
+      tmpQuat.setFromEuler(tmpEuler.set(...entry.rotation)),
+      tmpScale.set(...entry.scale),
+    )
+    geometry.applyMatrix4(tmpMatrix)
+    const count = geometry.attributes.position.count
+    const colors = new Float32Array(count * 3)
+    tmpColor.set(entry.color)
+    for (let i = 0; i < count; i++) {
+      colors[i * 3] = tmpColor.r
+      colors[i * 3 + 1] = tmpColor.g
+      colors[i * 3 + 2] = tmpColor.b
+    }
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+    return geometry
+  })
+  const merged = mergeGeometries(prepared)
+  prepared.forEach((geometry) => geometry.dispose())
+  return merged
+}
+const box = (w, h, d) => new THREE.BoxGeometry(w, h, d)
+const vertexMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.92, flatShading: true })
+function seeded(seed) {
+  let s = seed >>> 0
+  return () => {
+    s = (s + 0x6d2b79f5) >>> 0
+    let t = s
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
   }
 }
 
-// Character geometry is rebuilt from Start.ng style data; unknown values use safe defaults.
+// ---------------------------------------------------------------------------
+// Track: sandstone slabs that scroll under the runner, gold rails, stone curbs.
+// ---------------------------------------------------------------------------
+const TRACK_LENGTH = 150
+const TRACK_CENTER_Z = -60
+const SLAB_DEPTH = CFG.trackWidth / 2
+
+function createSlabTexture() {
+  const canvas = document.createElement('canvas')
+  canvas.width = 512
+  canvas.height = 256
+  const ctx = canvas.getContext('2d')
+  const random = seeded(7)
+  ctx.fillStyle = '#b8946a'
+  ctx.fillRect(0, 0, 512, 256)
+  // Two staggered rows of four slabs per tile, each with its own tint.
+  for (let row = 0; row < 2; row++) {
+    for (let col = 0; col < 4; col++) {
+      const x = col * 128 + (row ? 64 : 0) - 64
+      const y = row * 128
+      for (const offset of [0, 512]) {
+        const shade = 168 + Math.floor(random() * 26)
+        ctx.fillStyle = `rgb(${shade + 22}, ${shade}, ${shade - 38})`
+        ctx.fillRect(x + offset, y, 128, 128)
+      }
+    }
+  }
+  for (let i = 0; i < 1400; i++) {
+    ctx.fillStyle = `rgba(70, 44, 20, ${random() * 0.09})`
+    ctx.fillRect(random() * 512, random() * 256, 1 + random() * 3, 1 + random() * 3)
+  }
+  ctx.strokeStyle = 'rgba(58, 36, 16, 0.55)'
+  ctx.lineWidth = 4
+  for (let row = 0; row < 2; row++) {
+    ctx.beginPath()
+    ctx.moveTo(0, row * 128 + 2)
+    ctx.lineTo(512, row * 128 + 2)
+    ctx.stroke()
+    for (let col = -1; col < 5; col++) {
+      const x = col * 128 + (row ? 64 : 0)
+      ctx.beginPath()
+      ctx.moveTo(x + 2, row * 128)
+      ctx.lineTo(x + 2, row * 128 + 128)
+      ctx.stroke()
+    }
+  }
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.wrapS = THREE.RepeatWrapping
+  texture.wrapT = THREE.RepeatWrapping
+  texture.repeat.set(1, TRACK_LENGTH / SLAB_DEPTH)
+  texture.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy())
+  return texture
+}
+const slabTexture = createSlabTexture()
+const trackSide = new THREE.MeshStandardMaterial({ color: PAL.stoneDark, roughness: 1 })
+const trackTop = new THREE.MeshStandardMaterial({ map: slabTexture, roughness: 0.9 })
+const track = new THREE.Mesh(
+  new THREE.BoxGeometry(CFG.trackWidth, 0.22, TRACK_LENGTH),
+  [trackSide, trackSide, trackTop, trackSide, trackSide, trackSide],
+)
+track.position.set(0, 0, TRACK_CENTER_Z)
+track.receiveShadow = true
+scene.add(track)
+
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(420, 420),
+  new THREE.MeshStandardMaterial({ color: '#5b4a2c', roughness: 1 }),
+)
+ground.rotation.x = -Math.PI / 2
+ground.position.set(0, -0.14, -80)
+ground.receiveShadow = true
+scene.add(ground)
+
+const railMaterial = new THREE.MeshStandardMaterial({ color: PAL.gold, emissive: '#7a4a08', emissiveIntensity: 0.55, metalness: 0.5, roughness: 0.38 })
+const curbMaterial = new THREE.MeshStandardMaterial({ color: '#9a7a52', roughness: 0.95 })
+const railGeometry = new THREE.BoxGeometry(0.1, 0.05, TRACK_LENGTH)
+const curbGeometry = new THREE.BoxGeometry(0.6, 0.42, TRACK_LENGTH)
+for (const x of [-1.23, 1.23, -3.45, 3.45]) {
+  const rail = new THREE.Mesh(railGeometry, railMaterial)
+  rail.position.set(x, 0.135, TRACK_CENTER_Z)
+  scene.add(rail)
+}
+for (const x of [-(CFG.trackWidth / 2 + 0.3), CFG.trackWidth / 2 + 0.3]) {
+  const curb = new THREE.Mesh(curbGeometry, curbMaterial)
+  curb.position.set(x, 0.1, TRACK_CENTER_Z)
+  curb.castShadow = true
+  curb.receiveShadow = true
+  scene.add(curb)
+}
+
+// ---------------------------------------------------------------------------
+// Backdrop: hazy temple, sphinx and cliffs that sit inside the fog, as on the cover.
+// ---------------------------------------------------------------------------
+function buildBackdrop() {
+  const parts = []
+  const rand = seeded(21)
+  const temple = [0, 0, -160]
+  const at = (x, y, z) => [temple[0] + x, temple[1] + y, temple[2] + z]
+  parts.push(part(box(96, 4, 40), PAL.stoneDark, at(0, 2, 0)))
+  parts.push(part(box(72, 6, 30), '#8a6a48', at(0, 7, 0)))
+  parts.push(part(box(46, 10, 20), PAL.stone, at(0, 15, 0)))
+  parts.push(part(box(30, 6, 14), PAL.stoneLight, at(0, 23, 0)))
+  parts.push(part(box(8, 13, 1.2), '#2b1b10', at(0, 12.5, 10.4)))
+  for (let i = -3; i <= 3; i++) {
+    parts.push(part(new THREE.CylinderGeometry(1.7, 1.9, 15, 7), '#b79570', at(i * 7.5, 11.5, 13)))
+    parts.push(part(box(4.4, 1.2, 4.4), PAL.stoneDark, at(i * 7.5, 19.6, 13)))
+  }
+  parts.push(part(box(58, 3.2, 7), '#9a7850', at(0, 21.4, 13)))
+  for (const side of [-1, 1]) {
+    parts.push(part(box(14, 34, 14), '#8f6e4a', at(side * 44, 17, -4)))
+    parts.push(part(box(16, 3, 16), PAL.stoneLight, at(side * 44, 35, -4)))
+  }
+  // Sphinx guarding the end of the track, facing the player.
+  const sphinx = [0, 0, -128]
+  const sat = (x, y, z) => [sphinx[0] + x, sphinx[1] + y, sphinx[2] + z]
+  parts.push(part(box(16, 1.6, 22), PAL.stoneDark, sat(0, 0.8, 0)))
+  parts.push(part(box(5.4, 3.4, 11), '#d2a96a', sat(0, 3.3, -1)))
+  parts.push(part(box(1.6, 1.4, 6), '#d9b274', sat(-1.7, 2.3, 6.5)))
+  parts.push(part(box(1.6, 1.4, 6), '#d9b274', sat(1.7, 2.3, 6.5)))
+  parts.push(part(box(3, 3.4, 3), '#dcb678', sat(0, 6.6, 4)))
+  parts.push(part(box(4.8, 3.8, 1.4), '#c9a060', sat(0, 6.6, 2.8)))
+  parts.push(part(box(1.2, 4.6, 1.2), '#c9a060', sat(-2.1, 6.2, 4)))
+  parts.push(part(box(1.2, 4.6, 1.2), '#c9a060', sat(2.1, 6.2, 4)))
+  // Cliffs and boulders framing the valley.
+  for (let i = 0; i < 16; i++) {
+    const side = i % 2 ? 1 : -1
+    const size = 8 + rand() * 16
+    const x = side * (46 + rand() * 60)
+    const z = -30 - rand() * 130
+    parts.push(part(
+      new THREE.DodecahedronGeometry(1, 0),
+      i % 3 ? '#8a6644' : '#9d7a52',
+      [x, size * 0.35, z],
+      [rand() * 3, rand() * 3, rand() * 3],
+      [size, size * (0.8 + rand() * 0.8), size],
+    ))
+  }
+  const mesh = new THREE.Mesh(mergeParts(parts), vertexMaterial)
+  scene.add(mesh)
+}
+buildBackdrop()
+
+// Sun glow and light shafts. Additive, unfogged and cheap.
+function radialTexture() {
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = 128
+  const ctx = canvas.getContext('2d')
+  const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64)
+  g.addColorStop(0, 'rgba(255, 244, 214, 1)')
+  g.addColorStop(0.25, 'rgba(255, 214, 140, 0.55)')
+  g.addColorStop(1, 'rgba(255, 190, 100, 0)')
+  ctx.fillStyle = g
+  ctx.fillRect(0, 0, 128, 128)
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  return texture
+}
+const sunGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+  map: radialTexture(), blending: THREE.AdditiveBlending, depthWrite: false, fog: false, transparent: true, opacity: 0.9,
+}))
+sunGlow.position.set(34, 40, -200)
+sunGlow.scale.setScalar(120)
+scene.add(sunGlow)
+
+function shaftTexture() {
+  const canvas = document.createElement('canvas')
+  canvas.width = 32
+  canvas.height = 256
+  const ctx = canvas.getContext('2d')
+  const g = ctx.createLinearGradient(0, 0, 0, 256)
+  g.addColorStop(0, 'rgba(255, 226, 160, 0.0)')
+  g.addColorStop(0.2, 'rgba(255, 226, 160, 0.55)')
+  g.addColorStop(1, 'rgba(255, 226, 160, 0)')
+  ctx.fillStyle = g
+  ctx.fillRect(0, 0, 32, 256)
+  const h = ctx.createLinearGradient(0, 0, 32, 0)
+  h.addColorStop(0, 'rgba(0,0,0,1)')
+  h.addColorStop(0.5, 'rgba(0,0,0,0)')
+  h.addColorStop(1, 'rgba(0,0,0,1)')
+  ctx.globalCompositeOperation = 'destination-out'
+  ctx.fillStyle = h
+  ctx.fillRect(0, 0, 32, 256)
+  return new THREE.CanvasTexture(canvas)
+}
+const shaftMaterial = new THREE.MeshBasicMaterial({
+  map: shaftTexture(), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, fog: false, opacity: 0.2,
+})
+const shaftGeometry = new THREE.PlaneGeometry(1, 1)
+for (const [x, y, z, width, length, tilt] of [
+  [14, 14, -42, 6, 70, -0.5], [22, 16, -56, 9, 80, -0.55], [6, 15, -34, 3.5, 60, -0.45],
+  [30, 18, -70, 12, 90, -0.6], [-4, 14, -48, 4, 66, -0.4],
+]) {
+  const shaft = new THREE.Mesh(shaftGeometry, shaftMaterial)
+  shaft.position.set(x, y, z)
+  shaft.scale.set(width, length, 1)
+  shaft.rotation.z = tilt
+  shaft.renderOrder = 2
+  scene.add(shaft)
+}
+
+// ---------------------------------------------------------------------------
+// Runner: blocky character rebuilt from Start.ng style data. Unknown values use safe defaults.
+// The runner faces -z (away from the camera), so face details sit on FRONT and packs on the back.
+// ---------------------------------------------------------------------------
+const FRONT = -1
 const player = new THREE.Group()
-player.position.set(0, 0.16, 2.2)
+player.position.set(0, 0.16, CFG.playerZ)
 scene.add(player)
+const rig = new THREE.Group() // lean, yaw and bob live here so lane drift never fights the mesh offsets
+player.add(rig)
+const limbs = { armL: null, armR: null, legL: null, legR: null }
 
 const DEFAULT_STYLE = {
   body: 'male',
-  primaryColor: '#ff7a00',
-  secondaryColor: '#202735',
-  skinColor: '#c98961',
-  hairColor: '#17120f',
+  primaryColor: '#f28a1f',
+  secondaryColor: '#2f3e5c',
+  skinColor: '#d9a07a',
+  hairColor: '#2a1b14',
   hair: 'short',
   hat: 'none',
-  accessory: 'none',
+  accessory: 'backpack',
 }
 const STYLE_OPTIONS = {
   body: ['female', 'male'],
@@ -158,191 +434,342 @@ function normalizeStyle(style) {
     accessory: safeOption(value.accessory, STYLE_OPTIONS.accessory, DEFAULT_STYLE.accessory),
   }
 }
-function rebuildPlayer(rawStyle) {
-  const style = normalizeStyle(rawStyle)
-  for (const child of [...player.children]) {
-    player.remove(child)
+function disposeChildren(group) {
+  for (const child of [...group.children]) {
+    group.remove(child)
+    disposeChildren(child)
     child.geometry?.dispose()
     if (Array.isArray(child.material)) child.material.forEach((material) => material.dispose())
     else child.material?.dispose()
   }
-  const material = (color, roughness = 0.78, metalness = 0) =>
-    new THREE.MeshStandardMaterial({ color, roughness, metalness })
+}
+let appliedStyleKey = ''
+function rebuildPlayer(rawStyle) {
+  const style = normalizeStyle(rawStyle)
+  const key = JSON.stringify(style)
+  // Focus/visibility refreshes re-send the same style; skip the geometry churn.
+  if (key === appliedStyleKey) return
+  appliedStyleKey = key
+  disposeChildren(rig)
+
+  const material = (color, roughness = 0.8, metalness = 0) =>
+    new THREE.MeshStandardMaterial({ color, roughness, metalness, flatShading: true })
   const skin = material(style.skinColor)
   const shirt = material(style.primaryColor, 0.72)
   const trousers = material(style.secondaryColor, 0.8)
   const hair = material(style.hairColor)
-  const shoes = material('#f2f2f2', 0.65)
+  const shoes = material('#6b4426', 0.7)
   const dark = material('#171a20', 0.55)
   const gold = material('#ffd45c', 0.3, 0.55)
-  const addPart = (geometry, partMaterial, position, scale) => {
-    const mesh = new THREE.Mesh(geometry, partMaterial)
-    mesh.position.set(...position)
-    if (scale) mesh.scale.set(...scale)
+  const pack = material('#3f6b3a', 0.85)
+  const packDark = material('#2d4d2a', 0.85)
+  const addBox = (parent, w, h, d, partMaterial, x, y, z) => {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), partMaterial)
+    mesh.position.set(x, y, z)
     mesh.castShadow = true
     mesh.receiveShadow = true
-    player.add(mesh)
+    parent.add(mesh)
     return mesh
   }
-  const female = style.body === 'female'
-  addPart(new THREE.BoxGeometry(female ? 0.48 : 0.57, 0.68, 0.32), shirt, [0, 1.18, 0])
-  addPart(new THREE.SphereGeometry(0.245, 8, 6), skin, [0, 1.77, 0])
-  addPart(new THREE.BoxGeometry(0.15, 0.5, 0.17), skin, [-0.37, 1.18, 0])
-  addPart(new THREE.BoxGeometry(0.15, 0.5, 0.17), skin, [0.37, 1.18, 0])
-  if (female) {
-    addPart(new THREE.CylinderGeometry(0.22, 0.37, 0.42, 7), trousers, [0, 0.68, 0])
-    addPart(new THREE.BoxGeometry(0.17, 0.42, 0.19), skin, [-0.14, 0.31, 0])
-    addPart(new THREE.BoxGeometry(0.17, 0.42, 0.19), skin, [0.14, 0.31, 0])
-  } else {
-    addPart(new THREE.BoxGeometry(0.2, 0.58, 0.22), trousers, [-0.16, 0.55, 0])
-    addPart(new THREE.BoxGeometry(0.2, 0.58, 0.22), trousers, [0.16, 0.55, 0])
+  const pivot = (x, y) => {
+    const group = new THREE.Group()
+    group.position.set(x, y, 0)
+    rig.add(group)
+    return group
   }
-  addPart(new THREE.BoxGeometry(0.22, 0.13, 0.36), shoes, [-0.16, 0.22, -0.04])
-  addPart(new THREE.BoxGeometry(0.22, 0.13, 0.36), shoes, [0.16, 0.22, -0.04])
+  const female = style.body === 'female'
+  const BACK = -FRONT
 
+  // Torso, head, face.
+  addBox(rig, female ? 0.6 : 0.72, 0.72, 0.4, shirt, 0, 1.14, 0)
+  const head = new THREE.Group()
+  head.position.set(0, 1.8, 0)
+  rig.add(head)
+  addBox(head, 0.52, 0.52, 0.52, skin, 0, 0, 0)
+  addBox(head, 0.07, 0.09, 0.03, dark, -0.12, 0.03, FRONT * 0.265)
+  addBox(head, 0.07, 0.09, 0.03, dark, 0.12, 0.03, FRONT * 0.265)
+  addBox(head, 0.1, 0.03, 0.03, dark, 0, -0.12, FRONT * 0.265)
+
+  // Arms swing from the shoulder, legs from the hip.
+  for (const side of [-1, 1]) {
+    const arm = pivot(side * (female ? 0.42 : 0.48), 1.44)
+    addBox(arm, 0.24, 0.3, 0.26, shirt, 0, -0.15, 0)
+    addBox(arm, 0.2, 0.4, 0.2, skin, 0, -0.5, 0)
+    if (side < 0) limbs.armL = arm
+    else limbs.armR = arm
+    const leg = pivot(side * 0.17, 0.8)
+    if (female) {
+      addBox(leg, 0.22, 0.6, 0.24, skin, 0, -0.3, 0)
+    } else {
+      addBox(leg, 0.27, 0.64, 0.29, trousers, 0, -0.32, 0)
+    }
+    addBox(leg, 0.29, 0.16, 0.42, shoes, 0, -0.64, FRONT * 0.06)
+    if (side < 0) limbs.legL = leg
+    else limbs.legR = leg
+  }
+  if (female) addBox(rig, 0.7, 0.34, 0.46, trousers, 0, 0.74, 0)
+
+  // Hair (hat styles below may cover it, which is the intended look).
+  const hairTop = 2.1
   if (style.hair !== 'bald') {
     if (style.hair === 'afro') {
-      addPart(new THREE.SphereGeometry(0.3, 8, 6), hair, [0, 1.94, -0.015])
+      addBox(head, 0.82, 0.7, 0.82, hair, 0, 0.26, 0)
     } else {
-      addPart(new THREE.SphereGeometry(0.255, 8, 5, 0, Math.PI * 2, 0, Math.PI / 2), hair, [0, 1.83, 0])
+      addBox(head, 0.56, 0.14, 0.56, hair, 0, hairTop - 1.8 - 0.01, 0)
+      addBox(head, 0.56, 0.34, 0.12, hair, 0, 0.1, BACK * 0.22)
+      addBox(head, 0.1, 0.22, 0.4, hair, -0.27, 0.12, 0)
+      addBox(head, 0.1, 0.22, 0.4, hair, 0.27, 0.12, 0)
       if (style.hair === 'braids' || style.hair === 'dreads') {
-        for (let i = -2; i <= 2; i++) {
-          addPart(new THREE.CylinderGeometry(0.035, 0.045, style.hair === 'dreads' ? 0.5 : 0.42, 5), hair, [i * 0.075, 1.62, -0.03])
-        }
+        const length = style.hair === 'dreads' ? 0.6 : 0.46
+        for (let i = -2; i <= 2; i++) addBox(head, 0.07, length, 0.07, hair, i * 0.1, -0.2 - length / 2 + 0.12, BACK * 0.27)
       } else if (style.hair === 'bun') {
-        addPart(new THREE.SphereGeometry(0.11, 7, 5), hair, [0, 2.02, -0.13])
+        addBox(head, 0.22, 0.22, 0.22, hair, 0, 0.42, BACK * 0.1)
       } else if (style.hair === 'ponytail') {
-        addPart(new THREE.CylinderGeometry(0.045, 0.06, 0.42, 5), hair, [0, 1.62, -0.2], [1, 1, 0.8])
+        addBox(head, 0.13, 0.44, 0.13, hair, 0, -0.08, BACK * 0.34)
       }
     }
   }
   if (style.hat === 'cap') {
-    addPart(new THREE.SphereGeometry(0.27, 8, 5, 0, Math.PI * 2, 0, Math.PI / 2), shirt, [0, 1.96, 0])
-    addPart(new THREE.BoxGeometry(0.3, 0.035, 0.2), shirt, [0, 1.9, 0.18])
+    addBox(head, 0.58, 0.16, 0.58, shirt, 0, 0.32, 0)
+    addBox(head, 0.5, 0.04, 0.28, shirt, 0, 0.26, FRONT * 0.4)
   } else if (style.hat === 'beanie') {
-    addPart(new THREE.SphereGeometry(0.265, 8, 5, 0, Math.PI * 2, 0, Math.PI / 2), shirt, [0, 1.94, 0])
-    addPart(new THREE.CylinderGeometry(0.24, 0.24, 0.08, 8), shirt, [0, 1.86, 0])
+    addBox(head, 0.6, 0.26, 0.6, shirt, 0, 0.33, 0)
+    addBox(head, 0.64, 0.08, 0.64, trousers, 0, 0.22, 0)
   } else if (style.hat === 'tophat') {
-    addPart(new THREE.CylinderGeometry(0.16, 0.16, 0.28, 8), dark, [0, 2.04, 0])
-    addPart(new THREE.CylinderGeometry(0.26, 0.26, 0.045, 8), dark, [0, 1.9, 0])
+    addBox(head, 0.34, 0.36, 0.34, dark, 0, 0.5, 0)
+    addBox(head, 0.74, 0.05, 0.74, dark, 0, 0.3, 0)
   } else if (style.hat === 'crown') {
-    addPart(new THREE.CylinderGeometry(0.2, 0.23, 0.13, 5), gold, [0, 1.98, 0])
-    for (let i = 0; i < 5; i++) {
-      const angle = (i / 5) * Math.PI * 2
-      addPart(new THREE.ConeGeometry(0.045, 0.13, 4), gold, [Math.cos(angle) * 0.17, 2.09, Math.sin(angle) * 0.17])
-    }
+    addBox(head, 0.54, 0.14, 0.54, gold, 0, 0.34, 0)
+    for (const [x, z] of [[-0.2, -0.2], [0.2, -0.2], [-0.2, 0.2], [0.2, 0.2], [0, 0]]) addBox(head, 0.1, 0.16, 0.1, gold, x, 0.47, z)
   }
   if (style.accessory === 'glasses') {
-    addPart(new THREE.BoxGeometry(0.18, 0.1, 0.035), dark, [-0.105, 1.79, 0.225])
-    addPart(new THREE.BoxGeometry(0.18, 0.1, 0.035), dark, [0.105, 1.79, 0.225])
-    addPart(new THREE.BoxGeometry(0.07, 0.025, 0.035), dark, [0, 1.8, 0.225])
+    addBox(head, 0.2, 0.12, 0.03, dark, -0.12, 0.04, FRONT * 0.285)
+    addBox(head, 0.2, 0.12, 0.03, dark, 0.12, 0.04, FRONT * 0.285)
+    addBox(head, 0.08, 0.03, 0.03, dark, 0, 0.06, FRONT * 0.285)
   } else if (style.accessory === 'earrings') {
-    addPart(new THREE.TorusGeometry(0.055, 0.018, 5, 8), gold, [-0.24, 1.68, 0.08])
-    addPart(new THREE.TorusGeometry(0.055, 0.018, 5, 8), gold, [0.24, 1.68, 0.08])
+    addBox(head, 0.06, 0.12, 0.06, gold, -0.29, -0.14, 0)
+    addBox(head, 0.06, 0.12, 0.06, gold, 0.29, -0.14, 0)
   } else if (style.accessory === 'beard') {
-    addPart(new THREE.SphereGeometry(0.15, 7, 5), hair, [0, 1.61, 0.12], [1, 0.7, 0.65])
+    addBox(head, 0.44, 0.2, 0.14, hair, 0, -0.2, FRONT * 0.24)
   } else if (style.accessory === 'scarf') {
-    addPart(new THREE.TorusGeometry(0.18, 0.065, 5, 8), trousers, [0, 1.48, 0])
-    addPart(new THREE.BoxGeometry(0.1, 0.3, 0.08), trousers, [0.13, 1.31, 0.19])
+    addBox(rig, 0.8, 0.14, 0.48, trousers, 0, 1.52, 0)
+    addBox(rig, 0.14, 0.42, 0.06, trousers, 0.2, 1.28, BACK * 0.26)
   } else if (style.accessory === 'backpack') {
-    addPart(new THREE.BoxGeometry(0.32, 0.42, 0.15), trousers, [0, 1.15, -0.24])
+    addBox(rig, 0.5, 0.58, 0.24, pack, 0, 1.2, BACK * 0.32)
+    addBox(rig, 0.52, 0.2, 0.26, packDark, 0, 1.38, BACK * 0.32)
   }
 }
 rebuildPlayer(DEFAULT_STYLE)
 
+// ---------------------------------------------------------------------------
+// Side scenery: carved pillars, torches and jungle growth. Each segment is one merged mesh.
+// ---------------------------------------------------------------------------
+const SEGMENT_SPACING = 9
+const SEGMENT_COUNT = 15
+const SEGMENT_SPAN = SEGMENT_SPACING * SEGMENT_COUNT
 const scenery = []
-const trunkMaterial = new THREE.MeshStandardMaterial({ color: '#62452f', roughness: 1 })
-const leafMaterials = [
-  new THREE.MeshStandardMaterial({ color: '#286653', roughness: 1 }),
-  new THREE.MeshStandardMaterial({ color: '#34765d', roughness: 1 }),
-]
-for (let i = 0; i < 18; i++) {
-  for (const side of [-1, 1]) {
-    const group = new THREE.Group()
-    group.position.set(side * (5.5 + (i % 3) * 0.7), 0, -i * 6.7 - 5)
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.2, 1.35, 6), trunkMaterial)
-    trunk.position.y = 0.68
-    trunk.castShadow = true
-    group.add(trunk)
-    const leaves = new THREE.Mesh(new THREE.ConeGeometry(0.85, 1.9, 7), leafMaterials[i % leafMaterials.length])
-    leaves.position.y = 1.95
-    leaves.castShadow = true
-    group.add(leaves)
-    scene.add(group)
-    scenery.push(group)
+const flames = []
+const flameMaterial = new THREE.MeshBasicMaterial({ color: '#ffa31f', fog: false })
+const flameGeometry = new THREE.ConeGeometry(0.16, 0.5, 5)
+flameGeometry.translate(0, 0.25, 0)
+const bladeGeometry = new THREE.ConeGeometry(0.22, 1.5, 4)
+bladeGeometry.translate(0, 0.75, 0)
+const bushGeometry = new THREE.OctahedronGeometry(0.7, 0)
+const pillarRand = seeded(99)
+function buildSegment(side, index) {
+  const rand = pillarRand
+  const parts = []
+  const height = 4.8 + rand() * 4
+  const inward = -side
+  parts.push(part(box(2, 0.5, 2), PAL.stoneDeep, [0, 0.25, 0]))
+  parts.push(part(box(1.4, height, 1.4), PAL.stoneDark, [0, height / 2 + 0.25, 0]))
+  parts.push(part(box(1.52, 0.38, 1.52), PAL.stoneBand, [0, 1.5, 0]))
+  parts.push(part(box(1.52, 0.38, 1.52), PAL.stoneBand, [0, height - 0.6, 0]))
+  if (rand() > 0.3) parts.push(part(box(1.9, 0.45, 1.9), PAL.stoneDeep, [0, height + 0.45, 0]))
+  // Crumbled blocks at the foot of the pillar.
+  parts.push(part(box(0.8, 0.5, 0.7), PAL.stone, [inward * 1.3, 0.25, rand() * 2 - 1], [0, rand(), 0]))
+  // Jungle growth: bushes and fern blades in three greens.
+  const greens = [PAL.leafDark, PAL.leafMid, PAL.leafLight]
+  const bushCount = 4 + Math.floor(rand() * 4)
+  for (let i = 0; i < bushCount; i++) {
+    const x = inward * 1.2 + side * (rand() * 8)
+    const z = (rand() - 0.5) * 7
+    const s = 0.6 + rand() * 0.9
+    parts.push(part(bushGeometry, greens[Math.floor(rand() * 3)], [x, 0.35 * s, z], [rand(), rand() * 3, 0], [s, s * 0.8, s]))
+    for (let b = 0; b < 3; b++) {
+      parts.push(part(bladeGeometry, greens[Math.floor(rand() * 3)], [x + (rand() - 0.5) * 0.9, 0, z + (rand() - 0.5) * 0.9], [(rand() - 0.5) * 0.9, rand() * 3, (rand() - 0.5) * 0.9], [1, 0.6 + rand() * 0.7, 1]))
+    }
   }
+  const group = new THREE.Group()
+  const mesh = new THREE.Mesh(mergeParts(parts), vertexMaterial)
+  mesh.castShadow = true
+  mesh.receiveShadow = true
+  group.add(mesh)
+  if (index % 3 === 0) {
+    const holder = new THREE.Mesh(mergeParts([part(box(0.16, 0.5, 0.16), PAL.stoneDeep, [inward * 0.85, 2.8, 0]), part(box(0.34, 0.12, 0.34), '#2b1b10', [inward * 0.85, 3.08, 0])]), vertexMaterial)
+    group.add(holder)
+    const flame = new THREE.Mesh(flameGeometry, flameMaterial)
+    flame.position.set(inward * 0.85, 3.12, 0)
+    flame.userData.phase = rand() * 6
+    group.add(flame)
+    flames.push(flame)
+  }
+  group.position.set(side * (5.7 + rand() * 0.5), 0, 6 - index * SEGMENT_SPACING - (side > 0 ? 3.5 : 0))
+  scene.add(group)
+  scenery.push({ group, startZ: group.position.z })
 }
+for (let i = 0; i < SEGMENT_COUNT; i++) for (const side of [-1, 1]) buildSegment(side, i)
 
-// Reusable obstacle and relic pools keep the scene bounded during long runs.
+// ---------------------------------------------------------------------------
+// Obstacles and relics: pooled, so a long run never allocates or leaks.
+// ---------------------------------------------------------------------------
+const crateGeometry = mergeParts([
+  part(box(1, 1, 1), PAL.crate, [0, 0.5, 0]),
+  part(box(1.06, 0.2, 1.06), PAL.crateBand, [0, 0.5, 0]),
+  part(box(0.9, 0.06, 0.9), '#b83621', [0, 1.02, 0]),
+])
+const urnGeometry = (() => {
+  const profile = [[0, 0], [0.2, 0], [0.32, 0.12], [0.4, 0.4], [0.32, 0.72], [0.18, 0.88], [0.22, 1.0], [0.3, 1.04], [0, 1.04]]
+    .map(([x, y]) => new THREE.Vector2(x, y))
+  return mergeParts([
+    part(new THREE.LatheGeometry(profile, 10), PAL.gold),
+    part(new THREE.TorusGeometry(0.2, 0.04, 4, 8), PAL.gold, [-0.4, 0.62, 0], [0, 0, 0]),
+    part(new THREE.TorusGeometry(0.2, 0.04, 4, 8), PAL.gold, [0.4, 0.62, 0], [0, 0, 0]),
+  ])
+})()
+const coinGeometry = mergeParts([
+  part(new THREE.CylinderGeometry(0.38, 0.38, 0.12, 14), '#ffd45c', [0, 0, 0], [Math.PI / 2, 0, 0]),
+  part(new THREE.TorusGeometry(0.3, 0.05, 4, 14), '#fff0a8', [0, 0, 0.07]),
+])
+const relicMaterial = new THREE.MeshStandardMaterial({
+  vertexColors: true, emissive: '#b87400', emissiveIntensity: 1.1, metalness: 0.5, roughness: 0.3, flatShading: true,
+})
 const obstaclePool = []
 const relicPool = []
-const obstacleMaterial = new THREE.MeshStandardMaterial({ color: '#d94b35', roughness: 0.75 })
-const obstacleStripeMaterial = new THREE.MeshStandardMaterial({ color: '#ffb15c', roughness: 0.6 })
-const relicMaterial = new THREE.MeshStandardMaterial({ color: '#ffd45c', emissive: '#a66a00', emissiveIntensity: 1.15, metalness: 0.55, roughness: 0.28 })
 function createObstacle() {
-  const group = new THREE.Group()
-  const body = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.95, 0.7), obstacleMaterial)
-  body.position.y = 0.6
-  body.castShadow = true
-  body.receiveShadow = true
-  group.add(body)
-  const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.94, 0.13, 0.72), obstacleStripeMaterial)
-  stripe.position.y = 0.68
-  stripe.castShadow = true
-  group.add(stripe)
-  group.visible = false
-  scene.add(group)
-  return { group, lane: 1, active: false }
-}
-function createRelic() {
-  const mesh = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.11, 8, 16), relicMaterial)
-  mesh.position.y = 1.15
-  mesh.rotation.x = Math.PI / 2
+  const mesh = new THREE.Mesh(crateGeometry, vertexMaterial)
   mesh.castShadow = true
+  mesh.receiveShadow = true
   mesh.visible = false
   scene.add(mesh)
-  return { mesh, lane: 1, active: false, phase: Math.random() * Math.PI * 2 }
+  return { mesh, lane: 1, active: false }
 }
-for (let i = 0; i < 7; i++) obstaclePool.push(createObstacle())
-for (let i = 0; i < 12; i++) relicPool.push(createRelic())
+function createRelic() {
+  const group = new THREE.Group()
+  const coin = new THREE.Mesh(coinGeometry, relicMaterial)
+  const urn = new THREE.Mesh(urnGeometry, relicMaterial)
+  urn.castShadow = true
+  group.add(coin, urn)
+  group.visible = false
+  scene.add(group)
+  return { group, coin, urn, lane: 1, active: false, phase: Math.random() * Math.PI * 2, isUrn: false }
+}
+for (let i = 0; i < 26; i++) obstaclePool.push(createObstacle())
+for (let i = 0; i < 64; i++) relicPool.push(createRelic())
 
-function placeObstacle(item, z) {
-  item.lane = Math.floor(Math.random() * 3)
-  item.group.position.set(LANE_X[item.lane], 0.12, z)
-  item.group.visible = true
-  item.active = true
+function acquire(pool) {
+  for (let i = 0; i < pool.length; i++) if (!pool[i].active) return pool[i]
+  return null
 }
-function placeRelic(item, z, lane = Math.floor(Math.random() * 3)) {
+function placeObstacle(lane, z) {
+  const item = acquire(obstaclePool)
+  if (!item) return
   item.lane = lane
-  item.mesh.position.set(LANE_X[lane], 1.15, z)
+  item.mesh.position.set(LANE_X[lane], 0.11, z)
+  item.mesh.scale.setScalar(0.01)
   item.mesh.visible = true
   item.active = true
 }
+function placeRelic(lane, z, isUrn) {
+  const item = acquire(relicPool)
+  if (!item) return
+  item.lane = lane
+  item.isUrn = isUrn
+  item.coin.visible = !isUrn
+  item.urn.visible = isUrn
+  item.group.position.set(LANE_X[lane], isUrn ? 0.14 : 1.15, z)
+  item.group.scale.setScalar(0.01)
+  item.group.visible = true
+  item.active = true
+}
 function hideWorldObjects() {
-  for (const item of obstaclePool) { item.active = false; item.group.visible = false }
-  for (const item of relicPool) { item.active = false; item.mesh.visible = false }
+  for (const item of obstaclePool) { item.active = false; item.mesh.visible = false }
+  for (const item of relicPool) { item.active = false; item.group.visible = false }
 }
-function seedWorldObjects() {
+
+// Row spawner. Every layout is survivable from anywhere the runner could be standing:
+// the next row's free lane is chosen within one lane of *all* lanes left open by the
+// previous row, so no row ever demands a double lane change. A relic trail marks the safe line.
+const spawn = { frontier: CFG.firstRowZ, openLanes: [1] }
+const difficulty = (elapsed) => Math.min(elapsed / CFG.difficultyRampSeconds, 1)
+const currentGap = (elapsed) => Math.max(CFG.minRowGap, CFG.maxRowGap - elapsed * CFG.rowGapShrinkPerSecond)
+function spawnRow(z, gap, elapsed, attract) {
+  let free = 1
+  if (!attract) {
+    const reachable = [0, 1, 2].filter((lane) => spawn.openLanes.every((open) => Math.abs(lane - open) <= 1))
+    const options = reachable.length ? reachable : [1]
+    free = options[Math.floor(Math.random() * options.length)]
+  }
+  const others = [0, 1, 2].filter((lane) => lane !== free)
+  let obstructed = []
+  if (attract) {
+    obstructed = others
+  } else if (Math.random() < 0.1) {
+    // Breather row: no obstacles, relics only.
+  } else if (Math.random() < CFG.maxDoubleRowChance * difficulty(elapsed)) {
+    obstructed = others
+  } else {
+    obstructed = [others[Math.floor(Math.random() * others.length)]]
+  }
+  for (const lane of obstructed) placeObstacle(lane, z)
+  // A breather leaves the whole row open, but the runner still gets a full gap to line up.
+  spawn.openLanes = obstructed.length ? [0, 1, 2].filter((lane) => !obstructed.includes(lane)) : [free]
+  if (Math.random() < 0.9) {
+    const spacing = 2.4
+    // Keep the whole trail clear of the obstacle rows on either side of this gap.
+    const count = Math.min(3 + Math.floor(Math.random() * 3), Math.floor((gap - 4) / spacing) + 1)
+    const startZ = z + gap / 2 + ((count - 1) * spacing) / 2
+    const urnIndex = Math.random() < 0.3 ? Math.floor(Math.random() * count) : -1
+    for (let i = 0; i < count; i++) placeRelic(free, startZ - i * spacing, i === urnIndex)
+  }
+}
+function streamWorld(elapsed, attract) {
+  for (;;) {
+    const gap = currentGap(elapsed)
+    if (spawn.frontier - gap <= -CFG.spawnDistance) break
+    spawn.frontier -= gap
+    spawnRow(spawn.frontier, gap, elapsed, attract)
+  }
+}
+function resetWorldObjects(attract) {
   hideWorldObjects()
-  obstaclePool.forEach((item, i) => placeObstacle(item, -28 - i * 15))
-  relicPool.forEach((item, i) => placeRelic(item, -20 - i * 8, i % 3))
-}
-function resetWorldObjects() {
-  seedWorldObjects()
+  spawn.frontier = CFG.firstRowZ
+  spawn.openLanes = [1]
+  streamWorld(0, attract)
 }
 
 // Start.ng's documented connect-page protocol. No credentials are handled by the game.
 const START_NG_ORIGIN = 'https://start.ng'
+const START_NG_CONNECT_TIMEOUT_MS = 8000
 let startNgFramePromise
 function connectFrame() {
   if (!startNgFramePromise) {
     startNgFramePromise = new Promise((resolve, reject) => {
       const frame = document.createElement('iframe')
+      // A blocked or silent iframe never fires onload/onerror, so a timer is the only way out.
+      const timer = window.setTimeout(() => {
+        frame.remove()
+        reject(new Error('Start.ng connection timed out'))
+      }, START_NG_CONNECT_TIMEOUT_MS)
       frame.src = `${START_NG_ORIGIN}/connect`
       frame.hidden = true
       frame.title = 'Start.ng player connection'
-      frame.onload = () => resolve(frame)
+      frame.onload = () => {
+        window.clearTimeout(timer)
+        resolve(frame)
+      }
       frame.onerror = () => {
+        window.clearTimeout(timer)
         frame.remove()
         reject(new Error('Could not load Start.ng connection'))
       }
@@ -526,10 +953,23 @@ window.addEventListener('relicrush:run-finished', (event) => {
 })
 void refreshLeaderboard()
 
+// ---------------------------------------------------------------------------
+// Sizing. On tall, narrow screens the horizontal FOV collapses and crops the side
+// lanes, so the camera pulls back and widens to keep all three lanes in view.
+// ---------------------------------------------------------------------------
+function fitCamera(aspect) {
+  const t = Math.min(Math.max((1.45 - aspect) / 0.95, 0), 1)
+  camera.fov = 56 + t * 14
+  cameraRig.y = 4 + t * 2.6
+  cameraRig.z = 8.4 + t * 8
+  camera.position.y = cameraRig.y
+  camera.position.z = cameraRig.z
+}
 const resize = () => {
   const width = Math.max(container.clientWidth, 1)
   const height = Math.max(container.clientHeight, 1)
   camera.aspect = width / height
+  fitCamera(camera.aspect)
   camera.updateProjectionMatrix()
   renderer.setSize(width, height, false)
 }
@@ -537,8 +977,10 @@ const resizeObserver = new ResizeObserver(resize)
 resizeObserver.observe(container)
 resize()
 
-const LANE_X = [-2.46, 0, 2.46]
-const state = { mode: 'ready', lane: 1, elapsed: 0, distance: 0, score: 0, relics: 0, speed: 13, lastRun: null, bestRun: null }
+// ---------------------------------------------------------------------------
+// Game state
+// ---------------------------------------------------------------------------
+const state = { mode: 'ready', lane: 1, elapsed: 0, distance: 0, score: 0, relics: 0, speed: CFG.initialSpeed, lastRun: null, bestRun: null }
 let audioContext = null
 let soundMuted = false
 const soundButton = app.querySelector('#sound-toggle')
@@ -623,12 +1065,17 @@ const hideOverlays = () => {
   pauseOverlay.hidden = true
   gameoverOverlay.hidden = true
 }
+const hud = { score: -1, distance: -1, relics: -1, best: -1 }
 function updateHud() {
-  scoreElement.textContent = String(state.score)
-  distanceElement.textContent = `${Math.floor(state.distance)} m`
-  relicsElement.textContent = String(state.relics)
-  bestScoreElement.textContent = String(state.bestRun?.score ?? 0)
+  // Only touch the DOM when a value changed; this runs every frame.
+  const distance = Math.floor(state.distance)
+  const best = state.bestRun?.score ?? 0
+  if (hud.score !== state.score) { hud.score = state.score; scoreElement.textContent = String(state.score) }
+  if (hud.distance !== distance) { hud.distance = distance; distanceElement.textContent = `${distance} m` }
+  if (hud.relics !== state.relics) { hud.relics = state.relics; relicsElement.textContent = String(state.relics) }
+  if (hud.best !== best) { hud.best = best; bestScoreElement.textContent = String(best) }
 }
+let shake = 0
 function setMode(mode) {
   const previousMode = state.mode
   state.mode = mode
@@ -644,6 +1091,7 @@ function setMode(mode) {
   if (mode === 'gameover') {
     gameoverOverlay.hidden = false
     if (previousMode === 'running') {
+      shake = 0.4
       const result = {
         score: state.score,
         relics: state.relics,
@@ -663,7 +1111,7 @@ function setMode(mode) {
 }
 function moveLane(direction) {
   if (state.mode !== 'running') return
-  const nextLane = Math.max(0, Math.min(2, state.lane + direction))
+  const nextLane = Math.max(0, Math.min(CFG.laneCount - 1, state.lane + direction))
   if (nextLane === state.lane) return
   state.lane = nextLane
   playSound('lane')
@@ -675,13 +1123,14 @@ function resetRun() {
   state.distance = 0
   state.score = 0
   state.relics = 0
-  state.speed = 13
+  state.speed = CFG.initialSpeed
   player.position.x = 0
   player.position.y = 0.16
   camera.position.x = 0
-  for (let i = 0; i < markings.length; i++) markings[i].position.z = 10 - i % 20 * 5.6
-  for (let i = 0; i < scenery.length; i++) scenery[i].position.z = -Math.floor(i / 2) * 6.7 - 5
-  resetWorldObjects()
+  menuShift = 0
+  shake = 0
+  for (const item of scenery) item.group.position.z = item.startZ
+  resetWorldObjects(false)
   updateHud()
 }
 function startRun() {
@@ -692,11 +1141,11 @@ function togglePause() {
   if (state.mode === 'running') setMode('paused')
   else if (state.mode === 'paused') setMode('running')
 }
-// Collision systems in the next phase can end a run through this explicit hook.
+// Collision systems can end a run through this explicit hook.
 window.relicRushEndRun = () => {
   if (state.mode === 'running') setMode('gameover')
 }
-// Stable result adapters for future Start.ng leaderboard wiring. No platform API is assumed here.
+// Stable result adapters for Start.ng leaderboard wiring. No platform API is assumed here.
 window.relicRushGetLastRun = () => state.lastRun ? { ...state.lastRun } : null
 window.relicRushGetBestRun = () => state.bestRun ? { ...state.bestRun } : null
 soundButton.addEventListener('click', () => {
@@ -716,99 +1165,147 @@ window.addEventListener('keydown', (event) => {
   unlockAudio()
   const key = event.key.toLowerCase()
   if (['arrowleft', 'arrowright', ' '].includes(key)) event.preventDefault()
+  // Held keys auto-repeat; without this guard one long press skips straight across the track.
+  if (event.repeat) return
   if (key === 'arrowleft' || key === 'a') moveLane(-1)
   if (key === 'arrowright' || key === 'd') moveLane(1)
   if (key === 'escape' || key === 'p') togglePause()
-  if ((key === 'enter' || key === ' ') && state.mode === 'ready') startRun()
-  if ((key === 'enter' || key === ' ') && state.mode === 'gameover') startRun()
-})
-let swipeStart = null
-container.addEventListener('pointerdown', (event) => {
-  if (!event.isPrimary || event.button !== 0) return
-  swipeStart = {
-    pointerId: event.pointerId,
-    x: event.clientX,
-    y: event.clientY,
-    handled: false,
+  if ((key === 'enter' || key === ' ') && (state.mode === 'ready' || state.mode === 'gameover')) {
+    // Stop the focused overlay button from also firing its own click and restarting twice.
+    event.preventDefault()
+    startRun()
   }
 })
-container.addEventListener('pointermove', (event) => {
-  if (!swipeStart || swipeStart.pointerId !== event.pointerId || swipeStart.handled) return
-
-  const dx = event.clientX - swipeStart.x
-  const dy = event.clientY - swipeStart.y
-  const horizontalDistance = Math.abs(dx)
-  const verticalDistance = Math.abs(dy)
-
-  // React as soon as the gesture is clearly horizontal; let vertical page scrolling work normally.
-  if (horizontalDistance < 24 || horizontalDistance <= verticalDistance * 1.25) return
-
-  swipeStart.handled = true
-  moveLane(dx < 0 ? -1 : 1)
+// Backgrounded tabs must not keep a run alive under the player.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden' && state.mode === 'running') setMode('paused')
 })
-const clearSwipe = (event) => {
-  if (swipeStart?.pointerId === event.pointerId) swipeStart = null
-}
-container.addEventListener('pointerup', clearSwipe)
-container.addEventListener('pointercancel', clearSwipe)
+let touchStart = null
+container.addEventListener('touchstart', (event) => {
+  if (event.changedTouches.length) {
+    const touch = event.changedTouches[0]
+    touchStart = { x: touch.clientX, y: touch.clientY }
+  }
+}, { passive: true })
+container.addEventListener('touchend', (event) => {
+  if (!touchStart || !event.changedTouches.length) return
+  const touch = event.changedTouches[0]
+  const dx = touch.clientX - touchStart.x
+  const dy = touch.clientY - touchStart.y
+  if (Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy)) moveLane(dx < 0 ? -1 : 1)
+  touchStart = null
+}, { passive: true })
 setMode('ready')
-seedWorldObjects()
+resetWorldObjects(true)
 
+// ---------------------------------------------------------------------------
+// Main loop
+// ---------------------------------------------------------------------------
 const clock = new THREE.Clock()
+let animTime = 0
+const clamp01 = (value) => Math.min(Math.max(value, 0), 1)
 function animate() {
   const delta = Math.min(clock.getDelta(), 0.05)
-  if (state.mode === 'running') {
+  const running = state.mode === 'running'
+  const attract = state.mode === 'ready'
+  if (running) {
     state.elapsed += delta
     // Speed ramps up gradually, with a sensible cap to keep late-game control possible.
-    state.speed = Math.min(13 + state.elapsed * 0.22, 25)
+    state.speed = Math.min(CFG.initialSpeed + state.elapsed * CFG.speedIncreasePerSecond, CFG.maximumSpeed)
     state.distance += delta * state.speed
-    state.score = Math.floor(state.distance) + state.relics * 100
-    for (const mark of markings) {
-      mark.position.z += delta * state.speed
-      if (mark.position.z > 12) mark.position.z -= 112
-    }
+  }
+  // The world also scrolls slowly behind the start screen; paused and game-over freeze it.
+  const worldSpeed = running ? state.speed : attract ? CFG.attractSpeed : 0
+  const dz = delta * worldSpeed
+  if (dz > 0) {
+    animTime += delta
+    slabTexture.offset.y += dz / SLAB_DEPTH
     for (const item of scenery) {
-      item.position.z += delta * state.speed
-      if (item.position.z > 12) item.position.z -= 121
+      item.group.position.z += dz
+      if (item.group.position.z > 12) item.group.position.z -= SEGMENT_SPAN
     }
+    spawn.frontier += dz
+    streamWorld(state.elapsed, attract)
+  }
+  for (const flame of flames) {
+    flame.scale.set(1, 1 + Math.sin(clock.elapsedTime * 13 + flame.userData.phase) * 0.18, 1)
+  }
 
-    for (const item of obstaclePool) {
-      if (!item.active) continue
-      item.group.position.z += delta * state.speed
-      if (item.group.position.z > 8) {
-        placeObstacle(item, -90 - Math.random() * 35)
-      } else if (item.lane === state.lane && item.group.position.z > 1.45 && item.group.position.z < 3.15) {
+  const playerX = player.position.x
+  for (const item of obstaclePool) {
+    if (!item.active) continue
+    const z = (item.mesh.position.z += dz)
+    if (z > CFG.despawnZ) {
+      item.active = false
+      item.mesh.visible = false
+      continue
+    }
+    // Crates rise out of the haze instead of popping into view.
+    item.mesh.scale.setScalar(clamp01((z + CFG.spawnDistance) / 14))
+    if (running) {
+      const relativeZ = z - CFG.playerZ
+      if (relativeZ > CFG.obstacleHitZ[0] && relativeZ < CFG.obstacleHitZ[1] &&
+          Math.abs(item.mesh.position.x - playerX) < CFG.obstacleHitX) {
         setMode('gameover')
         break
       }
     }
+  }
+  for (const item of relicPool) {
+    if (!item.active) continue
+    const z = (item.group.position.z += dz)
+    if (z > CFG.despawnZ) {
+      item.active = false
+      item.group.visible = false
+      continue
+    }
+    item.group.scale.setScalar(clamp01((z + CFG.spawnDistance) / 14))
+    if (!item.isUrn) {
+      item.group.rotation.y += delta * 3
+      item.group.position.y = 1.15 + Math.sin(clock.elapsedTime * 4 + item.phase) * 0.12
+    }
     if (state.mode === 'running') {
-      for (const item of relicPool) {
-        if (!item.active) continue
-        item.mesh.position.z += delta * state.speed
-        item.mesh.rotation.z += delta * 2.5
-        item.mesh.position.y = 1.15 + Math.sin(clock.elapsedTime * 4 + item.phase) * 0.12
-        // Relics are finite per run: missed relics disappear instead of respawning.
-        if (item.mesh.position.z > 8) {
-          item.active = false
-          item.mesh.visible = false
-        } else if (item.lane === state.lane && item.mesh.position.z > 1.25 && item.mesh.position.z < 3.2) {
-          item.active = false
-          item.mesh.visible = false
-          state.relics += 1
-          state.score += 100
-          playSound('relic')
-        }
+      const relativeZ = z - CFG.playerZ
+      if (relativeZ > CFG.relicHitZ[0] && relativeZ < CFG.relicHitZ[1] &&
+          Math.abs(item.group.position.x - playerX) < CFG.relicHitX) {
+        item.active = false
+        item.group.visible = false
+        state.relics += 1
+        playSound('relic')
       }
     }
+  }
+  if (running) {
+    // Derived every frame so score can never drift from distance and relics.
+    state.score = Math.floor(state.distance) + state.relics * CFG.relicScore
     updateHud()
   }
+
   const targetX = LANE_X[state.lane]
-  // Shorten lane-transition easing so the character catches up to input sooner.
-  player.position.x += (targetX - player.position.x) * Math.min(delta * 18, 1)
-  player.position.y = 0.16 + (state.mode === 'running' ? Math.sin(clock.elapsedTime * 7) * 0.035 : 0)
-  camera.position.x += (player.position.x * 0.22 - camera.position.x) * Math.min(delta * 2.2, 1)
-  camera.lookAt(player.position.x * 0.18, 1.15, -5)
+  player.position.x += (targetX - player.position.x) * Math.min(delta * 12, 1)
+  const moving = running || attract
+  const stride = animTime * 11
+  player.position.y = 0.16 + (moving ? Math.abs(Math.sin(stride)) * 0.07 : 0)
+  const swing = moving ? Math.sin(stride) * 0.95 : 0
+  limbs.legL.rotation.x = swing
+  limbs.legR.rotation.x = -swing
+  limbs.armL.rotation.x = -swing * 0.9
+  limbs.armR.rotation.x = swing * 0.9
+  rig.rotation.x += ((moving ? -0.14 : 0) - rig.rotation.x) * Math.min(delta * 8, 1)
+  rig.rotation.y = Math.max(-0.45, Math.min(0.45, (player.position.x - targetX) * 0.22))
+
+  menuShift += ((attract && camera.aspect > 1.2 ? 2.4 : 0) - menuShift) * Math.min(delta * 3, 1)
+  camera.position.x += (player.position.x * 0.22 - menuShift - camera.position.x) * Math.min(delta * 2.2, 1)
+  let shakeX = 0
+  let shakeY = 0
+  if (shake > 0) {
+    shake = Math.max(0, shake - delta)
+    shakeX = (Math.random() - 0.5) * shake * 0.6
+    shakeY = (Math.random() - 0.5) * shake * 0.6
+  }
+  camera.position.y = cameraRig.y + shakeY
+  camera.position.x += shakeX
+  camera.lookAt(player.position.x * 0.18 - menuShift, 1.9, -7)
   renderer.render(scene, camera)
   const loadingStatus = app.querySelector('#scene-loading')
   if (loadingStatus && !loadingStatus.hidden) loadingStatus.hidden = true
