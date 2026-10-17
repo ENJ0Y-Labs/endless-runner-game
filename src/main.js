@@ -10,6 +10,7 @@ app.innerHTML = `
       <span class="game-brand">RELIC RUSH <b>3D</b></span>
       <div class="player-identity" id="player-identity" aria-live="polite"><span class="player-avatar" aria-hidden="true">R</span><span class="player-identity-copy"><strong id="player-name">Guest</strong><small id="player-account">Guest player</small></span><button class="sign-in-button" id="player-sign-in" type="button">Sign in</button></div>
       <div class="hud-stats"><span>SCORE <strong id="score">0</strong></span><span>DISTANCE <strong id="distance">0 m</strong></span><span>RELICS <strong id="relics">0</strong></span><span>BEST <strong id="best-score">0</strong></span></div>
+      <span class="season-indicator" id="season-indicator" aria-live="polite">SPRING</span>
       <button class="sound-button" id="sound-toggle" type="button" aria-label="Mute sound" aria-pressed="false">Sound on</button>
       <button class="pause-button" id="pause-button" type="button" hidden>Pause</button>
     </header>
@@ -106,6 +107,8 @@ function gradientTexture(stops, width = 4, height = 256) {
   return texture
 }
 scene.background = gradientTexture([[0, PAL.skyTop], [0.38, PAL.skyMid], [0.56, PAL.skyLow], [1, PAL.fog]])
+const skyCanvas = scene.background.image
+const skyContext = skyCanvas.getContext('2d')
 
 const camera = new THREE.PerspectiveCamera(56, 1, 0.1, 260)
 const cameraRig = { y: 4, z: 8.4 }
@@ -123,7 +126,8 @@ renderer.toneMappingExposure = 1.05
 container.appendChild(renderer.domElement)
 
 // Warm golden-hour light: low sun from the upper right, like the cover.
-scene.add(new THREE.HemisphereLight('#ffe2b4', '#5a4330', 1.55))
+const hemisphere = new THREE.HemisphereLight('#ffe2b4', '#5a4330', 1.55)
+scene.add(hemisphere)
 const sun = new THREE.DirectionalLight('#ffd08a', 3.4)
 sun.position.set(9, 13, -2)
 sun.target.position.set(0, 0, -8)
@@ -251,9 +255,10 @@ track.position.set(0, 0, TRACK_CENTER_Z)
 track.receiveShadow = true
 scene.add(track)
 
+const groundMaterial = new THREE.MeshStandardMaterial({ color: '#5b4a2c', roughness: 1 })
 const ground = new THREE.Mesh(
   new THREE.PlaneGeometry(420, 420),
-  new THREE.MeshStandardMaterial({ color: '#5b4a2c', roughness: 1 }),
+  groundMaterial,
 )
 ground.rotation.x = -Math.PI / 2
 ground.position.set(0, -0.14, -80)
@@ -279,7 +284,14 @@ for (const x of [-(CFG.trackWidth / 2 + 0.3), CFG.trackWidth / 2 + 0.3]) {
 
 // ---------------------------------------------------------------------------
 // Backdrop: hazy temple, sphinx and cliffs that sit inside the fog, as on the cover.
+// Seasonal color variants reuse the same merged geometry to keep mobile draw calls low.
 // ---------------------------------------------------------------------------
+const seasonalMeshes = []
+function registerSeasonalMesh(mesh) {
+  const colors = mesh.geometry.getAttribute('color')
+  if (colors) mesh.geometry.userData.baseVertexColors = colors.array.slice()
+  seasonalMeshes.push(mesh)
+}
 function buildBackdrop() {
   const parts = []
   const rand = seeded(21)
@@ -326,8 +338,62 @@ function buildBackdrop() {
   }
   const mesh = new THREE.Mesh(mergeParts(parts), vertexMaterial)
   scene.add(mesh)
+  registerSeasonalMesh(mesh)
 }
 buildBackdrop()
+
+// Low-poly tree lines add distinct seasonal silhouettes without external assets.
+// Each season is one merged mesh; only the active backdrop is rendered.
+const seasonalBackdropMeshes = []
+const seasonalTreeTrunk = new THREE.CylinderGeometry(0.28, 0.42, 1, 5)
+const seasonalCanopy = new THREE.DodecahedronGeometry(1, 0)
+const seasonalPine = new THREE.ConeGeometry(1, 1, 6)
+const seasonalBlossom = new THREE.DodecahedronGeometry(0.5, 0)
+function buildSeasonalBackdrop(kind, colors, seed) {
+  const parts = []
+  const rand = seeded(seed)
+  for (const side of [-1, 1]) {
+    for (let i = 0; i < 5; i++) {
+      const x = side * (10 + rand() * 15)
+      const z = -38 - rand() * 92
+      const trunkHeight = 3.2 + rand() * 1.5
+      parts.push(part(seasonalTreeTrunk, colors.trunk, [x, trunkHeight / 2, z], [0, rand() * 0.25, 0], [1, trunkHeight, 1]))
+      if (kind === 'winter') {
+        parts.push(part(seasonalPine, colors.foliage, [x, trunkHeight + 1.1, z], [0, 0, 0], [2.6, 3.4, 2.6]))
+        parts.push(part(seasonalPine, colors.foliage, [x, trunkHeight + 2.9, z], [0, 0, 0], [2.05, 3, 2.05]))
+        parts.push(part(seasonalPine, colors.foliage, [x, trunkHeight + 4.4, z], [0, 0, 0], [1.45, 2.4, 1.45]))
+        parts.push(part(seasonalPine, colors.snow, [x, trunkHeight + 2.1, z], [0, 0, 0], [1.85, 0.8, 1.85]))
+        parts.push(part(seasonalPine, colors.snow, [x, trunkHeight + 3.8, z], [0, 0, 0], [1.35, 0.65, 1.35]))
+      } else {
+        const crownY = trunkHeight + 1.25
+        parts.push(part(seasonalCanopy, colors.foliage, [x, crownY, z], [0, rand() * 3, 0], [2.4, 2.25, 2.3]))
+        parts.push(part(seasonalCanopy, colors.foliage, [x - 1.45, crownY - 0.2, z + 0.25], [0, rand() * 3, 0], [1.65, 1.65, 1.7]))
+        parts.push(part(seasonalCanopy, colors.foliage, [x + 1.4, crownY - 0.15, z - 0.2], [0, rand() * 3, 0], [1.7, 1.75, 1.65]))
+        if (kind === 'spring') {
+          for (let blossom = 0; blossom < 5; blossom++) {
+            const angle = (blossom / 5) * Math.PI * 2
+            parts.push(part(
+              seasonalBlossom, colors.blossom,
+              [x + Math.cos(angle) * (1.2 + rand() * 0.8), crownY + (rand() - 0.2) * 1.5, z + Math.sin(angle) * 1.5],
+              [rand(), rand() * 3, rand()],
+              [0.55, 0.45, 0.5],
+            ))
+          }
+        }
+      }
+    }
+  }
+  const mesh = new THREE.Mesh(mergeParts(parts), vertexMaterial)
+  mesh.visible = kind === 'spring'
+  mesh.castShadow = false
+  mesh.receiveShadow = false
+  scene.add(mesh)
+  seasonalBackdropMeshes.push(mesh)
+}
+buildSeasonalBackdrop('spring', { trunk: '#72513a', foliage: '#69a95b', blossom: '#f3bfd9' }, 410)
+buildSeasonalBackdrop('summer', { trunk: '#6b4b30', foliage: '#347a35' }, 420)
+buildSeasonalBackdrop('autumn', { trunk: '#68452f', foliage: '#d47735' }, 430)
+buildSeasonalBackdrop('winter', { trunk: '#62564e', foliage: '#31555a', snow: '#e2edf2' }, 440)
 
 // Sun glow and light shafts. Additive, unfogged and cheap.
 function radialTexture() {
@@ -344,9 +410,10 @@ function radialTexture() {
   texture.colorSpace = THREE.SRGBColorSpace
   return texture
 }
-const sunGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+const sunGlowMaterial = new THREE.SpriteMaterial({
   map: radialTexture(), blending: THREE.AdditiveBlending, depthWrite: false, fog: false, transparent: true, opacity: 0.9,
-}))
+})
+const sunGlow = new THREE.Sprite(sunGlowMaterial)
 sunGlow.position.set(34, 40, -200)
 sunGlow.scale.setScalar(120)
 scene.add(sunGlow)
@@ -607,6 +674,7 @@ function buildSegment(side, index) {
   mesh.castShadow = true
   mesh.receiveShadow = true
   group.add(mesh)
+  registerSeasonalMesh(mesh)
   if (index % 3 === 0) {
     const holder = new THREE.Mesh(mergeParts([part(box(0.16, 0.5, 0.16), PAL.stoneDeep, [inward * 0.85, 2.8, 0]), part(box(0.34, 0.12, 0.34), '#2b1b10', [inward * 0.85, 3.08, 0])]), vertexMaterial)
     group.add(holder)
@@ -621,6 +689,134 @@ function buildSegment(side, index) {
   scenery.push({ group, startZ: group.position.z })
 }
 for (let i = 0; i < SEGMENT_COUNT; i++) for (const side of [-1, 1]) buildSegment(side, i)
+
+
+// ---------------------------------------------------------------------------
+// Seasonal environment. Palette changes are driven by distance, not frame count.
+// Foliage vertex colors are recolored only when a season changes to protect mobile performance.
+// ---------------------------------------------------------------------------
+const SEASONS = [
+  {
+    name: 'Spring',
+    sky: [[0, '#82b9ed'], [0.38, '#c4e5f5'], [0.56, '#f5e5ce'], [1, '#c6d9cf']],
+    fog: '#c6d9cf', ground: '#62864c', track: '#d6c29c', rail: '#d9b75c', curb: '#82956a',
+    foliage: '#65a94f', stone: '#b5ad91', stoneBlend: 0.16,
+    skyLight: '#dff4ff', groundLight: '#496443', hemisphereIntensity: 1.55,
+    sun: '#fff0c4', sunIntensity: 2.6, glowOpacity: 0.55, shaftOpacity: 0.08,
+  },
+  {
+    name: 'Summer',
+    sky: [[0, '#5aa5e8'], [0.38, '#a8d9f4'], [0.56, '#f8e3b1'], [1, '#b5c9b0']],
+    fog: '#b5c9b0', ground: '#6e8d43', track: '#d5b47e', rail: '#f0c34e', curb: '#8d8950',
+    foliage: '#39833b', stone: '#c3a273', stoneBlend: 0.12,
+    skyLight: '#e3f5ff', groundLight: '#465c32', hemisphereIntensity: 1.7,
+    sun: '#ffe0a0', sunIntensity: 3.1, glowOpacity: 0.8, shaftOpacity: 0.16,
+  },
+  {
+    name: 'Autumn',
+    sky: [[0, '#7d91bd'], [0.38, '#e1b4a0'], [0.56, '#f2b878'], [1, '#b8a18b']],
+    fog: '#b8a18b', ground: '#796044', track: '#b99a76', rail: '#d88b35', curb: '#8b6849',
+    foliage: '#d47735', stone: '#9e8269', stoneBlend: 0.3,
+    skyLight: '#f7d8bc', groundLight: '#594435', hemisphereIntensity: 1.35,
+    sun: '#ffc27c', sunIntensity: 2.25, glowOpacity: 0.48, shaftOpacity: 0.06,
+  },
+  {
+    name: 'Winter',
+    sky: [[0, '#789bc7'], [0.38, '#c9dce9'], [0.56, '#e5edf2'], [1, '#b7c9d4']],
+    fog: '#b7c9d4', ground: '#b3c1c6', track: '#a9b8c2', rail: '#d4dce0', curb: '#899ca7',
+    foliage: '#dce8ed', stone: '#aabac6', stoneBlend: 0.52,
+    skyLight: '#eaf6ff', groundLight: '#667985', hemisphereIntensity: 1.25,
+    sun: '#d9eaff', sunIntensity: 1.65, glowOpacity: 0.22, shaftOpacity: 0.025,
+  },
+]
+const seasonIndicator = app.querySelector('#season-indicator')
+let activeSeasonIndex = -1
+let lastSkySeasonIndex = -1
+const seasonColorTarget = new THREE.Color()
+const seasonColorMix = new THREE.Color()
+function recolorSeasonalMeshes(season) {
+  for (const mesh of seasonalMeshes) {
+    const geometry = mesh.geometry
+    const colors = geometry.getAttribute('color')
+    const base = geometry.userData.baseVertexColors
+    if (!colors || !base) continue
+    const output = colors.array
+    const foliage = new THREE.Color(season.foliage)
+    const stone = new THREE.Color(season.stone)
+    for (let i = 0; i < base.length; i += 3) {
+      const r = base[i]
+      const g = base[i + 1]
+      const b = base[i + 2]
+      if (g > r * 1.18 && g > b * 1.08) {
+        const brightness = Math.min(1.25, Math.max(0.62, (r + g + b) / 0.36))
+        output[i] = foliage.r * brightness
+        output[i + 1] = foliage.g * brightness
+        output[i + 2] = foliage.b * brightness
+      } else {
+        const tintAmount = season.stoneBlend
+        output[i] = r + (stone.r - r) * tintAmount
+        output[i + 1] = g + (stone.g - g) * tintAmount
+        output[i + 2] = b + (stone.b - b) * tintAmount
+      }
+    }
+    colors.needsUpdate = true
+  }
+}
+function drawSeasonSky(stops) {
+  const gradient = skyContext.createLinearGradient(0, 0, 0, skyCanvas.height)
+  for (const [offset, color] of stops) gradient.addColorStop(offset, color)
+  skyContext.fillStyle = gradient
+  skyContext.fillRect(0, 0, skyCanvas.width, skyCanvas.height)
+  scene.background.needsUpdate = true
+}
+function updateSeasonEnvironment(distance) {
+  const seasonLength = CFG.seasonLength
+  const rawIndex = Math.floor(distance / seasonLength)
+  const seasonIndex = rawIndex % SEASONS.length
+  const progress = distance - rawIndex * seasonLength
+  const transitionStart = seasonLength - CFG.seasonTransitionDistance
+  const blend = progress > transitionStart
+    ? (progress - transitionStart) / CFG.seasonTransitionDistance
+    : 0
+  const nextIndex = (seasonIndex + 1) % SEASONS.length
+  const current = SEASONS[seasonIndex]
+  const next = SEASONS[nextIndex]
+  const visualSeasonIndex = blend >= 0.5 ? nextIndex : seasonIndex
+  const mix = (key) => seasonColorMix.set(current[key]).lerp(seasonColorTarget.set(next[key]), blend)
+  const colorHex = (from, to) => `#${seasonColorMix.set(from).lerp(seasonColorTarget.set(to), blend).getHexString()}`
+  const sky = current.sky.map(([offset, color], index) => [
+    offset,
+    colorHex(color, next.sky[index][1]),
+  ])
+  if (blend > 0 || lastSkySeasonIndex !== seasonIndex) {
+    drawSeasonSky(sky)
+    lastSkySeasonIndex = seasonIndex
+  }
+  scene.fog.color.copy(mix('fog'))
+  groundMaterial.color.copy(mix('ground'))
+  trackTop.color.copy(mix('track'))
+  trackSide.color.copy(mix('track'))
+  curbMaterial.color.copy(mix('curb'))
+  railMaterial.color.copy(mix('rail'))
+  hemisphere.color.copy(mix('skyLight'))
+  hemisphere.groundColor.copy(mix('groundLight'))
+  hemisphere.intensity = THREE.MathUtils.lerp(current.hemisphereIntensity, next.hemisphereIntensity, blend)
+  sun.color.copy(mix('sun'))
+  sun.intensity = THREE.MathUtils.lerp(current.sunIntensity, next.sunIntensity, blend)
+  sunGlowMaterial.opacity = THREE.MathUtils.lerp(current.glowOpacity, next.glowOpacity, blend)
+  shaftMaterial.opacity = THREE.MathUtils.lerp(current.shaftOpacity, next.shaftOpacity, blend)
+  if (visualSeasonIndex !== activeSeasonIndex) {
+    activeSeasonIndex = visualSeasonIndex
+    const visualSeason = SEASONS[visualSeasonIndex]
+    seasonIndicator.textContent = visualSeason.name.toUpperCase()
+    seasonIndicator.dataset.season = visualSeason.name.toLowerCase()
+    recolorSeasonalMeshes(visualSeason)
+    seasonalBackdropMeshes.forEach((mesh, index) => {
+      mesh.visible = index === visualSeasonIndex
+    })
+  }
+}
+updateSeasonEnvironment(0)
 
 // ---------------------------------------------------------------------------
 // Obstacles and relics: pooled, so a long run never allocates or leaks.
@@ -1249,6 +1445,7 @@ function animate() {
       }
     }
   }
+  updateSeasonEnvironment(state.distance)
   // The world also scrolls slowly behind the start screen; paused and game-over freeze it.
   const worldSpeed = running ? state.speed : attract ? CFG.attractSpeed : 0
   const dz = delta * worldSpeed

@@ -320,3 +320,28 @@ h2 { color: var(--cream); text-shadow: 0 .06em 0 #a8641a; }
 /* Layout fix: a bare `auto` grid column grows to the leaderboard table's min-width (440px),
    which pushed the whole page wider than a 390px phone and cropped the HUD and controls. */
 .game-shell { grid-template-columns: minmax(0, 1fr); }
+
+
+/* Seasonal world indicator; its color follows the active environment. */
+.season-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.25rem;
+  padding: .4rem .7rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--cream);
+  background: rgb(255 226 170 / 8%);
+  font-size: .68rem;
+  font-weight: 900;
+  letter-spacing: .1em;
+  white-space: nowrap;
+}
+.season-indicator[data-season="spring"] { border-color: #79a96b; color: #b7e4a2; }
+.season-indicator[data-season="summer"] { border-color: #e4b957; color: #ffdf8b; }
+.season-indicator[data-season="autumn"] { border-color: #d77c3e; color: #ffc08a; }
+.season-indicator[data-season="winter"] { border-color: #a9c6d8; color: #d9efff; }
+@media (max-width: 560px) {
+  .season-indicator { min-height: 2rem; padding: .3rem .5rem; font-size: .6rem; }
+}
