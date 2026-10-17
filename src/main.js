@@ -593,6 +593,22 @@ function playSound(kind) {
     // A browser audio restriction should not break the current run.
   }
 }
+function triggerHaptic(kind) {
+  if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') return
+
+  const patterns = {
+    lane: 18,
+    crash: [75, 40, 130],
+  }
+  const pattern = patterns[kind]
+  if (pattern === undefined) return
+
+  try {
+    navigator.vibrate(pattern)
+  } catch {
+    // Haptics are optional; unsupported devices must never interrupt gameplay.
+  }
+}
 syncSoundButton()
 const startOverlay = app.querySelector('#start-overlay')
 const pauseOverlay = app.querySelector('#pause-overlay')
@@ -616,7 +632,10 @@ function updateHud() {
 function setMode(mode) {
   const previousMode = state.mode
   state.mode = mode
-  if (mode === 'gameover' && previousMode === 'running') playSound('crash')
+  if (mode === 'gameover' && previousMode === 'running') {
+    playSound('crash')
+    triggerHaptic('crash')
+  }
   container.dataset.mode = mode
   hideOverlays()
   pauseButton.hidden = mode !== 'running'
@@ -648,6 +667,7 @@ function moveLane(direction) {
   if (nextLane === state.lane) return
   state.lane = nextLane
   playSound('lane')
+  triggerHaptic('lane')
 }
 function resetRun() {
   state.lane = 1
