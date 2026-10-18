@@ -1104,3 +1104,25 @@ h2 {
     font-size: 0.6rem;
   }
 }
+
+
+/* Icon-only pause control. Preserve its centered position when pressed. */
+.pause-button {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+}
+.pause-button svg {
+  display: block;
+  width: 1.1rem;
+  height: 1.1rem;
+  fill: currentColor;
+}
+.pause-button:active {
+  transform: translate(-50%, 1px);
+}
