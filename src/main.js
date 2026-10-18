@@ -14,7 +14,11 @@ app.innerHTML = `
       <button class="sound-button" id="sound-toggle" type="button" aria-label="Mute sound" aria-pressed="false">Sound on</button>
       </header>
       <div class="scene-container" aria-label="Three-dimensional endless runner game">
-      <button class="pause-button" id="pause-button" type="button" hidden>Pause</button>
+      <button class="pause-button" id="pause-button" type="button" aria-label="Pause game" title="Pause game" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" aria-hidden="true" focusable="false">
+          <path d="M176 96C149.5 96 128 117.5 128 144L128 496C128 522.5 149.5 544 176 544L240 544C266.5 544 288 522.5 288 496L288 144C288 117.5 266.5 96 240 96L176 96zM400 96C373.5 96 352 117.5 352 144L352 496C352 522.5 373.5 544 400 544L464 544C490.5 544 512 522.5 512 496L512 144C512 117.5 490.5 96 464 96L400 96z" />
+        </svg>
+      </button>
       <div class="scene-loading" id="scene-loading" role="status" aria-live="polite"><span class="loading-indicator" aria-hidden="true"></span> Preparing your track…</div>
       <section class="game-overlay" id="start-overlay">
         <p class="eyebrow">Start.ng game</p>
