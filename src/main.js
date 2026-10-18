@@ -1187,7 +1187,16 @@ function createObstacle() {
   mesh.receiveShadow = true;
   mesh.visible = false;
   scene.add(mesh);
-  return { mesh, lane: 1, active: false };
+  return {
+    mesh,
+    lane: 1,
+    active: false,
+    targetLane: 1,
+    sourceLane: 1,
+    moving: false,
+    shiftStarted: false,
+    shiftProgress: 0,
+  };
 }
 function createRelic() {
   const group = new THREE.Group();
@@ -1214,14 +1223,39 @@ function acquire(pool) {
   for (let i = 0; i < pool.length; i++) if (!pool[i].active) return pool[i];
   return null;
 }
-function placeObstacle(lane, z) {
+function placeObstacle(lane, z, elapsed = state.elapsed) {
   const item = acquire(obstaclePool);
   if (!item) return;
   item.lane = lane;
+  item.targetLane = lane;
+  item.sourceLane = lane;
+  item.moving = false;
+  item.shiftStarted = false;
+  item.shiftProgress = 0;
   item.mesh.position.set(LANE_X[lane], 0.11, z);
   item.mesh.scale.setScalar(0.01);
   item.mesh.visible = true;
   item.active = true;
+
+  // Some crates shift one lane later in a run, while they are still far away.
+  const movementChance = 0.12 + 0.1 * difficulty(elapsed);
+  if (z < CFG.playerZ - 18 && Math.random() < movementChance) {
+    const safeTargets = [0, 1, 2].filter(
+      (candidate) =>
+        candidate !== lane &&
+        !obstaclePool.some(
+          (other) =>
+            other !== item &&
+            other.active &&
+            Math.abs(other.mesh.position.z - z) < 3.5 &&
+            other.lane === candidate,
+        ),
+    );
+    if (safeTargets.length) {
+      item.targetLane = safeTargets[Math.floor(Math.random() * safeTargets.length)];
+      item.moving = true;
+    }
+  }
 }
 function placeRelic(lane, z, isUrn) {
   const item = acquire(relicPool);
@@ -1948,10 +1982,30 @@ function animate() {
     if (z > CFG.despawnZ) {
       item.active = false;
       item.mesh.visible = false;
+      item.moving = false;
+      item.shiftStarted = false;
+      item.shiftProgress = 0;
       continue;
     }
     // Crates rise out of the haze instead of popping into view.
     item.mesh.scale.setScalar(clamp01((z + CFG.spawnDistance) / 14));
+
+    if (item.moving) {
+      // Start shifting only once visible and still far enough away to react.
+      if (!item.shiftStarted && z > -18) item.shiftStarted = true;
+      if (item.shiftStarted) {
+        item.shiftProgress = Math.min(item.shiftProgress + delta / 0.8, 1);
+        const eased = item.shiftProgress * item.shiftProgress * (3 - 2 * item.shiftProgress);
+        item.mesh.position.x =
+          LANE_X[item.sourceLane] +
+          (LANE_X[item.targetLane] - LANE_X[item.sourceLane]) * eased;
+        if (item.shiftProgress >= 1) {
+          item.lane = item.targetLane;
+          item.moving = false;
+        }
+      }
+    }
+
     if (running) {
       const relativeZ = z - CFG.playerZ;
       if (
