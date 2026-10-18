@@ -2033,7 +2033,6 @@ function animate() {
     }
   }
 
-  const playerX = player.position.x;
   for (const item of obstaclePool) {
     if (!item.active) continue;
     const z = (item.mesh.position.z += dz);
