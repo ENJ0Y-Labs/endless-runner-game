@@ -300,6 +300,22 @@ ground.position.set(0, -0.14, -80);
 ground.receiveShadow = true;
 scene.add(ground);
 
+// Gaps are dark recessed-looking overlays on the track, pooled and moved with the world.
+const gapMaterial = new THREE.MeshStandardMaterial({
+  color: "#100f12",
+  roughness: 1,
+});
+const gapPool = Array.from({ length: 3 }, () => {
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(CFG.trackWidth * 0.98, 0.035, 3.2),
+    gapMaterial,
+  );
+  mesh.position.y = 0.126;
+  mesh.visible = false;
+  scene.add(mesh);
+  return { mesh, active: false };
+});
+
 const railMaterial = new THREE.MeshStandardMaterial({
   color: PAL.gold,
   emissive: "#7a4a08",
@@ -1309,6 +1325,20 @@ function spawnRow(z, gap, elapsed, attract) {
     obstructed = [others[Math.floor(Math.random() * others.length)]];
   }
   for (const lane of obstructed) placeObstacle(lane, z);
+
+  // Leave a clear approach before every gap; gaps are uncommon and span the whole track.
+  if (!attract && Math.random() < 0.075) {
+    const gapItem = gapPool.find((item) => !item.active);
+    const rowIsClear = obstaclePool.every(
+      (item) => !item.active || Math.abs(item.mesh.position.z - z) > 5,
+    );
+    if (gapItem && rowIsClear) {
+      gapItem.active = true;
+      gapItem.mesh.visible = true;
+      gapItem.mesh.position.z = z;
+    }
+  }
+
   // A breather leaves the whole row open, but the runner still gets a full gap to line up.
   spawn.openLanes = obstructed.length
     ? [0, 1, 2].filter((lane) => !obstructed.includes(lane))
@@ -1337,6 +1367,10 @@ function streamWorld(elapsed, attract) {
 }
 function resetWorldObjects(attract) {
   hideWorldObjects();
+  for (const item of gapPool) {
+    item.active = false;
+    item.mesh.visible = false;
+  }
   spawn.frontier = CFG.firstRowZ;
   spawn.openLanes = [1];
   streamWorld(0, attract);
@@ -1973,6 +2007,30 @@ function animate() {
       1 + Math.sin(clock.elapsedTime * 13 + flame.userData.phase) * 0.18,
       1,
     );
+  }
+
+  const playerX = player.position.x;
+
+  for (const item of gapPool) {
+    if (!item.active) continue;
+    item.mesh.position.z += dz;
+    if (item.mesh.position.z > CFG.despawnZ) {
+      item.active = false;
+      item.mesh.visible = false;
+      continue;
+    }
+    if (running) {
+      const relativeZ = item.mesh.position.z - CFG.playerZ;
+      const isOverGap =
+        relativeZ > -1.45 &&
+        relativeZ < 1.45;
+      const clearsGap = state.jumpHeight > 0.42;
+      if (isOverGap && !clearsGap) {
+        state.jumpHeight = 0;
+        state.jumpVelocity = 0;
+        setMode("gameover");
+      }
+    }
   }
 
   const playerX = player.position.x;
