@@ -1357,3 +1357,25 @@ h2 {
     font-size: clamp(1.8rem, 9vw, 2.5rem);
   }
 }
+
+
+/* Start.ng game-standard branding and end-of-run sharing. */
+.startng-branding {
+  margin: 0.35rem 0 0.7rem;
+  color: #ffd37a;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 8px rgb(0 0 0 / 55%);
+}
+#gameover-overlay .overlay-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.7rem;
+  width: 100%;
+  margin-top: 0.65rem;
+}
+#gameover-overlay .overlay-actions button {
+  min-width: 145px;
+}
