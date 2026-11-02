@@ -194,6 +194,8 @@ The following features are excluded from the initial release:
 - Power-ups and special abilities.
 - A custom authentication system.
 
+Story Mode is planned as a separate post-MVP expansion. Its proposed scope, chapter design, progression rules, technical boundaries, implementation phases, and acceptance criteria are documented in [docs/STORY-MODE-PLAN.md](docs/STORY-MODE-PLAN.md). The exclusions above remain in force for the current MVP; Story Mode must be implemented as a separate experience and must not replace or regress Classic Mode.
+
 A persistent leaderboard is not required for the core gameplay loop, but the score data must be structured to support Start.ng leaderboard integration.
 
 ## 10. Acceptance Criteria
