@@ -46,7 +46,7 @@ app.innerHTML = `
         <p>Final score: <strong id="final-score">0</strong> · Distance: <strong id="final-distance">0 m</strong> · Relics: <strong id="final-relics">0</strong></p><p class="best-run-summary">Best run: <strong id="final-best-score">0</strong></p>
         <p class="startng-branding">Play more on start.ng</p>
         <div class="overlay-actions">
-          <button class="secondary-button" id="share-result-button" type="button">Share result on X</button>
+          <a class="secondary-button" id="share-result-button" href="https://twitter.com/intent/tweet" target="_blank" rel="noopener noreferrer">Share result on X</a>
           <button class="primary-button" id="restart-button" type="button">Run again</button>
         </div>
       </section>
@@ -1921,7 +1921,8 @@ soundButton.addEventListener("click", () => {
 window.addEventListener("pointerdown", unlockAudio);
 app.querySelector("#play-button").addEventListener("click", startRun);
 app.querySelector("#restart-button").addEventListener("click", startRun);
-app.querySelector("#share-result-button").addEventListener("click", () => {
+app.querySelector("#share-result-button").addEventListener("click", (event) => {
+  event.preventDefault();
   const result = state.lastRun ?? {
     score: state.score,
     distance: Math.floor(state.distance),
