@@ -237,6 +237,10 @@ h2 {
   margin-top: 1rem;
 }
 .secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
   min-width: 160px;
   border: 1px solid #73818b;
   border-radius: 999px;
