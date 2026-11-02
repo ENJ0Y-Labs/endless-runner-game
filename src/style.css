@@ -1181,6 +1181,7 @@ h2 {
   opacity: 0.65;
 }
 .story-suitcase {
+  position: relative;
   z-index: 1;
   display: grid;
   width: 76px;
@@ -1196,13 +1197,16 @@ h2 {
 }
 .story-suitcase::before {
   position: absolute;
+  top: -13px;
+  left: 50%;
   width: 25px;
   height: 12px;
-  margin-top: -104px;
+  margin-top: 0;
   border: 2px solid #ffd37a;
   border-bottom: 0;
   border-radius: 7px 7px 0 0;
   content: "";
+  transform: translateX(-50%);
 }
 .story-sun {
   position: absolute;
@@ -1336,7 +1340,9 @@ h2 {
     font-size: 1.7rem;
   }
   .story-suitcase::before {
-    margin-top: -77px;
+    top: -11px;
+    width: 20px;
+    height: 10px;
   }
   .story-sun {
     top: 12%;
