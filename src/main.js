@@ -22,6 +22,7 @@ app.innerHTML = `
       <div class="scene-loading" id="scene-loading" role="status" aria-live="polite"><span class="loading-indicator" aria-hidden="true"></span> Preparing your track…</div>
       <section class="game-overlay" id="start-overlay">
         <p class="eyebrow">Start.ng game</p>
+        <p class="startng-branding">Play more on start.ng</p>
         <h1 class="title-art" aria-label="Relic Rush 3D"><span class="t-line" aria-hidden="true">Relic</span><span class="t-line" aria-hidden="true">Rush <span class="t-3d">3D</span></span></h1>
         <p>Switch lanes, dodge danger, and collect relics.</p>
         <div class="instruction-grid" aria-label="How to play">
@@ -43,7 +44,11 @@ app.innerHTML = `
       <section class="game-overlay" id="gameover-overlay" hidden>
         <p class="eyebrow">Run complete</p><h2>Game over</h2>
         <p>Final score: <strong id="final-score">0</strong> · Distance: <strong id="final-distance">0 m</strong> · Relics: <strong id="final-relics">0</strong></p><p class="best-run-summary">Best run: <strong id="final-best-score">0</strong></p>
-        <button class="primary-button" id="restart-button" type="button">Run again</button>
+        <p class="startng-branding">Play more on start.ng</p>
+        <div class="overlay-actions">
+          <button class="secondary-button" id="share-result-button" type="button">Share result on X</button>
+          <button class="primary-button" id="restart-button" type="button">Run again</button>
+        </div>
       </section>
       <div class="touch-controls" aria-label="Movement and jump controls">
         <button type="button" id="left-button" aria-label="Move left">←</button>
@@ -1916,6 +1921,18 @@ soundButton.addEventListener("click", () => {
 window.addEventListener("pointerdown", unlockAudio);
 app.querySelector("#play-button").addEventListener("click", startRun);
 app.querySelector("#restart-button").addEventListener("click", startRun);
+app.querySelector("#share-result-button").addEventListener("click", () => {
+  const result = state.lastRun ?? {
+    score: state.score,
+    distance: Math.floor(state.distance),
+    relics: state.relics,
+  };
+  const text = `I scored ${result.score} points, ran ${result.distance}m, and collected ${result.relics} relics in Relic Rush 3D!`;
+  const shareUrl = new URL("https://twitter.com/intent/tweet");
+  shareUrl.searchParams.set("text", text);
+  shareUrl.searchParams.set("url", "https://relic-rush-3d.start.ng");
+  window.open(shareUrl.toString(), "_blank", "noopener,noreferrer");
+});
 app.querySelector("#resume-button").addEventListener("click", togglePause);
 app.querySelector("#pause-restart-button").addEventListener("click", startRun);
 pauseButton.addEventListener("click", togglePause);
