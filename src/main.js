@@ -52,6 +52,23 @@ app.innerHTML = `
       </div>
     </div>
     <footer class="scene-help"><span class="help-key">A</span><span class="help-key">D</span><span class="help-key">Space / ↑</span><span>Move between lanes and jump · Swipe on mobile</span></footer>
+    <section class="story-teaser" aria-labelledby="story-teaser-title">
+      <div class="story-teaser-art" aria-hidden="true">
+        <span class="story-road-line"></span>
+        <span class="story-suitcase">▰</span>
+        <span class="story-sun"></span>
+      </div>
+      <div class="story-teaser-content">
+        <div class="story-teaser-heading">
+          <p class="eyebrow">A new adventure is on the way</p>
+          <span class="coming-soon-badge"><span aria-hidden="true"></span> Coming soon</span>
+        </div>
+        <h2 id="story-teaser-title">Japa Rush <span>Story Mode</span></h2>
+        <p class="story-hook">“You think you can Japa? The Big Man is coming for you!” One suitcase. One-way ticket. A never-ending highway. Dodge the country’s problems as they come flying at you, and try to reach the terminal before the system catches up.</p>
+        <p class="story-teaser-detail">Race through Lagos Hustle, survive the Emilokan Expressway, face the system, and make a final dash for the Japa Terminal.</p>
+        <div class="story-credit"><span class="credit-mark" aria-hidden="true">✦</span><span><strong>Story concept by ambh4ck3r</strong><small>Fam-submitted story concept</small></span></div>
+      </div>
+    </section>
     <section class="leaderboard-panel" aria-labelledby="leaderboard-title">
       <div class="leaderboard-heading">
         <div><p class="eyebrow">Community best runs</p><h2 id="leaderboard-title">Leaderboard</h2></div>
