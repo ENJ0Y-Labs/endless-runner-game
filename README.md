@@ -48,18 +48,94 @@ npm run preview
 
 Vite writes the production site to `dist/`. Open the preview URL printed by Vite and check the browser console and Network panel for errors or missing assets.
 
-## Start.ng submission
+## Build and publish to Start.ng
 
-Start.ng hosts a static site and does not install npm dependencies or build the source. Before submitting:
+Start.ng hosts the built static game. It does **not** run `npm install` or `npm run build` for this repository, so the generated `dist/` directory must be committed and pushed to GitHub.
 
-1. Run `npm install` and `npm run build`.
-2. Verify the production build with `npm run preview`.
-3. Commit the generated `dist/` directory so the ready-built `dist/index.html` and its assets are present in the repository. The repository's `.gitignore` is configured to allow `dist/` to be committed.
-4. Keep the source `cover.png` at the repository root and a 16:10 `public/cover.png`; Vite copies the latter beside `dist/index.html` for the game listing.
-5. Keep `startng.json` at the repository root. Its configured leaderboard stats are `score`, `distance`, and `relics`.
-6. Test identity, character styling, score saving, and leaderboard behaviour on the published `*.start.ng` game. Local preview cannot confirm live platform data or score saving.
+### 1. Build and test the game
 
-The expected submission layout includes:
+Install Node.js 20.19+ or 22.12+ and npm, then run from the repository root:
+
+```bash
+npm install
+npm run build
+npm run preview
+```
+
+Open the preview URL printed by Vite. Test gameplay, mobile controls, restart, and the browser console. Stop the preview server when finished. Confirm that `dist/index.html` and its assets exist.
+
+### 2. Commit and push the production build
+
+Make sure `dist/` is not ignored by Git. Then run:
+
+```bash
+git add README.md startng.json cover.png public/cover.png dist/
+git commit -m "build: prepare game for Start.ng"
+git push origin main
+```
+
+If you are working on another branch, push that branch instead and use its name in the API request below. Resolve any Git errors before continuing. The GitHub repository must be public for Start.ng to fetch it.
+
+Keep `cover.png` at the repository root and `public/cover.png` in the source project. Vite copies `public/cover.png` to `dist/cover.png`, next to the built `index.html`. Use a 16:10 cover image, ideally at least 640 × 400 pixels. Keep `startng.json` at the repository root.
+
+### 3. Check the repository with Start.ng
+
+Send a POST request to the Start.ng check endpoint with your repository URL and game name. Replace the example values if needed.
+
+**macOS, Linux, or Termux on Android (with curl):**
+
+```bash
+curl -X POST https://api.start.ng/games/check \
+  -H "Content-Type: application/json" \
+  -d '{"repo_url":"https://github.com/ENJ0Y-Labs/endless-runner-game","name":"Relic Rush 3D"}'
+```
+
+**Windows PowerShell:**
+
+```powershell
+$body = @{
+  repo_url = "https://github.com/ENJ0Y-Labs/endless-runner-game"
+  name = "Relic Rush 3D"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Method Post -Uri "https://api.start.ng/games/check" -ContentType "application/json" -Body $body
+```
+
+Read the full response. Fix all reported errors and warnings, rebuild the game, commit and push the updated `dist/`, then run the check again. Do not publish until the check passes.
+
+To publish a non-default branch, include its branch name in the JSON body, for example `"branch":"main"`. Use the same branch in both the check and publish requests.
+
+### 4. Publish the game
+
+After the check passes, send a POST request to `https://api.start.ng/games/publish` with the same repository details.
+
+**curl (including Termux on Android):**
+
+```bash
+curl -X POST https://api.start.ng/games/publish \
+  -H "Content-Type: application/json" \
+  -d '{"repo_url":"https://github.com/ENJ0Y-Labs/endless-runner-game","name":"Relic Rush 3D"}'
+```
+
+**Windows PowerShell:**
+
+```powershell
+Invoke-RestMethod -Method Post -Uri "https://api.start.ng/games/publish" -ContentType "application/json" -Body $body
+```
+
+If the response contains an `approve_url`, open that URL in a browser while signed in to Start.ng and approve the game. The approval link is one-time and valid for 30 days. A first publication may wait for this approval; do not assume the game is live until the process completes.
+
+### 5. Verify the live game
+
+Open the published game URL and test it on desktop and mobile. Check that the game loads without missing assets, controls work, the Start.ng player/character integration behaves correctly, and scores and leaderboard data are saved as expected.
+
+Once the game is approved, later pushes to the watched branch normally update it automatically within a few minutes. You still need to build and commit the updated `dist/` before pushing; Start.ng does not build the source for you.
+
+### Can I publish from an Android phone?
+
+Yes, provided you can build the project and push the generated files. One option is Termux with Git, Node.js, and npm installed; run the same build commands above, then use the curl requests to check and publish. You can also use a browser-based development environment that supports Node.js and Git. Simply editing files in the GitHub mobile website will not generate the required production build.
+
+The expected repository layout includes:
 
 ```text
 index.html
@@ -70,12 +146,14 @@ dist/
   index.html
   assets/
 src/
+public/
+  cover.png
 package.json
 package-lock.json
 README.md
 ```
 
-Do not submit a build as verified until `npm run build` and the production preview have actually been tested. Live Start.ng score and leaderboard checks must be done on the published game.
+Do not describe the build as verified until `npm run build` and the production preview have actually been tested. Local preview cannot confirm live Start.ng score saving or leaderboard behaviour.
 
 ## Project structure
 
