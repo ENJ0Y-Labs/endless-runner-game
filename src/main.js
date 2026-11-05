@@ -1904,7 +1904,6 @@ function jump() {
   state.jumpVelocity = CFG.jumpInitialVelocity;
 }
 // The attract-mode runner follows the same lane limits and obstacle positions as a player.
-let demoDecisionLane = -1;
 function updateDemoBot() {
   const lookAhead = Math.max(10, state.speed * 1.15);
   let nextRowZ = -Infinity;
@@ -1917,7 +1916,6 @@ function updateDemoBot() {
     }
   }
   if (!Number.isFinite(nextRowZ)) {
-    demoDecisionLane = -1;
     return;
   }
 
@@ -1935,7 +1933,6 @@ function updateDemoBot() {
   );
   if (bestLane !== currentLane) {
     state.lane = bestLane;
-    demoDecisionLane = bestLane;
   }
 }
 function resetRun() {
