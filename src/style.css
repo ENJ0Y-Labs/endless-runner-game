@@ -1482,3 +1482,290 @@ body[data-page=play] #start-overlay .instruction-grid { width:min(100%,440px); }
     margin-top: .25rem;
   }
 }
+
+
+/* Gemini-inspired presentation pass: preserve Relic Rush controls and scene. */
+body[data-page="play"] .game-hud {
+  align-items: center;
+  gap: clamp(.45rem, 1.5vw, 1rem);
+}
+body[data-page="play"] .player-identity,
+body[data-page="play"] .sound-button,
+body[data-page="play"] .season-indicator,
+body[data-page="play"] .hud-stats {
+  border-color: rgb(255 226 170 / 24%);
+  background: rgb(28 19 12 / 58%);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 22%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+body[data-page="play"] .game-brand {
+  color: var(--cream);
+  letter-spacing: .14em;
+}
+body[data-page="play"] .player-avatar {
+  border: 1px solid rgb(255 226 170 / 45%);
+  box-shadow: 0 0 0 3px rgb(242 164 58 / 10%);
+}
+body[data-page="play"] .sound-button {
+  color: #ffdf9b;
+  border-radius: 14px;
+  padding-inline: .9rem;
+}
+body[data-page="play"] #start-overlay {
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: clamp(6.2rem, 13vh, 9rem);
+  padding-bottom: clamp(1rem, 3vh, 2rem);
+  background: linear-gradient(
+    180deg,
+    rgb(26 15 6 / 46%) 0%,
+    rgb(26 15 6 / 12%) 28%,
+    transparent 48%,
+    rgb(26 15 6 / 10%) 64%,
+    rgb(26 15 6 / 78%) 100%
+  );
+}
+body[data-page="play"] #start-overlay > .eyebrow,
+body[data-page="play"] #start-overlay > .startng-branding,
+body[data-page="play"] #start-overlay > .title-art,
+body[data-page="play"] #start-overlay > p:not(.eyebrow):not(.startng-branding) {
+  max-width: min(44vw, 540px);
+}
+body[data-page="play"] #start-overlay > .eyebrow {
+  margin-bottom: .2rem;
+  color: #ffd37a;
+}
+body[data-page="play"] #start-overlay > .startng-branding {
+  margin: 0;
+  color: rgb(255 226 170 / 82%);
+  font-size: .7rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+body[data-page="play"] #start-overlay > .title-art {
+  margin: .15rem 0 .1rem;
+  font-size: clamp(3.4rem, 7vw, 6.5rem);
+  line-height: .88;
+}
+body[data-page="play"] #start-overlay > p:not(.eyebrow):not(.startng-branding) {
+  margin: .35rem 0 0;
+  color: #fff4dc;
+  font-size: clamp(.9rem, 1.25vw, 1.05rem);
+}
+body[data-page="play"] #start-overlay .instruction-grid {
+  width: min(100%, 620px);
+  margin-top: auto;
+  padding: .65rem;
+  border: 1px solid rgb(255 226 170 / 20%);
+  border-radius: 20px;
+  background: rgb(26 17 10 / 56%);
+  box-shadow: 0 14px 38px rgb(0 0 0 / 24%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+body[data-page="play"] #start-overlay .instruction-card {
+  min-height: 76px;
+  align-content: center;
+  justify-items: start;
+  gap: .2rem;
+  padding: .7rem .8rem;
+  border-color: rgb(255 226 170 / 12%);
+  border-radius: 13px;
+  background: rgb(255 255 255 / 4%);
+  text-align: left;
+}
+body[data-page="play"] #start-overlay .instruction-icon {
+  min-height: 1.4rem;
+  color: #ffd37a;
+}
+body[data-page="play"] #start-overlay .instruction-card strong {
+  color: #fff4dc;
+  font-size: .76rem;
+}
+body[data-page="play"] #start-overlay .instruction-card small {
+  color: #d3bd9c;
+  font-size: .66rem;
+}
+body[data-page="play"] #start-overlay #play-button {
+  width: min(100%, 620px);
+  min-height: 4.1rem;
+  margin-top: .15rem;
+  border: 1px solid rgb(255 235 190 / 85%);
+  border-bottom: 5px solid #9b5a16;
+  border-radius: 18px;
+  color: #321b08;
+  background: linear-gradient(180deg, #ffe39a 0%, #f6b94e 52%, #df8d24 100%);
+  box-shadow: 0 0 24px rgb(242 164 58 / 28%), 0 12px 30px rgb(0 0 0 / 32%);
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
+  font-weight: 950;
+  letter-spacing: .12em;
+  text-shadow: 0 1px rgb(255 255 255 / 30%);
+  animation: relic-start-glow 2.8s ease-in-out infinite;
+}
+body[data-page="play"] #start-overlay #play-button:hover {
+  background: linear-gradient(180deg, #ffedb7 0%, #ffd071 52%, #eda13a 100%);
+}
+body[data-page="play"] #start-overlay #play-button:active {
+  border-bottom-width: 2px;
+  animation: none;
+}
+body[data-page="play"] #start-overlay .overlay-hint {
+  width: min(100%, 620px);
+  margin: 0;
+  color: rgb(255 226 170 / 88%);
+  font-size: .68rem;
+  letter-spacing: .07em;
+  text-align: center;
+  text-transform: uppercase;
+}
+@keyframes relic-start-glow {
+  0%, 100% { box-shadow: 0 0 18px rgb(242 164 58 / 24%), 0 12px 30px rgb(0 0 0 / 32%); }
+  50% { box-shadow: 0 0 30px rgb(255 190 78 / 48%), 0 14px 34px rgb(0 0 0 / 38%); }
+}
+body[data-page="play"] #pause-overlay,
+body[data-page="play"] #gameover-overlay {
+  background: rgb(20 12 6 / 78%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+body[data-page="play"] #pause-overlay .primary-button,
+body[data-page="play"] #gameover-overlay .primary-button {
+  min-height: 3.2rem;
+  border-radius: 16px;
+}
+@media (max-width: 700px) {
+  body[data-page="play"] #start-overlay {
+    align-items: center;
+    justify-content: flex-end;
+    gap: .45rem;
+    padding: 6.8rem .85rem max(1rem, env(safe-area-inset-bottom));
+    background: linear-gradient(
+      180deg,
+      rgb(26 15 6 / 28%) 0%,
+      rgb(26 15 6 / 4%) 30%,
+      rgb(26 15 6 / 16%) 48%,
+      rgb(26 15 6 / 88%) 100%
+    );
+    text-align: center;
+  }
+  body[data-page="play"] #start-overlay > .eyebrow,
+  body[data-page="play"] #start-overlay > .startng-branding,
+  body[data-page="play"] #start-overlay > .title-art,
+  body[data-page="play"] #start-overlay > p:not(.eyebrow):not(.startng-branding) {
+    max-width: 100%;
+  }
+  body[data-page="play"] #start-overlay > .eyebrow {
+    margin: 0;
+    font-size: .62rem;
+  }
+  body[data-page="play"] #start-overlay > .startng-branding {
+    font-size: .58rem;
+  }
+  body[data-page="play"] #start-overlay > .title-art {
+    margin: .1rem 0;
+    font-size: clamp(2.65rem, 13vw, 4.2rem);
+  }
+  body[data-page="play"] #start-overlay > p:not(.eyebrow):not(.startng-branding) {
+    margin: .1rem 0 .2rem;
+    font-size: .8rem;
+  }
+  body[data-page="play"] #start-overlay .instruction-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .35rem;
+    width: min(100%, 460px);
+    margin-top: .35rem;
+    padding: .45rem;
+    border-radius: 15px;
+  }
+  body[data-page="play"] #start-overlay .instruction-card {
+    min-height: 58px;
+    grid-template-columns: 1.6rem minmax(0, 1fr);
+    justify-items: start;
+    align-items: center;
+    gap: .05rem .4rem;
+    padding: .4rem .5rem;
+    text-align: left;
+  }
+  body[data-page="play"] #start-overlay .instruction-icon {
+    grid-row: span 2;
+    min-width: 1.5rem;
+    min-height: 1.5rem;
+    font-size: 1rem;
+  }
+  body[data-page="play"] #start-overlay .instruction-card strong {
+    font-size: .68rem;
+  }
+  body[data-page="play"] #start-overlay .instruction-card small {
+    font-size: .58rem;
+    line-height: 1.25;
+  }
+  body[data-page="play"] #start-overlay #play-button {
+    min-height: 3.45rem;
+    margin-top: .1rem;
+    border-radius: 15px;
+    font-size: 1.05rem;
+  }
+  body[data-page="play"] #start-overlay .overlay-hint {
+    font-size: .57rem;
+    line-height: 1.4;
+  }
+  body[data-page="play"] .game-hud {
+    padding-top: max(.55rem, env(safe-area-inset-top));
+  }
+}
+@media (max-width: 380px) {
+  body[data-page="play"] #start-overlay {
+    gap: .25rem;
+    padding-inline: .65rem;
+    padding-bottom: max(.65rem, env(safe-area-inset-bottom));
+  }
+  body[data-page="play"] #start-overlay > .title-art {
+    font-size: 2.45rem;
+  }
+  body[data-page="play"] #start-overlay .instruction-card {
+    min-height: 52px;
+    padding: .3rem .35rem;
+  }
+  body[data-page="play"] #start-overlay .instruction-card strong {
+    font-size: .62rem;
+  }
+  body[data-page="play"] #start-overlay .instruction-card small {
+    font-size: .54rem;
+  }
+  body[data-page="play"] #start-overlay .overlay-hint {
+    display: none;
+  }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  body[data-page="play"] #start-overlay {
+    justify-content: flex-end;
+    gap: .25rem;
+    padding: 4.5rem 1rem .55rem;
+  }
+  body[data-page="play"] #start-overlay > .title-art {
+    font-size: 2.35rem;
+  }
+  body[data-page="play"] #start-overlay .instruction-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    width: min(100%, 760px);
+    margin-top: .15rem;
+    padding: .35rem;
+  }
+  body[data-page="play"] #start-overlay .instruction-card {
+    min-height: 44px;
+    padding: .25rem .4rem;
+  }
+  body[data-page="play"] #start-overlay #play-button {
+    width: min(100%, 760px);
+    min-height: 2.65rem;
+  }
+  body[data-page="play"] #start-overlay .overlay-hint {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body[data-page="play"] #start-overlay #play-button {
+    animation: none;
+  }
+}
