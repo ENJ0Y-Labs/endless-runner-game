@@ -2093,7 +2093,7 @@ function animate() {
       if (item.group.position.z > 12) item.group.position.z -= SEGMENT_SPAN;
     }
     spawn.frontier += dz;
-    streamWorld(state.elapsed, attract);
+    streamWorld(attract ? 0 : state.elapsed, attract);
   }
   for (const flame of flames) {
     flame.scale.set(
