@@ -1281,6 +1281,8 @@ function createObstacle() {
     moving: false,
     shiftStarted: false,
     shiftProgress: 0,
+    fallVelocity: 0,
+    falling: false,
   };
 }
 function createRelic() {
@@ -1317,6 +1319,9 @@ function placeObstacle(lane, z, elapsed = state.elapsed, allowMovement = true) {
   item.moving = false;
   item.shiftStarted = false;
   item.shiftProgress = 0;
+  item.falling = false;
+  item.fallVelocity = 0;
+  item.mesh.rotation.set(0, 0, 0);
   item.mesh.position.set(LANE_X[lane], 0.11, z);
   item.mesh.scale.setScalar(0.01);
   item.mesh.visible = true;
@@ -1358,6 +1363,10 @@ function hideWorldObjects() {
   for (const item of obstaclePool) {
     item.active = false;
     item.mesh.visible = false;
+    item.falling = false;
+    item.fallVelocity = 0;
+    item.mesh.position.y = 0.11;
+    item.mesh.rotation.set(0, 0, 0);
   }
   for (const item of relicPool) {
     item.active = false;
@@ -1629,6 +1638,10 @@ function refreshLeaderboard() {
     });
 }
 async function saveCompletedRun(result) {
+  if (result.demo) {
+    scoreSaveMessage.textContent = "AI demonstration complete. Demo scores are not submitted.";
+    return;
+  }
   if (!isStartNgSignedIn) {
     scoreSaveMessage.textContent =
       "Guest run not saved. Sign in to Start.ng to save your best score.";
@@ -1888,7 +1901,9 @@ function setMode(mode) {
       if (!state.bestRun || result.score > state.bestRun.score)
         state.bestRun = result;
       window.dispatchEvent(
-        new CustomEvent("relicrush:run-finished", { detail: { ...result } }),
+        new CustomEvent("relicrush:run-finished", {
+          detail: { ...result, demo: state.aiDemo },
+        }),
       );
     }
     app.querySelector("#final-score").textContent = String(state.score);
@@ -1955,7 +1970,6 @@ function updateDemoBot() {
   }
 }
 function resetRun() {
-  demoDecisionLane = -1;
   state.lane = 1;
   state.elapsed = 0;
   state.distance = 0;
@@ -1964,6 +1978,11 @@ function resetRun() {
   state.speed = CFG.initialSpeed;
   state.jumpHeight = 0;
   state.jumpVelocity = 0;
+  state.aiDemo = false;
+  state.crashObstacle = null;
+  state.crashElapsed = 0;
+  state.fallIntoGap = false;
+  state.fallElapsed = 0;
   player.position.x = 0;
   player.position.y = 0.16;
   camera.position.x = 0;
@@ -1973,8 +1992,9 @@ function resetRun() {
   resetWorldObjects(false);
   updateHud();
 }
-function startRun() {
+function startRun(aiDemo = false) {
   resetRun();
+  state.aiDemo = aiDemo;
   setMode("running");
 }
 function togglePause() {
@@ -1996,8 +2016,9 @@ soundButton.addEventListener("click", () => {
   if (!soundMuted) unlockAudio();
 });
 window.addEventListener("pointerdown", unlockAudio);
-app.querySelector("#play-button").addEventListener("click", startRun);
-app.querySelector("#restart-button").addEventListener("click", startRun);
+app.querySelector("#play-button").addEventListener("click", () => startRun(false));
+app.querySelector("#ai-demo-button").addEventListener("click", () => startRun(true));
+app.querySelector("#restart-button").addEventListener("click", () => startRun(false));
 app.querySelector("#share-result-button").addEventListener("click", (event) => {
   event.preventDefault();
   const result = state.lastRun ?? {
@@ -2012,7 +2033,7 @@ app.querySelector("#share-result-button").addEventListener("click", (event) => {
   window.open(shareUrl.toString(), "_blank", "noopener,noreferrer");
 });
 app.querySelector("#resume-button").addEventListener("click", togglePause);
-app.querySelector("#pause-restart-button").addEventListener("click", startRun);
+app.querySelector("#pause-restart-button").addEventListener("click", () => startRun(false));
 pauseButton.addEventListener("click", togglePause);
 app.querySelector("#left-button").addEventListener("click", () => moveLane(-1));
 app.querySelector("#jump-button").addEventListener("click", jump);
@@ -2107,6 +2128,7 @@ function animate() {
   // The pre-game attract mode is a real, computer-controlled run, not a static backdrop.
   const worldSpeed = running || attract ? state.speed : 0;
   const dz = delta * worldSpeed;
+  if (running) updateAi(delta);
   if (dz > 0) {
     animTime += delta;
     slabTexture.offset.y += dz / SLAB_DEPTH;
@@ -2136,7 +2158,7 @@ function animate() {
       item.mesh.visible = false;
       continue;
     }
-    if (running) {
+    if (running && state.mode === "running") {
       const relativeZ = item.mesh.position.z - CFG.playerZ;
       const isOverGap =
         relativeZ > -1.45 &&
@@ -2145,6 +2167,8 @@ function animate() {
       if (isOverGap && !clearsGap) {
         state.jumpHeight = 0;
         state.jumpVelocity = 0;
+        state.fallIntoGap = true;
+        state.fallElapsed = 0;
         setMode("gameover");
       }
     }
@@ -2166,9 +2190,9 @@ function animate() {
 
     if (item.moving) {
       // Start shifting only once visible and still far enough away to react.
-      if (!item.shiftStarted && z > -18) item.shiftStarted = true;
+      if (!item.shiftStarted && z > -26) item.shiftStarted = true;
       if (item.shiftStarted) {
-        item.shiftProgress = Math.min(item.shiftProgress + delta / 0.8, 1);
+        item.shiftProgress = Math.min(item.shiftProgress + delta / 0.72, 1);
         const eased = item.shiftProgress * item.shiftProgress * (3 - 2 * item.shiftProgress);
         item.mesh.position.x =
           LANE_X[item.sourceLane] +
@@ -2180,7 +2204,7 @@ function animate() {
       }
     }
 
-    if (running) {
+    if (running && state.mode === "running") {
       const relativeZ = z - CFG.playerZ;
       if (
         relativeZ > CFG.obstacleHitZ[0] &&
@@ -2188,10 +2212,23 @@ function animate() {
         Math.abs(item.mesh.position.x - playerX) < CFG.obstacleHitX &&
         state.jumpHeight < CFG.jumpObstacleClearance
       ) {
+        item.falling = true;
+        item.fallVelocity = 1.8;
+        state.crashObstacle = item;
+        state.crashElapsed = 0;
         setMode("gameover");
         break;
       }
     }
+    if (item.falling) {
+      item.fallVelocity += 18 * delta;
+      item.mesh.position.y -= item.fallVelocity * delta;
+      item.mesh.rotation.z += delta * 3.8;
+      item.mesh.rotation.x += delta * 1.4;
+    }
+  }
+  if (state.crashObstacle && state.mode === "gameover") {
+    state.crashElapsed += delta;
   }
   for (const item of relicPool) {
     if (!item.active) continue;
@@ -2236,6 +2273,11 @@ function animate() {
   const runBob =
     moving && state.jumpHeight === 0 ? Math.abs(Math.sin(stride)) * 0.07 : 0;
   player.position.y = 0.16 + state.jumpHeight + runBob;
+  if (state.fallIntoGap) {
+    state.fallElapsed += delta;
+    player.position.y = 0.16 - Math.min(state.fallElapsed * 5.2, 2.8);
+    rig.rotation.x += (0.48 - rig.rotation.x) * Math.min(delta * 5, 1);
+  }
   const swing = moving ? Math.sin(stride) * 0.95 : 0;
   limbs.legL.rotation.x = swing;
   limbs.legR.rotation.x = -swing;
