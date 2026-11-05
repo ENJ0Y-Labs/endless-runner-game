@@ -30,10 +30,10 @@ export const GAME_CONFIG = Object.freeze({
 
   // Obstacle rows get closer together and double rows more likely as the run goes on.
   maxRowGap: 26,
-  minRowGap: 11,
-  rowGapShrinkPerSecond: 0.18,
+  minRowGap: 10,
+  rowGapShrinkPerSecond: 0.2,
   difficultyRampSeconds: 120,
-  maxDoubleRowChance: 0.4,
+  maxDoubleRowChance: 0.48,
 
   // Hit boxes (world units). Lateral checks use the runner's real x, not the target lane.
   obstacleHitX: 0.8,
