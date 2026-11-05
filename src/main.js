@@ -1087,39 +1087,60 @@ const SEASONS = [
 
 let activeSeasonIndex = -1;
 let lastSkySeasonIndex = -1;
+let lastSkyBlendStep = -1;
+const SKY_BLEND_STEPS = 60;
 const seasonColorTarget = new THREE.Color();
 const seasonColorMix = new THREE.Color();
-function recolorSeasonalMeshes(season) {
-  for (const mesh of seasonalMeshes) {
-    const geometry = mesh.geometry;
-    const colors = geometry.getAttribute("color");
-    const base = geometry.userData.baseVertexColors;
-    if (!colors || !base) continue;
-    const output = colors.array;
-    const foliage = new THREE.Color(season.foliage);
-    const stone = new THREE.Color(season.stone);
+
+// Build each seasonal vertex-colour variant once, before gameplay starts.
+// Switching seasons then copies cached data instead of recalculating every vertex mid-run.
+const seasonalVertexColors = SEASONS.map((season) => {
+  const foliage = new THREE.Color(season.foliage);
+  const stone = new THREE.Color(season.stone);
+  return seasonalMeshes.map((mesh) => {
+    const base = mesh.geometry.userData.baseVertexColors;
+    if (!base) return null;
+    const colors = new Float32Array(base.length);
     for (let i = 0; i < base.length; i += 3) {
       const r = base[i];
       const g = base[i + 1];
       const b = base[i + 2];
       if (g > r * 1.18 && g > b * 1.08) {
         const brightness = Math.min(1.25, Math.max(0.62, (r + g + b) / 0.36));
-        output[i] = foliage.r * brightness;
-        output[i + 1] = foliage.g * brightness;
-        output[i + 2] = foliage.b * brightness;
+        colors[i] = foliage.r * brightness;
+        colors[i + 1] = foliage.g * brightness;
+        colors[i + 2] = foliage.b * brightness;
       } else {
         const tintAmount = season.stoneBlend;
-        output[i] = r + (stone.r - r) * tintAmount;
-        output[i + 1] = g + (stone.g - g) * tintAmount;
-        output[i + 2] = b + (stone.b - b) * tintAmount;
+        colors[i] = r + (stone.r - r) * tintAmount;
+        colors[i + 1] = g + (stone.g - g) * tintAmount;
+        colors[i + 2] = b + (stone.b - b) * tintAmount;
       }
     }
+    return colors;
+  });
+});
+
+function recolorSeasonalMeshes(seasonIndex) {
+  for (const [meshIndex, mesh] of seasonalMeshes.entries()) {
+    const colors = mesh.geometry.getAttribute("color");
+    const cachedColors = seasonalVertexColors[seasonIndex][meshIndex];
+    if (!colors || !cachedColors) continue;
+    colors.array.set(cachedColors);
     colors.needsUpdate = true;
   }
 }
-function drawSeasonSky(stops) {
+function drawSeasonSky(current, next, blend) {
   const gradient = skyContext.createLinearGradient(0, 0, 0, skyCanvas.height);
-  for (const [offset, color] of stops) gradient.addColorStop(offset, color);
+  for (let index = 0; index < current.sky.length; index += 1) {
+    const [offset, from] = current.sky[index];
+    const to = next.sky[index][1];
+    const color = seasonColorMix
+      .set(from)
+      .lerp(seasonColorTarget.set(to), blend)
+      .getStyle();
+    gradient.addColorStop(offset, color);
+  }
   skyContext.fillStyle = gradient;
   skyContext.fillRect(0, 0, skyCanvas.width, skyCanvas.height);
   scene.background.needsUpdate = true;
@@ -1138,18 +1159,13 @@ function updateSeasonEnvironment(distance) {
   const current = SEASONS[seasonIndex];
   const next = SEASONS[nextIndex];
   const visualSeasonIndex = blend >= 0.5 ? nextIndex : seasonIndex;
-  const mix = (key) =>
-    seasonColorMix
-      .set(current[key])
-      .lerp(seasonColorTarget.set(next[key]), blend);
-  const colorHex = (from, to) =>
-    `#${seasonColorMix.set(from).lerp(seasonColorTarget.set(to), blend).getHexString()}`;
-  const sky = current.sky.map(([offset, color], index) => [
-    offset,
-    colorHex(color, next.sky[index][1]),
-  ]);
-  if (blend > 0 || lastSkySeasonIndex !== seasonIndex) {
-    drawSeasonSky(sky);
+  const skyBlendStep = Math.round(blend * SKY_BLEND_STEPS);
+  if (
+    skyBlendStep !== lastSkyBlendStep ||
+    lastSkySeasonIndex !== seasonIndex
+  ) {
+    drawSeasonSky(current, next, skyBlendStep / SKY_BLEND_STEPS);
+    lastSkyBlendStep = skyBlendStep;
     lastSkySeasonIndex = seasonIndex;
   }
   scene.fog.color.copy(mix("fog"));
@@ -1184,7 +1200,7 @@ function updateSeasonEnvironment(distance) {
   if (visualSeasonIndex !== activeSeasonIndex) {
     activeSeasonIndex = visualSeasonIndex;
     const visualSeason = SEASONS[visualSeasonIndex];
-    recolorSeasonalMeshes(visualSeason);
+    recolorSeasonalMeshes(visualSeasonIndex);
     seasonalBackdropMeshes.forEach((mesh, index) => {
       mesh.visible = index === visualSeasonIndex;
     });
@@ -2060,7 +2076,10 @@ const clock = new THREE.Clock();
 let animTime = 0;
 const clamp01 = (value) => Math.min(Math.max(value, 0), 1);
 function animate() {
-  const delta = Math.min(clock.getDelta(), 0.05);
+  // Do not cap normal frame delays at 50 ms: that made the runner lose speed
+  // whenever rendering dipped below 20 FPS, including during season changes.
+  // Keep a larger safety cap for exceptional stalls (for example, a tab resume).
+  const delta = Math.min(clock.getDelta(), 0.1);
   const running = state.mode === "running";
   const attract = state.mode === "ready";
   if (running || attract) {
