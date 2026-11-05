@@ -62,6 +62,7 @@ app.innerHTML = `
           <div class="instruction-card"><strong>Avoid obstacles</strong><small>Jump over crates</small></div>
         </div>
         <button class="primary-button" id="play-button" type="button">START RUNNING</button>
+        <button class="secondary-button" id="ai-demo-button" type="button">WATCH AI DEMO</button>
       </section>
       <section class="game-overlay" id="pause-overlay" hidden>
         <p class="eyebrow">Run paused</p><h2>Take a breather.</h2>
