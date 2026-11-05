@@ -62,7 +62,6 @@ app.innerHTML = `
           <div class="instruction-card"><strong>Avoid obstacles</strong><small>Jump over crates</small></div>
         </div>
         <button class="primary-button" id="play-button" type="button">START RUNNING</button>
-        <button class="secondary-button" id="ai-demo-button" type="button">WATCH AI DEMO</button>
       </section>
       <section class="game-overlay" id="pause-overlay" hidden>
         <p class="eyebrow">Run paused</p><h2>Take a breather.</h2>
@@ -2018,7 +2017,6 @@ soundButton.addEventListener("click", () => {
 });
 window.addEventListener("pointerdown", unlockAudio);
 app.querySelector("#play-button").addEventListener("click", () => startRun(false));
-app.querySelector("#ai-demo-button").addEventListener("click", () => startRun(true));
 app.querySelector("#restart-button").addEventListener("click", () => startRun(false));
 app.querySelector("#share-result-button").addEventListener("click", (event) => {
   event.preventDefault();
