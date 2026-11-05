@@ -1158,6 +1158,10 @@ function updateSeasonEnvironment(distance) {
   const nextIndex = (seasonIndex + 1) % SEASONS.length;
   const current = SEASONS[seasonIndex];
   const next = SEASONS[nextIndex];
+  const mix = (key) =>
+    seasonColorMix
+      .set(current[key])
+      .lerp(seasonColorTarget.set(next[key]), blend);
   const visualSeasonIndex = blend >= 0.5 ? nextIndex : seasonIndex;
   const skyBlendStep = Math.round(blend * SKY_BLEND_STEPS);
   if (
