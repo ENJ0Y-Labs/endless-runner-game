@@ -1970,7 +1970,6 @@ function updateDemoBot() {
   }
 }
 function resetRun() {
-  demoDecisionLane = -1;
   state.lane = 1;
   state.elapsed = 0;
   state.distance = 0;
@@ -1984,7 +1983,6 @@ function resetRun() {
   state.crashElapsed = 0;
   state.fallIntoGap = false;
   state.fallElapsed = 0;
-  aiDecisionCooldown = 0;
   player.position.x = 0;
   player.position.y = 0.16;
   camera.position.x = 0;
@@ -2035,7 +2033,7 @@ app.querySelector("#share-result-button").addEventListener("click", (event) => {
   window.open(shareUrl.toString(), "_blank", "noopener,noreferrer");
 });
 app.querySelector("#resume-button").addEventListener("click", togglePause);
-app.querySelector("#pause-restart-button").addEventListener("click", startRun);
+app.querySelector("#pause-restart-button").addEventListener("click", () => startRun(false));
 pauseButton.addEventListener("click", togglePause);
 app.querySelector("#left-button").addEventListener("click", () => moveLane(-1));
 app.querySelector("#jump-button").addEventListener("click", jump);
