@@ -2127,7 +2127,6 @@ function animate() {
   // The pre-game attract mode is a real, computer-controlled run, not a static backdrop.
   const worldSpeed = running || attract ? state.speed : 0;
   const dz = delta * worldSpeed;
-  if (running) updateAi(delta);
   if (dz > 0) {
     animTime += delta;
     slabTexture.offset.y += dz / SLAB_DEPTH;
