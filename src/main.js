@@ -1985,6 +1985,8 @@ function resetRun() {
   state.aiDemo = false;
   state.crashObstacle = null;
   state.crashElapsed = 0;
+  state.fallIntoGap = false;
+  state.fallElapsed = 0;
   aiDecisionCooldown = 0;
   player.position.x = 0;
   player.position.y = 0.16;
@@ -2165,6 +2167,8 @@ function animate() {
       if (isOverGap && !clearsGap) {
         state.jumpHeight = 0;
         state.jumpVelocity = 0;
+        state.fallIntoGap = true;
+        state.fallElapsed = 0;
         setMode("gameover");
       }
     }
@@ -2267,6 +2271,11 @@ function animate() {
   const runBob =
     moving && state.jumpHeight === 0 ? Math.abs(Math.sin(stride)) * 0.07 : 0;
   player.position.y = 0.16 + state.jumpHeight + runBob;
+  if (state.fallIntoGap) {
+    state.fallElapsed += delta;
+    player.position.y = 0.16 - Math.min(state.fallElapsed * 5.2, 2.8);
+    rig.rotation.x += (0.48 - rig.rotation.x) * Math.min(delta * 5, 1);
+  }
   const swing = moving ? Math.sin(stride) * 0.95 : 0;
   limbs.legL.rotation.x = swing;
   limbs.legR.rotation.x = -swing;
