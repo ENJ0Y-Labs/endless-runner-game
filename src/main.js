@@ -27,13 +27,14 @@ app.innerHTML = `
         <a class="secondary-button" href="./?page=leaderboard">View leaderboard</a>
       </div>
     </section>
-    <header class="game-hud">
-      <span class="game-brand">RELIC RUSH <b>3D</b></span>
-      <div class="player-identity" id="player-identity" aria-live="polite"><span class="player-avatar" aria-hidden="true">R</span><span class="player-identity-copy"><strong id="player-name">Guest</strong><small id="player-account">Guest player</small></span><button class="sign-in-button" id="player-sign-in" type="button">Sign in</button></div>
-      <div class="hud-stats"><span>SCORE <strong id="score">0</strong></span><span>DISTANCE <strong id="distance">0 m</strong></span><span>RELICS <strong id="relics">0</strong></span><span>BEST <strong id="best-score">0</strong></span></div>
-      <span class="season-indicator" id="season-indicator" aria-live="polite">SPRING</span>
-      <button class="sound-button" id="sound-toggle" type="button" aria-label="Mute sound" aria-pressed="false">Sound on</button>
-      </header>
+    <header class="game-hud" id="game-hud" hidden>
+      <span class="startng-hud-label">START.NG</span>
+      <div class="hud-stats">
+        <span>DISTANCE <strong id="distance">0 m</strong></span>
+        <span>RELICS <strong id="relics">0</strong></span>
+        <span>BEST <strong id="best-score">0</strong></span>
+      </div>
+    </header>
       <div class="scene-container" aria-label="Three-dimensional endless runner game">
       <button class="pause-button" id="pause-button" type="button" aria-label="Pause game" title="Pause game" hidden>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" aria-hidden="true" focusable="false">
@@ -42,21 +43,25 @@ app.innerHTML = `
       </button>
       <div class="scene-loading" id="scene-loading" role="status" aria-live="polite"><span class="loading-indicator" aria-hidden="true"></span> Preparing your track…</div>
       <section class="game-overlay" id="start-overlay">
-        <p class="eyebrow">Start.ng game</p>
-        <p class="startng-branding">Play more on start.ng</p>
+        <div class="pre-game-topbar">
+          <button class="sound-button" id="sound-toggle" type="button" aria-label="Mute sound" aria-pressed="false">SOUND ON</button>
+          <div class="player-identity" id="player-identity" aria-live="polite">
+            <span class="player-avatar" aria-hidden="true">G</span>
+            <span class="player-identity-copy">
+              <strong id="player-name">GUEST</strong>
+              <small id="player-account" hidden>Guest player</small>
+            </span>
+            <button class="sign-in-button" id="player-sign-in" type="button" aria-label="Sign in to Start.ng" title="Sign in to Start.ng">T</button>
+          </div>
+        </div>
         <h1 class="title-art" aria-label="Relic Rush 3D"><span class="t-line" aria-hidden="true">Relic</span><span class="t-line" aria-hidden="true">Rush <span class="t-3d">3D</span></span></h1>
-        <p>Switch lanes, dodge danger, and collect relics.</p>
         <div class="instruction-grid" aria-label="How to play">
-          <div class="instruction-card"><span class="instruction-icon" aria-hidden="true">← →</span><strong>Switch lanes</strong><small>Arrow keys or A / D</small></div>
-          <div class="instruction-card"><span class="instruction-icon" aria-hidden="true">↑</span><strong>Jump</strong><small>Space, Up Arrow, or swipe up</small></div>
-          <div class="instruction-card"><span class="instruction-icon" aria-hidden="true">✦</span><strong>Collect relics</strong><small>Each relic adds 100 points</small></div>
-          <div class="instruction-card"><span class="instruction-icon" aria-hidden="true">!</span><strong>Avoid obstacles</strong><small>Jump over crates</small></div>
+          <div class="instruction-card"><strong>Switch lanes</strong><small>Arrow keys or A/D</small></div>
+          <div class="instruction-card"><strong>Jump</strong><small>Space, Up, or swipe up</small></div>
+          <div class="instruction-card"><strong>Collect relics</strong><small>+100 points each</small></div>
+          <div class="instruction-card"><strong>Avoid obstacles</strong><small>Jump over crates</small></div>
         </div>
-        <div class="overlay-actions start-actions">
-          <button class="primary-button" id="play-button" type="button">Start running</button>
-          <button class="secondary-button" id="ai-demo-button" type="button">Watch AI demo</button>
-        </div>
-        <p class="overlay-hint">On mobile, swipe to move or use the on-screen controls to move and jump.</p>
+        <button class="primary-button" id="play-button" type="button">START RUNNING</button>
       </section>
       <section class="game-overlay" id="pause-overlay" hidden>
         <p class="eyebrow">Run paused</p><h2>Take a breather.</h2>
@@ -81,7 +86,7 @@ app.innerHTML = `
         <button type="button" id="right-button" aria-label="Move right">→</button>
       </div>
     </div>
-    <footer class="scene-help"><span class="help-key">A</span><span class="help-key">D</span><span class="help-key">Space / ↑</span><span>Move between lanes and jump · Swipe on mobile</span></footer>
+
     <section class="story-teaser" aria-labelledby="story-teaser-title">
       <div class="story-teaser-art" aria-hidden="true">
         <span class="story-road-line"></span>
@@ -1079,42 +1084,63 @@ const SEASONS = [
     shaftOpacity: 0.025,
   },
 ];
-const seasonIndicator = app.querySelector("#season-indicator");
+
 let activeSeasonIndex = -1;
 let lastSkySeasonIndex = -1;
+let lastSkyBlendStep = -1;
+const SKY_BLEND_STEPS = 60;
 const seasonColorTarget = new THREE.Color();
 const seasonColorMix = new THREE.Color();
-function recolorSeasonalMeshes(season) {
-  for (const mesh of seasonalMeshes) {
-    const geometry = mesh.geometry;
-    const colors = geometry.getAttribute("color");
-    const base = geometry.userData.baseVertexColors;
-    if (!colors || !base) continue;
-    const output = colors.array;
-    const foliage = new THREE.Color(season.foliage);
-    const stone = new THREE.Color(season.stone);
+
+// Build each seasonal vertex-colour variant once, before gameplay starts.
+// Switching seasons then copies cached data instead of recalculating every vertex mid-run.
+const seasonalVertexColors = SEASONS.map((season) => {
+  const foliage = new THREE.Color(season.foliage);
+  const stone = new THREE.Color(season.stone);
+  return seasonalMeshes.map((mesh) => {
+    const base = mesh.geometry.userData.baseVertexColors;
+    if (!base) return null;
+    const colors = new Float32Array(base.length);
     for (let i = 0; i < base.length; i += 3) {
       const r = base[i];
       const g = base[i + 1];
       const b = base[i + 2];
       if (g > r * 1.18 && g > b * 1.08) {
         const brightness = Math.min(1.25, Math.max(0.62, (r + g + b) / 0.36));
-        output[i] = foliage.r * brightness;
-        output[i + 1] = foliage.g * brightness;
-        output[i + 2] = foliage.b * brightness;
+        colors[i] = foliage.r * brightness;
+        colors[i + 1] = foliage.g * brightness;
+        colors[i + 2] = foliage.b * brightness;
       } else {
         const tintAmount = season.stoneBlend;
-        output[i] = r + (stone.r - r) * tintAmount;
-        output[i + 1] = g + (stone.g - g) * tintAmount;
-        output[i + 2] = b + (stone.b - b) * tintAmount;
+        colors[i] = r + (stone.r - r) * tintAmount;
+        colors[i + 1] = g + (stone.g - g) * tintAmount;
+        colors[i + 2] = b + (stone.b - b) * tintAmount;
       }
     }
+    return colors;
+  });
+});
+
+function recolorSeasonalMeshes(seasonIndex) {
+  for (const [meshIndex, mesh] of seasonalMeshes.entries()) {
+    const colors = mesh.geometry.getAttribute("color");
+    const cachedColors = seasonalVertexColors[seasonIndex][meshIndex];
+    if (!colors || !cachedColors) continue;
+    colors.array.set(cachedColors);
     colors.needsUpdate = true;
   }
 }
-function drawSeasonSky(stops) {
+function drawSeasonSky(current, next, blend) {
   const gradient = skyContext.createLinearGradient(0, 0, 0, skyCanvas.height);
-  for (const [offset, color] of stops) gradient.addColorStop(offset, color);
+  for (let index = 0; index < current.sky.length; index += 1) {
+    const [offset, from] = current.sky[index];
+    const to = next.sky[index][1];
+    const color = seasonColorMix
+      .set(from)
+      .lerp(seasonColorTarget.set(to), blend)
+      .getStyle();
+    gradient.addColorStop(offset, color);
+  }
   skyContext.fillStyle = gradient;
   skyContext.fillRect(0, 0, skyCanvas.width, skyCanvas.height);
   scene.background.needsUpdate = true;
@@ -1132,19 +1158,18 @@ function updateSeasonEnvironment(distance) {
   const nextIndex = (seasonIndex + 1) % SEASONS.length;
   const current = SEASONS[seasonIndex];
   const next = SEASONS[nextIndex];
-  const visualSeasonIndex = blend >= 0.5 ? nextIndex : seasonIndex;
   const mix = (key) =>
     seasonColorMix
       .set(current[key])
       .lerp(seasonColorTarget.set(next[key]), blend);
-  const colorHex = (from, to) =>
-    `#${seasonColorMix.set(from).lerp(seasonColorTarget.set(to), blend).getHexString()}`;
-  const sky = current.sky.map(([offset, color], index) => [
-    offset,
-    colorHex(color, next.sky[index][1]),
-  ]);
-  if (blend > 0 || lastSkySeasonIndex !== seasonIndex) {
-    drawSeasonSky(sky);
+  const visualSeasonIndex = blend >= 0.5 ? nextIndex : seasonIndex;
+  const skyBlendStep = Math.round(blend * SKY_BLEND_STEPS);
+  if (
+    skyBlendStep !== lastSkyBlendStep ||
+    lastSkySeasonIndex !== seasonIndex
+  ) {
+    drawSeasonSky(current, next, skyBlendStep / SKY_BLEND_STEPS);
+    lastSkyBlendStep = skyBlendStep;
     lastSkySeasonIndex = seasonIndex;
   }
   scene.fog.color.copy(mix("fog"));
@@ -1178,10 +1203,7 @@ function updateSeasonEnvironment(distance) {
   );
   if (visualSeasonIndex !== activeSeasonIndex) {
     activeSeasonIndex = visualSeasonIndex;
-    const visualSeason = SEASONS[visualSeasonIndex];
-    seasonIndicator.textContent = visualSeason.name.toUpperCase();
-    seasonIndicator.dataset.season = visualSeason.name.toLowerCase();
-    recolorSeasonalMeshes(visualSeason);
+    recolorSeasonalMeshes(visualSeasonIndex);
     seasonalBackdropMeshes.forEach((mesh, index) => {
       mesh.visible = index === visualSeasonIndex;
     });
@@ -1288,7 +1310,7 @@ function acquire(pool) {
   for (let i = 0; i < pool.length; i++) if (!pool[i].active) return pool[i];
   return null;
 }
-function placeObstacle(lane, z, elapsed = state.elapsed) {
+function placeObstacle(lane, z, elapsed = state.elapsed, allowMovement = true) {
   const item = acquire(obstaclePool);
   if (!item) return;
   item.lane = lane;
@@ -1305,9 +1327,9 @@ function placeObstacle(lane, z, elapsed = state.elapsed) {
   item.mesh.visible = true;
   item.active = true;
 
-  // Moving crates are common enough to be noticed, but remain readable from a distance.
-  const movementChance = 0.28 + 0.24 * difficulty(elapsed);
-  if (z < CFG.playerZ - 18 && Math.random() < movementChance) {
+  // Some crates shift one lane later in a run, while they are still far away.
+  const movementChance = 0.12 + 0.1 * difficulty(elapsed);
+  if (allowMovement && z < CFG.playerZ - 18 && Math.random() < movementChance) {
     const safeTargets = [0, 1, 2].filter(
       (candidate) =>
         candidate !== lane &&
@@ -1361,7 +1383,7 @@ const difficulty = (elapsed) =>
 const currentGap = (elapsed) =>
   Math.max(CFG.minRowGap, CFG.maxRowGap - elapsed * CFG.rowGapShrinkPerSecond);
 function spawnRow(z, gap, elapsed, attract) {
-  let free = 1;
+  let free = attract ? Math.floor(Math.random() * CFG.laneCount) : 1;
   if (!attract) {
     const reachable = [0, 1, 2].filter((lane) =>
       spawn.openLanes.every((open) => Math.abs(lane - open) <= 1),
@@ -1380,7 +1402,7 @@ function spawnRow(z, gap, elapsed, attract) {
   } else {
     obstructed = [others[Math.floor(Math.random() * others.length)]];
   }
-  for (const lane of obstructed) placeObstacle(lane, z);
+  for (const lane of obstructed) placeObstacle(lane, z, elapsed, !attract);
 
   // Leave a clear approach before every gap; gaps are uncommon and span the whole track.
   if (!attract && Math.random() < 0.075) {
@@ -1821,10 +1843,10 @@ function triggerHaptic(kind) {
 }
 syncSoundButton();
 const startOverlay = app.querySelector("#start-overlay");
+const gameHud = app.querySelector("#game-hud");
 const pauseOverlay = app.querySelector("#pause-overlay");
 const gameoverOverlay = app.querySelector("#gameover-overlay");
 const pauseButton = app.querySelector("#pause-button");
-const scoreElement = app.querySelector("#score");
 const distanceElement = app.querySelector("#distance");
 const relicsElement = app.querySelector("#relics");
 const bestScoreElement = app.querySelector("#best-score");
@@ -1833,15 +1855,11 @@ const hideOverlays = () => {
   pauseOverlay.hidden = true;
   gameoverOverlay.hidden = true;
 };
-const hud = { score: -1, distance: -1, relics: -1, best: -1 };
+const hud = { distance: -1, relics: -1, best: -1 };
 function updateHud() {
   // Only touch the DOM when a value changed; this runs every frame.
   const distance = Math.floor(state.distance);
   const best = state.bestRun?.score ?? 0;
-  if (hud.score !== state.score) {
-    hud.score = state.score;
-    scoreElement.textContent = String(state.score);
-  }
   if (hud.distance !== distance) {
     hud.distance = distance;
     distanceElement.textContent = `${distance} m`;
@@ -1864,6 +1882,7 @@ function setMode(mode) {
     triggerHaptic("crash");
   }
   container.dataset.mode = mode;
+  gameHud.hidden = mode === "ready";
   hideOverlays();
   pauseButton.hidden = mode !== "running";
   if (mode === "ready") startOverlay.hidden = false;
@@ -1918,62 +1937,40 @@ function jump() {
     return;
   state.jumpVelocity = CFG.jumpInitialVelocity;
 }
-
-// The demo controller only issues the same lane and jump commands available to a player.
-// It reads hazards that are already in the world; it never changes the runner's position.
-let aiDecisionCooldown = 0;
-function updateAi(delta) {
-  if (!state.aiDemo || state.mode !== "running") return;
-  aiDecisionCooldown -= delta;
-  if (aiDecisionCooldown > 0) return;
-  aiDecisionCooldown = 0.14;
-
-  const distanceToPlayer = (z) => CFG.playerZ - z;
-  const nearestGap = gapPool
-    .filter((item) => item.active)
-    .map((item) => ({ item, distance: distanceToPlayer(item.mesh.position.z) }))
-    .filter(({ distance }) => distance > 2.5 && distance < 13)
-    .sort((a, b) => a.distance - b.distance)[0];
-
-  // Gaps span the full track, so the only legal response is a properly timed jump.
-  if (nearestGap && nearestGap.distance < 9.5) {
-    jump();
+// The attract-mode runner follows the same lane limits and obstacle positions as a player.
+function updateDemoBot() {
+  const lookAhead = Math.max(10, state.speed * 1.15);
+  let nextRowZ = -Infinity;
+  for (const item of obstaclePool) {
+    if (!item.active) continue;
+    const z = item.mesh.position.z;
+    const distance = CFG.playerZ - z;
+    if (distance > 2.5 && distance < lookAhead && z > nextRowZ) {
+      nextRowZ = z;
+    }
+  }
+  if (!Number.isFinite(nextRowZ)) {
     return;
   }
 
-  const threats = obstaclePool
-    .filter((item) => item.active && !item.falling)
-    .map((item) => ({
-      item,
-      distance: distanceToPlayer(item.mesh.position.z),
-      lanes: item.moving ? [item.lane, item.targetLane] : [item.lane],
-    }))
-    .filter(({ distance }) => distance > 2.5 && distance < 15)
-    .sort((a, b) => a.distance - b.distance);
-
-  const threat = threats.find(({ lanes }) => lanes.includes(state.lane));
-  if (!threat) return;
-
   const blockedLanes = new Set(
-    threats
-      .filter(({ distance }) => Math.abs(distance - threat.distance) < 4.2)
-      .flatMap(({ lanes }) => lanes),
+    obstaclePool
+      .filter((item) => item.active && Math.abs(item.mesh.position.z - nextRowZ) < 3.5)
+      .map((item) => item.lane),
   );
   const safeLanes = [0, 1, 2].filter((lane) => !blockedLanes.has(lane));
-  if (safeLanes.length) {
-    const destination = safeLanes.sort(
-      (a, b) => Math.abs(a - state.lane) - Math.abs(b - state.lane),
-    )[0];
-    if (destination !== state.lane) {
-      moveLane(Math.sign(destination - state.lane));
-      return;
-    }
-  }
+  if (!safeLanes.length) return;
 
-  // If there is no open lane, attempt a jump at the same time a human could.
-  if (threat.distance < 7.2) jump();
+  const currentLane = state.lane;
+  const bestLane = safeLanes.reduce((best, lane) =>
+    Math.abs(lane - currentLane) < Math.abs(best - currentLane) ? lane : best,
+  );
+  if (bestLane !== currentLane) {
+    state.lane = bestLane;
+  }
 }
 function resetRun() {
+  demoDecisionLane = -1;
   state.lane = 1;
   state.elapsed = 0;
   state.distance = 0;
@@ -2105,14 +2102,18 @@ const clock = new THREE.Clock();
 let animTime = 0;
 const clamp01 = (value) => Math.min(Math.max(value, 0), 1);
 function animate() {
-  const delta = Math.min(clock.getDelta(), 0.05);
+  // Do not cap normal frame delays at 50 ms: that made the runner lose speed
+  // whenever rendering dipped below 20 FPS, including during season changes.
+  // Keep a larger safety cap for exceptional stalls (for example, a tab resume).
+  const delta = Math.min(clock.getDelta(), 0.1);
   const running = state.mode === "running";
   const attract = state.mode === "ready";
-  if (running) {
+  if (running || attract) {
     state.elapsed += delta;
-    // Speed ramps up gradually, with a sensible cap to keep late-game control possible.
+    // The preview starts gently, then accelerates using the same cap as a real run.
+    const startingSpeed = attract ? CFG.attractSpeed : CFG.initialSpeed;
     state.speed = Math.min(
-      CFG.initialSpeed + state.elapsed * CFG.speedIncreasePerSecond,
+      startingSpeed + state.elapsed * CFG.speedIncreasePerSecond,
       CFG.maximumSpeed,
     );
     state.distance += delta * state.speed;
@@ -2126,8 +2127,8 @@ function animate() {
     }
   }
   updateSeasonEnvironment(state.distance);
-  // The world also scrolls slowly behind the start screen; paused and game-over freeze it.
-  const worldSpeed = running ? state.speed : attract ? CFG.attractSpeed : 0;
+  // The pre-game attract mode is a real, computer-controlled run, not a static backdrop.
+  const worldSpeed = running || attract ? state.speed : 0;
   const dz = delta * worldSpeed;
   if (running) updateAi(delta);
   if (dz > 0) {
@@ -2138,7 +2139,7 @@ function animate() {
       if (item.group.position.z > 12) item.group.position.z -= SEGMENT_SPAN;
     }
     spawn.frontier += dz;
-    streamWorld(state.elapsed, attract);
+    streamWorld(attract ? 0 : state.elapsed, attract);
   }
   for (const flame of flames) {
     flame.scale.set(
@@ -2148,6 +2149,7 @@ function animate() {
     );
   }
 
+  if (attract) updateDemoBot();
   const playerX = player.position.x;
 
   for (const item of gapPool) {
@@ -2244,7 +2246,7 @@ function animate() {
       item.group.position.y =
         1.15 + Math.sin(clock.elapsedTime * 4 + item.phase) * 0.12;
     }
-    if (state.mode === "running") {
+    if (running || attract) {
       const relativeZ = z - CFG.playerZ;
       if (
         relativeZ > CFG.relicHitZ[0] &&
@@ -2253,8 +2255,10 @@ function animate() {
       ) {
         item.active = false;
         item.group.visible = false;
-        state.relics += 1;
-        playSound("relic");
+        if (running) {
+          state.relics += 1;
+          playSound("relic");
+        }
       }
     }
   }
