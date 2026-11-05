@@ -27,13 +27,14 @@ app.innerHTML = `
         <a class="secondary-button" href="./?page=leaderboard">View leaderboard</a>
       </div>
     </section>
-    <header class="game-hud">
-      <span class="game-brand">RELIC RUSH <b>3D</b></span>
-      <div class="player-identity" id="player-identity" aria-live="polite"><span class="player-avatar" aria-hidden="true">R</span><span class="player-identity-copy"><strong id="player-name">Guest</strong><small id="player-account">Guest player</small></span><button class="sign-in-button" id="player-sign-in" type="button">Sign in</button></div>
-      <div class="hud-stats"><span>SCORE <strong id="score">0</strong></span><span>DISTANCE <strong id="distance">0 m</strong></span><span>RELICS <strong id="relics">0</strong></span><span>BEST <strong id="best-score">0</strong></span></div>
-      <span class="season-indicator" id="season-indicator" aria-live="polite">SPRING</span>
-      <button class="sound-button" id="sound-toggle" type="button" aria-label="Mute sound" aria-pressed="false">Sound on</button>
-      </header>
+    <header class="game-hud" id="game-hud" hidden>
+      <span class="startng-hud-label">START.NG</span>
+      <div class="hud-stats">
+        <span>DISTANCE <strong id="distance">0 m</strong></span>
+        <span>RELICS <strong id="relics">0</strong></span>
+        <span>BEST <strong id="best-score">0</strong></span>
+      </div>
+    </header>
       <div class="scene-container" aria-label="Three-dimensional endless runner game">
       <button class="pause-button" id="pause-button" type="button" aria-label="Pause game" title="Pause game" hidden>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" aria-hidden="true" focusable="false">
@@ -42,18 +43,25 @@ app.innerHTML = `
       </button>
       <div class="scene-loading" id="scene-loading" role="status" aria-live="polite"><span class="loading-indicator" aria-hidden="true"></span> Preparing your track…</div>
       <section class="game-overlay" id="start-overlay">
-        <p class="eyebrow">Start.ng game</p>
-        <p class="startng-branding">Play more on start.ng</p>
-        <h1 class="title-art" aria-label="Relic Rush 3D"><span class="t-line" aria-hidden="true">Relic</span><span class="t-line" aria-hidden="true">Rush <span class="t-3d">3D</span></span></h1>
-        <p>Switch lanes, dodge danger, and collect relics.</p>
-        <div class="instruction-grid" aria-label="How to play">
-          <div class="instruction-card"><span class="instruction-icon" aria-hidden="true">← →</span><strong>Switch lanes</strong><small>Arrow keys or A / D</small></div>
-          <div class="instruction-card"><span class="instruction-icon" aria-hidden="true">↑</span><strong>Jump</strong><small>Space, Up Arrow, or swipe up</small></div>
-          <div class="instruction-card"><span class="instruction-icon" aria-hidden="true">✦</span><strong>Collect relics</strong><small>Each relic adds 100 points</small></div>
-          <div class="instruction-card"><span class="instruction-icon" aria-hidden="true">!</span><strong>Avoid obstacles</strong><small>Jump over crates</small></div>
+        <div class="pre-game-topbar">
+          <button class="sound-button" id="sound-toggle" type="button" aria-label="Mute sound" aria-pressed="false">SOUND ON</button>
+          <div class="player-identity" id="player-identity" aria-live="polite">
+            <span class="player-avatar" aria-hidden="true">G</span>
+            <span class="player-identity-copy">
+              <strong id="player-name">GUEST</strong>
+              <small id="player-account" hidden>Guest player</small>
+            </span>
+            <button class="sign-in-button" id="player-sign-in" type="button" aria-label="Sign in to Start.ng" title="Sign in to Start.ng">T</button>
+          </div>
         </div>
-        <button class="primary-button" id="play-button" type="button">Start running</button>
-        <p class="overlay-hint">On mobile, swipe to move or use the on-screen controls to move and jump.</p>
+        <h1 class="title-art" aria-label="Relic Rush 3D"><span class="t-line" aria-hidden="true">Relic</span><span class="t-line" aria-hidden="true">Rush <span class="t-3d">3D</span></span></h1>
+        <div class="instruction-grid" aria-label="How to play">
+          <div class="instruction-card"><strong>Switch lanes</strong><small>Arrow keys or A/D</small></div>
+          <div class="instruction-card"><strong>Jump</strong><small>Space, Up, or swipe up</small></div>
+          <div class="instruction-card"><strong>Collect relics</strong><small>+100 points each</small></div>
+          <div class="instruction-card"><strong>Avoid obstacles</strong><small>Jump over crates</small></div>
+        </div>
+        <button class="primary-button" id="play-button" type="button">START RUNNING</button>
       </section>
       <section class="game-overlay" id="pause-overlay" hidden>
         <p class="eyebrow">Run paused</p><h2>Take a breather.</h2>
@@ -78,7 +86,7 @@ app.innerHTML = `
         <button type="button" id="right-button" aria-label="Move right">→</button>
       </div>
     </div>
-    <footer class="scene-help"><span class="help-key">A</span><span class="help-key">D</span><span class="help-key">Space / ↑</span><span>Move between lanes and jump · Swipe on mobile</span></footer>
+
     <section class="story-teaser" aria-labelledby="story-teaser-title">
       <div class="story-teaser-art" aria-hidden="true">
         <span class="story-road-line"></span>
@@ -1076,7 +1084,7 @@ const SEASONS = [
     shaftOpacity: 0.025,
   },
 ];
-const seasonIndicator = app.querySelector("#season-indicator");
+
 let activeSeasonIndex = -1;
 let lastSkySeasonIndex = -1;
 const seasonColorTarget = new THREE.Color();
@@ -1805,10 +1813,10 @@ function triggerHaptic(kind) {
 }
 syncSoundButton();
 const startOverlay = app.querySelector("#start-overlay");
+const gameHud = app.querySelector("#game-hud");
 const pauseOverlay = app.querySelector("#pause-overlay");
 const gameoverOverlay = app.querySelector("#gameover-overlay");
 const pauseButton = app.querySelector("#pause-button");
-const scoreElement = app.querySelector("#score");
 const distanceElement = app.querySelector("#distance");
 const relicsElement = app.querySelector("#relics");
 const bestScoreElement = app.querySelector("#best-score");
@@ -1817,15 +1825,11 @@ const hideOverlays = () => {
   pauseOverlay.hidden = true;
   gameoverOverlay.hidden = true;
 };
-const hud = { score: -1, distance: -1, relics: -1, best: -1 };
+const hud = { distance: -1, relics: -1, best: -1 };
 function updateHud() {
   // Only touch the DOM when a value changed; this runs every frame.
   const distance = Math.floor(state.distance);
   const best = state.bestRun?.score ?? 0;
-  if (hud.score !== state.score) {
-    hud.score = state.score;
-    scoreElement.textContent = String(state.score);
-  }
   if (hud.distance !== distance) {
     hud.distance = distance;
     distanceElement.textContent = `${distance} m`;
@@ -1848,6 +1852,7 @@ function setMode(mode) {
     triggerHaptic("crash");
   }
   container.dataset.mode = mode;
+  gameHud.hidden = mode === "ready";
   hideOverlays();
   pauseButton.hidden = mode !== "running";
   if (mode === "ready") startOverlay.hidden = false;
