@@ -1184,8 +1184,6 @@ function updateSeasonEnvironment(distance) {
   if (visualSeasonIndex !== activeSeasonIndex) {
     activeSeasonIndex = visualSeasonIndex;
     const visualSeason = SEASONS[visualSeasonIndex];
-    seasonIndicator.textContent = visualSeason.name.toUpperCase();
-    seasonIndicator.dataset.season = visualSeason.name.toLowerCase();
     recolorSeasonalMeshes(visualSeason);
     seasonalBackdropMeshes.forEach((mesh, index) => {
       mesh.visible = index === visualSeasonIndex;
