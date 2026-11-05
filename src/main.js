@@ -4,8 +4,29 @@ import "./style.css";
 import { GAME_CONFIG as CFG } from "./game/config.js";
 
 const app = document.querySelector("#app");
+const requestedPage = new URLSearchParams(window.location.search).get("page");
+const page = ["play", "leaderboard", "story"].includes(requestedPage) ? requestedPage : "welcome";
+document.body.dataset.page = page;
+
 app.innerHTML = `
   <main class="game-shell">
+    <nav class="page-nav" aria-label="Main navigation">
+      <a class="page-nav-brand" href="./">RELIC RUSH <b>3D</b></a>
+      <div class="page-nav-links">
+        <a href="./?page=play" ${page === "play" ? 'aria-current="page"' : ""}>Play</a>
+        <a href="./?page=leaderboard" ${page === "leaderboard" ? 'aria-current="page"' : ""}>Leaderboard</a>
+        <a href="./?page=story" ${page === "story" ? 'aria-current="page"' : ""}>Story</a>
+      </div>
+    </nav>
+    <section class="welcome-page" aria-labelledby="welcome-title">
+      <p class="eyebrow">A three-lane endless runner</p>
+      <h1 id="welcome-title" class="title-art">Relic Rush <span class="t-3d">3D</span></h1>
+      <p>Run through ancient worlds, dodge obstacles, and collect relics. Your next run starts on the track, not inside a crowded menu.</p>
+      <div class="welcome-actions">
+        <a class="primary-button" href="./?page=play">Play full screen</a>
+        <a class="secondary-button" href="./?page=leaderboard">View leaderboard</a>
+      </div>
+    </section>
     <header class="game-hud">
       <span class="game-brand">RELIC RUSH <b>3D</b></span>
       <div class="player-identity" id="player-identity" aria-live="polite"><span class="player-avatar" aria-hidden="true">R</span><span class="player-identity-copy"><strong id="player-name">Guest</strong><small id="player-account">Guest player</small></span><button class="sign-in-button" id="player-sign-in" type="button">Sign in</button></div>
