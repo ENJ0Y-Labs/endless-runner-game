@@ -27,7 +27,7 @@ function setStatus(message, isError = false) {
   status.dataset.error = String(isError);
 }
 async function api(path, options = {}) {
-  if (!API_BASE) throw new Error("Admin API URL is not configured. Set window.RELIC_RUSH_ADMIN_API in public/admin-config.js.");
+  if (!API_BASE) throw new Error("The admin service has not been connected yet. Deploy the admin-api service, then set its public HTTPS URL in public/admin-config.js (window.RELIC_RUSH_ADMIN_API).");
   const session = captureSession();
   if (!session) throw new Error("Your Start.ng session is missing. Sign in again.");
   const response = await fetch(`${API_BASE}${path}`, {
@@ -129,6 +129,13 @@ async function loadDashboard() {
   setStatus(`Loaded ${allPlayers.length} known players.`);
 }
 async function boot() {
+  if (!API_BASE) {
+    signedOut.hidden = true;
+    dashboard.hidden = false;
+    setStatus("Admin service setup is incomplete. Deploy admin-api with PostgreSQL, then set its HTTPS URL in public/admin-config.js. The admin menu stays hidden until the owner is verified.", true);
+    document.querySelector("#refresh").disabled = true;
+    return;
+  }
   const session = captureSession();
   if (!session) {
     signedOut.hidden = false;
