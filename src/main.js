@@ -23,7 +23,7 @@ app.innerHTML = `
       <h1 id="welcome-title" class="title-art">Relic Rush <span class="t-3d">3D</span></h1>
       <p>Run through ancient worlds, dodge obstacles, and collect relics. Your next run starts on the track, not inside a crowded menu.</p>
       <div class="welcome-actions">
-        <a class="primary-button" href="./?page=play">Play full screen</a>
+        <a class="primary-button welcome-play-button" href="./?page=play">Play</a>
         <a class="secondary-button" href="./?page=leaderboard">View leaderboard</a>
       </div>
     </section>
@@ -57,9 +57,10 @@ app.innerHTML = `
       </section>
       <section class="game-overlay" id="pause-overlay" hidden>
         <p class="eyebrow">Run paused</p><h2>Take a breather.</h2>
-        <div class="overlay-actions">
+        <div class="overlay-actions pause-actions">
           <button class="primary-button" id="resume-button" type="button">Resume</button>
-          <button class="secondary-button" id="pause-restart-button" type="button">Restart run</button>
+          <a class="secondary-button" href="./">Main menu</a>
+          <button class="quiet-button" id="pause-restart-button" type="button">Restart run</button>
         </div>
       </section>
       <section class="game-overlay" id="gameover-overlay" hidden>
