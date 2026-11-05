@@ -17,7 +17,7 @@ async function syncPlayerWithAdminDirectory() {
   const session = sessionStorage.getItem("relic_rush_startng_session");
   if (!apiBase || !session) return;
   try {
-    await fetch(`${apiBase.replace(/\\/$/, "")}/api/players/sync`, {
+    await fetch(`${apiBase.endsWith("/") ? apiBase.slice(0, -1) : apiBase}/api/players/sync`, {
       method: "POST",
       headers: { Authorization: `Bearer ${session}` },
     });
@@ -37,6 +37,7 @@ app.innerHTML = `
         <a href="./?page=play" ${page === "play" ? 'aria-current="page"' : ""}>Play</a>
         <a href="./?page=leaderboard" ${page === "leaderboard" ? 'aria-current="page"' : ""}>Leaderboard</a>
         <a href="./?page=story" ${page === "story" ? 'aria-current="page"' : ""}>Story</a>
+        <a href="./admin/">Admin</a>
       </div>
     </nav>
     <section class="welcome-page" aria-labelledby="welcome-title">
