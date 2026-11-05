@@ -17,10 +17,14 @@ async function syncPlayerWithAdminDirectory() {
   const session = sessionStorage.getItem("relic_rush_startng_session");
   if (!apiBase || !session) return;
   try {
-    await fetch(`${apiBase.endsWith("/") ? apiBase.slice(0, -1) : apiBase}/api/players/sync`, {
+    const response = await fetch(`${apiBase.endsWith("/") ? apiBase.slice(0, -1) : apiBase}/api/players/sync`, {
       method: "POST",
       headers: { Authorization: `Bearer ${session}` },
     });
+    if (!response.ok) return;
+    const identity = await response.json();
+    const adminLink = document.querySelector("#admin-nav-link");
+    if (adminLink) adminLink.hidden = identity.isOwner !== true;
   } catch {
     // Admin tracking is optional and must never interrupt gameplay.
   }
@@ -37,7 +41,7 @@ app.innerHTML = `
         <a href="./?page=play" ${page === "play" ? 'aria-current="page"' : ""}>Play</a>
         <a href="./?page=leaderboard" ${page === "leaderboard" ? 'aria-current="page"' : ""}>Leaderboard</a>
         <a href="./?page=story" ${page === "story" ? 'aria-current="page"' : ""}>Story</a>
-        <a href="./admin/">Admin</a>
+        <a id="admin-nav-link" href="./admin/" hidden>Admin</a>
       </div>
     </nav>
     <section class="welcome-page" aria-labelledby="welcome-title">
