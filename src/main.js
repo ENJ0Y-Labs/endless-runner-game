@@ -52,7 +52,10 @@ app.innerHTML = `
           <div class="instruction-card"><span class="instruction-icon" aria-hidden="true">✦</span><strong>Collect relics</strong><small>Each relic adds 100 points</small></div>
           <div class="instruction-card"><span class="instruction-icon" aria-hidden="true">!</span><strong>Avoid obstacles</strong><small>Jump over crates</small></div>
         </div>
-        <button class="primary-button" id="play-button" type="button">Start running</button>
+        <div class="overlay-actions start-actions">
+          <button class="primary-button" id="play-button" type="button">Start running</button>
+          <button class="secondary-button" id="ai-demo-button" type="button">Watch AI demo</button>
+        </div>
         <p class="overlay-hint">On mobile, swipe to move or use the on-screen controls to move and jump.</p>
       </section>
       <section class="game-overlay" id="pause-overlay" hidden>
@@ -1256,6 +1259,8 @@ function createObstacle() {
     moving: false,
     shiftStarted: false,
     shiftProgress: 0,
+    fallVelocity: 0,
+    falling: false,
   };
 }
 function createRelic() {
@@ -1292,13 +1297,16 @@ function placeObstacle(lane, z, elapsed = state.elapsed) {
   item.moving = false;
   item.shiftStarted = false;
   item.shiftProgress = 0;
+  item.falling = false;
+  item.fallVelocity = 0;
+  item.mesh.rotation.set(0, 0, 0);
   item.mesh.position.set(LANE_X[lane], 0.11, z);
   item.mesh.scale.setScalar(0.01);
   item.mesh.visible = true;
   item.active = true;
 
-  // Some crates shift one lane later in a run, while they are still far away.
-  const movementChance = 0.12 + 0.1 * difficulty(elapsed);
+  // Moving crates are common enough to be noticed, but remain readable from a distance.
+  const movementChance = 0.28 + 0.24 * difficulty(elapsed);
   if (z < CFG.playerZ - 18 && Math.random() < movementChance) {
     const safeTargets = [0, 1, 2].filter(
       (candidate) =>
@@ -1333,6 +1341,10 @@ function hideWorldObjects() {
   for (const item of obstaclePool) {
     item.active = false;
     item.mesh.visible = false;
+    item.falling = false;
+    item.fallVelocity = 0;
+    item.mesh.position.y = 0.11;
+    item.mesh.rotation.set(0, 0, 0);
   }
   for (const item of relicPool) {
     item.active = false;
@@ -1604,6 +1616,10 @@ function refreshLeaderboard() {
     });
 }
 async function saveCompletedRun(result) {
+  if (result.demo) {
+    scoreSaveMessage.textContent = "AI demonstration complete. Demo scores are not submitted.";
+    return;
+  }
   if (!isStartNgSignedIn) {
     scoreSaveMessage.textContent =
       "Guest run not saved. Sign in to Start.ng to save your best score.";
@@ -1866,7 +1882,9 @@ function setMode(mode) {
       if (!state.bestRun || result.score > state.bestRun.score)
         state.bestRun = result;
       window.dispatchEvent(
-        new CustomEvent("relicrush:run-finished", { detail: { ...result } }),
+        new CustomEvent("relicrush:run-finished", {
+          detail: { ...result, demo: state.aiDemo },
+        }),
       );
     }
     app.querySelector("#final-score").textContent = String(state.score);
@@ -1900,6 +1918,61 @@ function jump() {
     return;
   state.jumpVelocity = CFG.jumpInitialVelocity;
 }
+
+// The demo controller only issues the same lane and jump commands available to a player.
+// It reads hazards that are already in the world; it never changes the runner's position.
+let aiDecisionCooldown = 0;
+function updateAi(delta) {
+  if (!state.aiDemo || state.mode !== "running") return;
+  aiDecisionCooldown -= delta;
+  if (aiDecisionCooldown > 0) return;
+  aiDecisionCooldown = 0.14;
+
+  const distanceToPlayer = (z) => CFG.playerZ - z;
+  const nearestGap = gapPool
+    .filter((item) => item.active)
+    .map((item) => ({ item, distance: distanceToPlayer(item.mesh.position.z) }))
+    .filter(({ distance }) => distance > 2.5 && distance < 13)
+    .sort((a, b) => a.distance - b.distance)[0];
+
+  // Gaps span the full track, so the only legal response is a properly timed jump.
+  if (nearestGap && nearestGap.distance < 9.5) {
+    jump();
+    return;
+  }
+
+  const threats = obstaclePool
+    .filter((item) => item.active && !item.falling)
+    .map((item) => ({
+      item,
+      distance: distanceToPlayer(item.mesh.position.z),
+      lanes: item.moving ? [item.lane, item.targetLane] : [item.lane],
+    }))
+    .filter(({ distance }) => distance > 2.5 && distance < 15)
+    .sort((a, b) => a.distance - b.distance);
+
+  const threat = threats.find(({ lanes }) => lanes.includes(state.lane));
+  if (!threat) return;
+
+  const blockedLanes = new Set(
+    threats
+      .filter(({ distance }) => Math.abs(distance - threat.distance) < 4.2)
+      .flatMap(({ lanes }) => lanes),
+  );
+  const safeLanes = [0, 1, 2].filter((lane) => !blockedLanes.has(lane));
+  if (safeLanes.length) {
+    const destination = safeLanes.sort(
+      (a, b) => Math.abs(a - state.lane) - Math.abs(b - state.lane),
+    )[0];
+    if (destination !== state.lane) {
+      moveLane(Math.sign(destination - state.lane));
+      return;
+    }
+  }
+
+  // If there is no open lane, attempt a jump at the same time a human could.
+  if (threat.distance < 7.2) jump();
+}
 function resetRun() {
   state.lane = 1;
   state.elapsed = 0;
@@ -1909,6 +1982,10 @@ function resetRun() {
   state.speed = CFG.initialSpeed;
   state.jumpHeight = 0;
   state.jumpVelocity = 0;
+  state.aiDemo = false;
+  state.crashObstacle = null;
+  state.crashElapsed = 0;
+  aiDecisionCooldown = 0;
   player.position.x = 0;
   player.position.y = 0.16;
   camera.position.x = 0;
@@ -1918,8 +1995,9 @@ function resetRun() {
   resetWorldObjects(false);
   updateHud();
 }
-function startRun() {
+function startRun(aiDemo = false) {
   resetRun();
+  state.aiDemo = aiDemo;
   setMode("running");
 }
 function togglePause() {
@@ -1941,8 +2019,9 @@ soundButton.addEventListener("click", () => {
   if (!soundMuted) unlockAudio();
 });
 window.addEventListener("pointerdown", unlockAudio);
-app.querySelector("#play-button").addEventListener("click", startRun);
-app.querySelector("#restart-button").addEventListener("click", startRun);
+app.querySelector("#play-button").addEventListener("click", () => startRun(false));
+app.querySelector("#ai-demo-button").addEventListener("click", () => startRun(true));
+app.querySelector("#restart-button").addEventListener("click", () => startRun(false));
 app.querySelector("#share-result-button").addEventListener("click", (event) => {
   event.preventDefault();
   const result = state.lastRun ?? {
@@ -2048,6 +2127,7 @@ function animate() {
   // The world also scrolls slowly behind the start screen; paused and game-over freeze it.
   const worldSpeed = running ? state.speed : attract ? CFG.attractSpeed : 0;
   const dz = delta * worldSpeed;
+  if (running) updateAi(delta);
   if (dz > 0) {
     animTime += delta;
     slabTexture.offset.y += dz / SLAB_DEPTH;
@@ -2106,9 +2186,9 @@ function animate() {
 
     if (item.moving) {
       // Start shifting only once visible and still far enough away to react.
-      if (!item.shiftStarted && z > -18) item.shiftStarted = true;
+      if (!item.shiftStarted && z > -26) item.shiftStarted = true;
       if (item.shiftStarted) {
-        item.shiftProgress = Math.min(item.shiftProgress + delta / 0.8, 1);
+        item.shiftProgress = Math.min(item.shiftProgress + delta / 0.72, 1);
         const eased = item.shiftProgress * item.shiftProgress * (3 - 2 * item.shiftProgress);
         item.mesh.position.x =
           LANE_X[item.sourceLane] +
@@ -2128,10 +2208,23 @@ function animate() {
         Math.abs(item.mesh.position.x - playerX) < CFG.obstacleHitX &&
         state.jumpHeight < CFG.jumpObstacleClearance
       ) {
+        item.falling = true;
+        item.fallVelocity = 1.8;
+        state.crashObstacle = item;
+        state.crashElapsed = 0;
         setMode("gameover");
         break;
       }
     }
+    if (item.falling) {
+      item.fallVelocity += 18 * delta;
+      item.mesh.position.y -= item.fallVelocity * delta;
+      item.mesh.rotation.z += delta * 3.8;
+      item.mesh.rotation.x += delta * 1.4;
+    }
+  }
+  if (state.crashObstacle && state.mode === "gameover") {
+    state.crashElapsed += delta;
   }
   for (const item of relicPool) {
     if (!item.active) continue;
