@@ -97,7 +97,7 @@ function renderPlayers() {
           });
           player.is_admin = toggle.checked;
           document.querySelector("#admin-count").textContent =
-            String(allPlayers.filter((item) => item.is_admin).length);
+            String(allPlayers.filter((item) => item.is_admin || item.is_owner).length);
           setStatus(`${player.name} is ${toggle.checked ? "now an administrator" : "no longer an administrator"}.`);
         } catch (error) {
           toggle.checked = !toggle.checked;
@@ -121,7 +121,7 @@ async function loadDashboard() {
   allPlayers = result.players || [];
   document.querySelector("#player-count").textContent = String(allPlayers.length);
   document.querySelector("#admin-count").textContent =
-    String(allPlayers.filter((player) => player.is_admin).length);
+    String(allPlayers.filter((player) => player.is_admin || player.is_owner).length);
   document.querySelector("#current-player").textContent = currentPlayer?.name || "Verified account";
   document.querySelector("#directory-note").textContent =
     result.note + " High scores are shown only when a player appears in Start.ng's top-50 leaderboard.";
