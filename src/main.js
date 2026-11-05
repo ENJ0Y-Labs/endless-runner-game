@@ -2158,7 +2158,7 @@ function animate() {
       item.mesh.visible = false;
       continue;
     }
-    if (running) {
+    if (running && state.mode === "running") {
       const relativeZ = item.mesh.position.z - CFG.playerZ;
       const isOverGap =
         relativeZ > -1.45 &&
@@ -2204,7 +2204,7 @@ function animate() {
       }
     }
 
-    if (running) {
+    if (running && state.mode === "running") {
       const relativeZ = z - CFG.playerZ;
       if (
         relativeZ > CFG.obstacleHitZ[0] &&
