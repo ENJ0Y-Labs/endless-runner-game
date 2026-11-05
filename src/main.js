@@ -1355,7 +1355,7 @@ const difficulty = (elapsed) =>
 const currentGap = (elapsed) =>
   Math.max(CFG.minRowGap, CFG.maxRowGap - elapsed * CFG.rowGapShrinkPerSecond);
 function spawnRow(z, gap, elapsed, attract) {
-  let free = 1;
+  let free = attract ? Math.floor(Math.random() * CFG.laneCount) : 1;
   if (!attract) {
     const reachable = [0, 1, 2].filter((lane) =>
       spawn.openLanes.every((open) => Math.abs(lane - open) <= 1),
