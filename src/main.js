@@ -4,6 +4,27 @@ import "./style.css";
 import { GAME_CONFIG as CFG } from "./game/config.js";
 
 const app = document.querySelector("#app");
+
+// Preserve the short-lived Start.ng game session for server-side identity checks.
+const startNgSessionParams = new URLSearchParams(location.hash.slice(1));
+const startNgGameSession = startNgSessionParams.get("startng_session");
+if (startNgGameSession) {
+  sessionStorage.setItem("relic_rush_startng_session", startNgGameSession);
+  history.replaceState(null, "", location.pathname + location.search);
+}
+async function syncPlayerWithAdminDirectory() {
+  const apiBase = window.RELIC_RUSH_ADMIN_API;
+  const session = sessionStorage.getItem("relic_rush_startng_session");
+  if (!apiBase || !session) return;
+  try {
+    await fetch(`${apiBase.endsWith("/") ? apiBase.slice(0, -1) : apiBase}/api/players/sync`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${session}` },
+    });
+  } catch {
+    // Admin tracking is optional and must never interrupt gameplay.
+  }
+}
 const requestedPage = new URLSearchParams(window.location.search).get("page");
 const page = ["play", "leaderboard", "story"].includes(requestedPage) ? requestedPage : "welcome";
 document.body.dataset.page = page;
@@ -16,6 +37,7 @@ app.innerHTML = `
         <a href="./?page=play" ${page === "play" ? 'aria-current="page"' : ""}>Play</a>
         <a href="./?page=leaderboard" ${page === "leaderboard" ? 'aria-current="page"' : ""}>Leaderboard</a>
         <a href="./?page=story" ${page === "story" ? 'aria-current="page"' : ""}>Story</a>
+        <a href="./admin/">Admin</a>
       </div>
     </nav>
     <section class="welcome-page" aria-labelledby="welcome-title">
@@ -1548,6 +1570,7 @@ async function refreshStartNgPlayer() {
     const reply = await askStartNg({ type: "startng:whoami" }, "startng:user");
     if (reply) {
       applyPlayerIdentity(reply);
+      if (reply.user) void syncPlayerWithAdminDirectory();
       void refreshLeaderboard();
     }
   } catch (error) {

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1a110a">
+  <title>Admin · Relic Rush 3D</title>
+  <link rel="stylesheet" href="./admin.css">
+</head>
+<body>
+  <main class="admin-shell">
+    <header class="topbar">
+      <a class="brand" href="../">RELIC RUSH <b>3D</b></a>
+      <a href="../">Back to game</a>
+    </header>
+    <section class="intro">
+      <p class="eyebrow">CONTROL ROOM</p>
+      <h1>Player management</h1>
+      <p>Review players recorded by Relic Rush 3D, check available high scores, and manage administrator access.</p>
+    </section>
+    <section id="signed-out" class="panel">
+      <h2>Sign in with Start.ng</h2>
+      <p>Your Start.ng game session is used to verify your identity. Only the configured owner and administrators can open this dashboard.</p>
+      <button id="sign-in" class="primary">Continue with Start.ng</button>
+    </section>
+    <section id="dashboard" hidden>
+      <div class="stats">
+        <article class="panel"><span>Known players</span><strong id="player-count">0</strong></article>
+        <article class="panel"><span>Administrators</span><strong id="admin-count">0</strong></article>
+        <article class="panel"><span>Signed in as</span><strong id="current-player">—</strong></article>
+      </div>
+      <div class="toolbar">
+        <label class="search-label" for="search">Search players</label>
+        <input id="search" type="search" placeholder="Name or Start.ng player ID">
+        <button id="refresh" class="secondary">Refresh</button>
+      </div>
+      <p id="status" role="status" aria-live="polite"></p>
+      <div class="table-wrap panel">
+        <table>
+          <thead><tr><th>Player</th><th>Start.ng ID</th><th>High score</th><th>First seen</th><th>Last seen</th><th>Administrator</th></tr></thead>
+          <tbody id="players"><tr><td colspan="6">Loading…</td></tr></tbody>
+        </table>
+      </div>
+      <p class="footnote" id="directory-note"></p>
+    </section>
+  </main>
+  <script src="../admin-config.js"></script>
+  <script type="module" src="./admin.js"></script>
+</body>
+</html>
