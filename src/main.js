@@ -1289,7 +1289,7 @@ function acquire(pool) {
   for (let i = 0; i < pool.length; i++) if (!pool[i].active) return pool[i];
   return null;
 }
-function placeObstacle(lane, z, elapsed = state.elapsed) {
+function placeObstacle(lane, z, elapsed = state.elapsed, allowMovement = true) {
   const item = acquire(obstaclePool);
   if (!item) return;
   item.lane = lane;
@@ -1305,7 +1305,7 @@ function placeObstacle(lane, z, elapsed = state.elapsed) {
 
   // Some crates shift one lane later in a run, while they are still far away.
   const movementChance = 0.12 + 0.1 * difficulty(elapsed);
-  if (z < CFG.playerZ - 18 && Math.random() < movementChance) {
+  if (allowMovement && z < CFG.playerZ - 18 && Math.random() < movementChance) {
     const safeTargets = [0, 1, 2].filter(
       (candidate) =>
         candidate !== lane &&
@@ -1374,7 +1374,7 @@ function spawnRow(z, gap, elapsed, attract) {
   } else {
     obstructed = [others[Math.floor(Math.random() * others.length)]];
   }
-  for (const lane of obstructed) placeObstacle(lane, z);
+  for (const lane of obstructed) placeObstacle(lane, z, elapsed, !attract);
 
   // Leave a clear approach before every gap; gaps are uncommon and span the whole track.
   if (!attract && Math.random() < 0.075) {
@@ -1903,7 +1903,43 @@ function jump() {
     return;
   state.jumpVelocity = CFG.jumpInitialVelocity;
 }
+// The attract-mode runner follows the same lane limits and obstacle positions as a player.
+let demoDecisionLane = -1;
+function updateDemoBot() {
+  const lookAhead = Math.max(10, state.speed * 1.15);
+  let nextRowZ = -Infinity;
+  for (const item of obstaclePool) {
+    if (!item.active) continue;
+    const z = item.mesh.position.z;
+    const distance = CFG.playerZ - z;
+    if (distance > 2.5 && distance < lookAhead && z > nextRowZ) {
+      nextRowZ = z;
+    }
+  }
+  if (!Number.isFinite(nextRowZ)) {
+    demoDecisionLane = -1;
+    return;
+  }
+
+  const blockedLanes = new Set(
+    obstaclePool
+      .filter((item) => item.active && Math.abs(item.mesh.position.z - nextRowZ) < 3.5)
+      .map((item) => item.lane),
+  );
+  const safeLanes = [0, 1, 2].filter((lane) => !blockedLanes.has(lane));
+  if (!safeLanes.length) return;
+
+  const currentLane = state.lane;
+  const bestLane = safeLanes.reduce((best, lane) =>
+    Math.abs(lane - currentLane) < Math.abs(best - currentLane) ? lane : best,
+  );
+  if (bestLane !== currentLane) {
+    state.lane = bestLane;
+    demoDecisionLane = bestLane;
+  }
+}
 function resetRun() {
+  demoDecisionLane = -1;
   state.lane = 1;
   state.elapsed = 0;
   state.distance = 0;
@@ -2030,11 +2066,12 @@ function animate() {
   const delta = Math.min(clock.getDelta(), 0.05);
   const running = state.mode === "running";
   const attract = state.mode === "ready";
-  if (running) {
+  if (running || attract) {
     state.elapsed += delta;
-    // Speed ramps up gradually, with a sensible cap to keep late-game control possible.
+    // The preview starts gently, then accelerates using the same cap as a real run.
+    const startingSpeed = attract ? CFG.attractSpeed : CFG.initialSpeed;
     state.speed = Math.min(
-      CFG.initialSpeed + state.elapsed * CFG.speedIncreasePerSecond,
+      startingSpeed + state.elapsed * CFG.speedIncreasePerSecond,
       CFG.maximumSpeed,
     );
     state.distance += delta * state.speed;
@@ -2048,8 +2085,8 @@ function animate() {
     }
   }
   updateSeasonEnvironment(state.distance);
-  // The world also scrolls slowly behind the start screen; paused and game-over freeze it.
-  const worldSpeed = running ? state.speed : attract ? CFG.attractSpeed : 0;
+  // The pre-game attract mode is a real, computer-controlled run, not a static backdrop.
+  const worldSpeed = running || attract ? state.speed : 0;
   const dz = delta * worldSpeed;
   if (dz > 0) {
     animTime += delta;
@@ -2069,6 +2106,7 @@ function animate() {
     );
   }
 
+  if (attract) updateDemoBot();
   const playerX = player.position.x;
 
   for (const item of gapPool) {
@@ -2150,7 +2188,7 @@ function animate() {
       item.group.position.y =
         1.15 + Math.sin(clock.elapsedTime * 4 + item.phase) * 0.12;
     }
-    if (state.mode === "running") {
+    if (running || attract) {
       const relativeZ = z - CFG.playerZ;
       if (
         relativeZ > CFG.relicHitZ[0] &&
@@ -2159,8 +2197,10 @@ function animate() {
       ) {
         item.active = false;
         item.group.visible = false;
-        state.relics += 1;
-        playSound("relic");
+        if (running) {
+          state.relics += 1;
+          playSound("relic");
+        }
       }
     }
   }
