@@ -1738,3 +1738,166 @@ body[data-page=play] .scene-help {
     font-size: 0.58rem;
   }
 }
+
+
+/* Pre-game composition: title high-left, instructions and launch action anchored low.
+   This deliberately leaves the centre of the scene unobstructed so the runner stays visible. */
+body[data-page="play"] #start-overlay {
+  position: absolute;
+  inset: 0;
+  display: block;
+  padding: 0;
+  overflow: hidden;
+  text-align: left;
+  background: linear-gradient(
+    180deg,
+    rgb(26 15 6 / 42%) 0%,
+    rgb(26 15 6 / 8%) 34%,
+    rgb(26 15 6 / 4%) 58%,
+    rgb(26 15 6 / 70%) 100%
+  );
+  backdrop-filter: none;
+}
+
+body[data-page="play"] #start-overlay .pre-game-topbar {
+  position: absolute;
+  top: max(.75rem, env(safe-area-inset-top));
+  right: max(1rem, env(safe-area-inset-right));
+  left: max(1rem, env(safe-area-inset-left));
+  z-index: 5;
+  width: auto;
+  margin: 0;
+}
+
+body[data-page="play"] #start-overlay .title-art {
+  position: absolute;
+  top: clamp(4.4rem, 10vh, 6.8rem);
+  left: clamp(1rem, 5vw, 4.5rem);
+  width: auto;
+  max-width: min(62vw, 650px);
+  margin: 0;
+  text-align: left;
+  font-size: clamp(2.5rem, 6.5vw, 5.4rem);
+  line-height: .88;
+  pointer-events: none;
+}
+
+body[data-page="play"] #start-overlay .title-art .t-line {
+  margin: 0;
+}
+
+body[data-page="play"] #start-overlay .instruction-grid {
+  position: absolute;
+  right: 1rem;
+  bottom: calc(max(5.25rem, env(safe-area-inset-bottom) + 4.5rem));
+  left: 1rem;
+  display: grid;
+  width: min(100% - 2rem, 760px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .55rem;
+  margin: 0 auto;
+}
+
+body[data-page="play"] #start-overlay .instruction-card {
+  min-height: 3.65rem;
+  padding: .55rem .8rem;
+  background: rgb(26 17 10 / 76%);
+  backdrop-filter: blur(8px);
+}
+
+body[data-page="play"] #start-overlay #play-button {
+  position: absolute;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  left: 50%;
+  min-width: min(260px, calc(100% - 2rem));
+  min-height: 3.25rem;
+  margin: 0;
+  transform: translateX(-50%);
+}
+
+body[data-page="play"] #start-overlay #play-button:active {
+  transform: translate(-50%, 2px);
+}
+
+@media (max-width: 700px) {
+  body[data-page="play"] #start-overlay .title-art {
+    top: calc(max(.75rem, env(safe-area-inset-top)) + 3.65rem);
+    left: 1rem;
+    max-width: 72vw;
+    font-size: clamp(2.35rem, 10vw, 4rem);
+    text-align: left;
+  }
+
+  body[data-page="play"] #start-overlay .title-art .t-line {
+    margin: 0;
+  }
+
+  body[data-page="play"] #start-overlay .instruction-grid {
+    right: .7rem;
+    bottom: calc(max(5rem, env(safe-area-inset-bottom) + 4.35rem));
+    left: .7rem;
+    width: calc(100% - 1.4rem);
+    gap: .4rem;
+  }
+
+  body[data-page="play"] #start-overlay .instruction-card {
+    min-height: 3.35rem;
+    padding: .45rem .35rem;
+    border-radius: 10px;
+  }
+
+  body[data-page="play"] #start-overlay .instruction-card strong {
+    font-size: .78rem;
+  }
+
+  body[data-page="play"] #start-overlay .instruction-card small {
+    font-size: .65rem;
+    text-align: center;
+  }
+
+  body[data-page="play"] #start-overlay #play-button {
+    bottom: max(.8rem, env(safe-area-inset-bottom));
+    min-height: 3rem;
+  }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  body[data-page="play"] #start-overlay .title-art {
+    top: calc(max(.5rem, env(safe-area-inset-top)) + 3.1rem);
+    font-size: clamp(1.8rem, 6vh, 2.8rem);
+  }
+
+  body[data-page="play"] #start-overlay .instruction-grid {
+    right: 1rem;
+    bottom: calc(max(4.1rem, env(safe-area-inset-bottom) + 3.6rem));
+    left: auto;
+    width: min(48vw, 520px);
+    gap: .3rem;
+  }
+
+  body[data-page="play"] #start-overlay .instruction-card {
+    min-height: 2.65rem;
+    padding: .3rem .45rem;
+  }
+
+  body[data-page="play"] #start-overlay .instruction-card strong {
+    font-size: .68rem;
+  }
+
+  body[data-page="play"] #start-overlay .instruction-card small {
+    font-size: .58rem;
+  }
+
+  body[data-page="play"] #start-overlay #play-button {
+    bottom: max(.55rem, env(safe-area-inset-bottom));
+    left: auto;
+    right: 1rem;
+    min-height: 2.65rem;
+    min-width: 200px;
+    transform: none;
+  }
+
+  body[data-page="play"] #start-overlay #play-button:active {
+    transform: translateY(2px);
+  }
+}
