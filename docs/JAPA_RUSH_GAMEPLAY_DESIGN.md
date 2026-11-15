@@ -30,13 +30,15 @@ Build this campaign on the original Relic Rush engine.
 
 ## 3. Campaign structure and chapter encounters
 
-Each chapter has a distinctive environment, required objective, ordinary hazards, and one memorable **set-piece encounter**. These set-pieces serve the role of boss fights: they introduce a recognisable pattern, escalate through phases, and test what the player has learned. They are not literal monsters or supernatural bosses.
+Each chapter follows one finite loop: **collect the chapter story item, earn the chapter's money target, then survive its set-piece encounter and reach the exit**. Each chapter has a distinctive environment, ordinary hazards, and one memorable set-piece encounter. These set-pieces serve the role of boss fights: they introduce a recognisable pattern, escalate through phases, and test what the player has learned. They are not literal monsters or supernatural bosses.
+
+The money target is a required progression gate, not an optional collectible goal. Naira notes are the primary money pickups. The chapter story item is a separate requirement. The boss encounter starts only when both requirements are complete. The chapter ends when the player survives the encounter and crosses its exit trigger.
 
 ### Chapter 1: Lagos Hustle
 
 **Setting:** Busy Lagos streets leading towards the expressway.
 
-**Story pressure:** The player is trying to get out of the neighbourhood and reach the expressway before time runs out.
+**Story pressure:** The player is trying to get out of the neighbourhood and reach the expressway.
 
 **Hazards:** Danfo minibuses, okadas, potholes, road barricades, street traders' carts, parked vehicles, and sudden but signalled traffic merges.
 
@@ -47,9 +49,13 @@ A persistent danfo/minibus and its unpredictable driver create a moving traffic 
 - Phase 2, Traffic squeeze: the danfo slows or changes lane while another ordinary traffic obstacle occupies a neighbouring lane.
 - Phase 3, Expressway merge: the player must read a final sequence of lane closures and reach the exit safely.
 
-**Required objective:** Reach the expressway exit without a collision.
+**Requirement 1, story item:** Collect the route slip/ticket.
 
-**Optional objective:** Collect at least 3 of 4 Naira notes. Notes must be placed on plausible, reachable routes and must never require a collision.
+**Requirement 2, money target:** Earn the chapter target in Naira from money pickups. Initial tuning placeholder: **₦300**.
+
+**Requirement 3, set-piece:** Trigger and survive The Last Danfo encounter, then reach the expressway exit.
+
+Naira notes count towards the money target and are therefore required in sufficient quantity. Additional notes beyond the target are optional score/rank pickups. Place every required pickup on a plausible, reachable route.
 
 ### Chapter 2: The Emilokan Expressway
 
@@ -64,7 +70,11 @@ A large tanker and surrounding traffic create a multi-stage traffic pattern.
 - Phase 2, Narrow passage: roadworks or a stalled vehicle reduce the available lanes. Warnings show the safe opening in advance.
 - Phase 3, Convoy break: two or more vehicles create a timed sequence of lane choices before the checkpoint.
 
-**Required objective:** Collect the travel folder and reach the checkpoint without a collision.
+**Requirement 1, story item:** Collect the travel folder.
+
+**Requirement 2, money target:** Earn the chapter target in Naira. Initial tuning placeholder: **₦500**.
+
+**Requirement 3, set-piece:** Trigger and survive The Tanker Convoy encounter, then reach the checkpoint.
 
 The tanker is a traffic obstacle, not a pursuing monster. It must obey plausible vehicle movement and have visible warning cues.
 
@@ -81,7 +91,11 @@ A sequence of queue-control changes and document checks creates the encounter.
 - Phase 2, Document rush: a document cart and queue ropes create a timed obstacle sequence.
 - Phase 3, Final verification: the player must navigate the final security/verification area and collect the last required stamp.
 
-**Required objective:** Collect all 3 clearance stamps in the intended sequence and reach the exit without a collision.
+**Requirement 1, story item:** Collect all 3 clearance stamps in the intended sequence.
+
+**Requirement 2, money target:** Earn the chapter target in Naira. Initial tuning placeholder: **₦800**.
+
+**Requirement 3, set-piece:** Trigger and survive The Clearance Queue encounter, then reach the processing-centre exit.
 
 The challenge comes from route reading and timing, not hostile security staff or implausible machinery.
 
@@ -98,11 +112,74 @@ A time-pressured sequence through check-in, security, and the departure concours
 - Phase 2, Security bottleneck: follow visible lane openings while avoiding moving airport equipment and temporary barriers.
 - Phase 3, Gate closing: a faster but clearly telegraphed sequence leads to the departure gate.
 
-**Required objective:** Collect the boarding pass and reach the departure gate without a collision.
+**Requirement 1, story item:** Collect the boarding pass.
+
+**Requirement 2, money target:** Earn the chapter target in Naira. Initial tuning placeholder: **₦1,200**.
+
+**Requirement 3, set-piece:** Trigger and survive The Final Departure encounter, then cross the departure-gate exit.
 
 **Final human antagonist (optional story presentation):** “The Big Man” can be a realistic, influential character who creates social or administrative pressure through dialogue, phone calls, or a brief cutscene. He must not become a supernatural boss or physically impossible pursuer. The actual gameplay challenge remains the airport route and its hazards.
 
-## 4. Encounter design principles
+## 4. Chapter loop, money economy, and boss trigger
+
+Every chapter uses the same clearly communicated sequence:
+
+1. **Play and collect:** The player enters the chapter and searches for its story item while collecting Naira pickups.
+2. **Earn the target:** The money HUD tracks the amount earned against the chapter target. Reaching the target does not end the chapter by itself.
+3. **Trigger the encounter:** The set-piece begins only when the story item requirement and money target are both complete.
+4. **Survive the encounter:** Normal chapter spawning stops. A clear warning and encounter title appear, then the authored three-phase set-piece runs.
+5. **Reach the exit:** Beating the set-piece means surviving all three phases and crossing its exit trigger. There is no separate health bar or requirement to attack a vehicle/person.
+
+### Initial money targets
+
+| Chapter | Story item requirement | Initial money target | Set-piece |
+|---|---|---:|---|
+| Lagos Hustle | 1 route slip/ticket | ₦300 | The Last Danfo |
+| The Emilokan Expressway | 1 travel folder | ₦500 | The Tanker Convoy |
+| The System | 3 clearance stamps, in order | ₦800 | The Clearance Queue |
+| Japa Terminal | 1 boarding pass | ₦1,200 | The Final Departure |
+
+These amounts are **playtest placeholders**, not final balance values. Tune them against measured pickup rates and the target chapter collection duration. Aim for roughly **60 to 90 seconds of collecting** before the encounter trigger on a competent run. Do not add a countdown timer to force this duration.
+
+### Fair and guaranteed money availability
+
+A required money target must never become mathematically unreachable because of random spawning.
+
+- Use an authored pickup schedule or a seeded, testable spawn plan with a known available total of at least **120% of the target** (target plus approximately 20% buffer).
+- If the existing spawner is retained, add a deterministic top-up rule that schedules enough reachable pickups to make the remaining target achievable.
+- The spawner must account for pickups already collected, missed pickups, upcoming scheduled value, and the player's reachable lanes.
+- Never place required money behind an unavoidable obstacle, inside a collision volume, or on a route that requires an unsupported movement action.
+- If the player misses a pickup, later scheduled opportunities must still allow the target to be reached. The buffer is a fairness margin, not an excuse to hide all remaining money in one difficult sequence.
+- Add deterministic test seeds and a debug readout for total available value, collected value, and remaining reachable value.
+- If the target can no longer be reached due to a spawn bug, fail safely with a clear recovery/retry state. Never leave the player running indefinitely with no possible boss trigger.
+
+### Money HUD and exchange-rate presentation
+
+Show money progress throughout the collection phase in a persistent, readable HUD element, for example **₦320 / ₦500** with a progress bar. Update it immediately when a pickup is collected. The bar must distinguish current collected value from the target and remain legible on mobile.
+
+A falling exchange-rate display may appear as a cosmetic story-pressure detail beside the money HUD. It must not secretly change pickup values, target requirements, collision behaviour, or difficulty unless a future design explicitly specifies and tests that mechanic. The player should never confuse it with the actual money target.
+
+### Boss trigger and three-phase resolution
+
+When both the chapter story item and money target are complete:
+
+- Stop spawning ordinary hazards and collectibles after any already-active entities have been safely cleared or removed.
+- Play a distinct warning cue and show a short chapter-specific message, such as **“The Last Danfo is coming.”**
+- Display the set-piece title and phase indicator without obscuring the runner or the safe route.
+- Start the authored three-phase encounter. Each phase must have a defined start condition, pattern, warning, safe response, and completion condition.
+- On completion of phase three, present the exit route. The chapter is won when the player survives to and crosses the exit trigger.
+
+The boss/set-piece is not defeated by attacking it. It is overcome by reading and surviving its traffic, queue, or terminal patterns. Do not continue ordinary random spawning during the encounter.
+
+### Checkpoint and one-hit-fail fairness
+
+The original runner's collision/failure rules remain authoritative. If a collision causes an immediate run failure, the collecting phase should be short enough that a retry is reasonable. Target approximately 60 to 90 seconds of collection before the encounter, subject to playtesting.
+
+Create a checkpoint at the boss trigger. Once the player has collected the story item and met the money target, save that chapter attempt state so a failure during the set-piece can restart at the encounter without requiring the player to earn the money again. The checkpoint must preserve the completed requirements but reset encounter phase state and temporary encounter entities. If checkpoint support cannot be added safely to the original engine, use a shorter collection phase and clearly document that boss retries restart the chapter; do not pretend a checkpoint exists.
+
+On chapter restart from the beginning, reset the current attempt's story item, money total, and encounter state. Previously completed chapters and permanent campaign unlocks remain saved.
+
+## 5. Encounter design principles
 
 Apply the following principles to every chapter encounter.
 
@@ -114,7 +191,7 @@ Apply the following principles to every chapter encounter.
 6. **Use controlled variation.** Build encounters from tested pattern sets with bounded variation rather than unconstrained random placement.
 7. **Respect the engine's movement model.** Pattern timing and spacing must be calibrated to actual Relic Rush movement speed, lane-change duration, jump/slide behaviour, and collision bounds.
 
-## 5. Precision movement: dodge and counter
+## 6. Precision movement: dodge and counter
 
 If supported by the original engine, add a timing-based reward window around selected, clearly telegraphed hazards.
 
@@ -124,9 +201,9 @@ If supported by the original engine, add a timing-based reward window around sel
 
 Do not require a perfect dodge to survive or complete a chapter. It is a mastery reward, not a mandatory mechanic. Avoid adding a combat attack unless it has a believable in-world action and fits the runner's existing controls.
 
-## 6. Hidden challenges and optional routes
+## 7. Hidden challenges and optional routes
 
-Add optional objectives for replay value. They should be discoverable through environmental clues and should not block ordinary chapter completion.
+Add optional objectives for replay value. They should be discoverable through environmental clues and should not block ordinary chapter completion. The chapter story item and money target described in Section 3 are mandatory progression requirements; optional objectives are separate.
 
 Examples:
 
@@ -137,7 +214,7 @@ Examples:
 
 Hidden objectives must be fair: give a clue, ensure the route is reachable, and make the reward clear. They can unlock cosmetic items, story details, profile badges, or challenge variants.
 
-## 7. Unlockable abilities and progression
+## 8. Unlockable abilities and progression
 
 Progression should reward demonstrated skill without making later chapters trivial or pay-to-win.
 
@@ -151,7 +228,7 @@ Progression should reward demonstrated skill without making later chapters trivi
 
 Any gameplay-affecting ability must be modest, optional, and tested against the campaign's difficulty. Prefer cosmetics, score bonuses, and informational assists over permanent speed or invulnerability upgrades.
 
-## 8. Difficulty modes
+## 9. Difficulty modes
 
 Offer three tuned difficulty presets. These change obstacle pacing and pattern complexity, not the realism of the setting.
 
@@ -175,7 +252,7 @@ Offer three tuned difficulty presets. These change obstacle pacing and pattern c
 
 Difficulty must be playtested. Do not choose arbitrary speed multipliers without measuring the time needed for a player to switch lanes or use other supported actions.
 
-## 9. Chapter ranks and campaign completion
+## 10. Chapter ranks and campaign completion
 
 Award a rank after each chapter based on objective completion, collisions, collectibles, and optional challenges.
 
@@ -202,7 +279,7 @@ The ultimate optional achievement:
 
 Ordinary chapter completion must remain available to casual players. A failed Perfect Escape attempt should not erase previously unlocked chapters or permanently delete chapter progress.
 
-## 10. Failure feedback and retry loop
+## 11. Failure feedback and retry loop
 
 Failure should teach the player what happened.
 
@@ -222,7 +299,7 @@ Retry behaviour:
 - Preserve previously completed chapters and campaign unlocks.
 - A failed campaign-wide Perfect Escape attempt resets the challenge streak, not the player's saved chapter progress.
 
-## 11. UI, audio, and presentation
+## 12. UI, audio, and presentation
 
 - Give each chapter a distinct, realistic environment palette and recognisable local details.
 - Use obstacle silhouettes that communicate their real-world identity at a glance.
@@ -232,7 +309,7 @@ Retry behaviour:
 - Keep existing Relic Rush sound effects and audio controls; add story-specific sounds as layers, not replacements.
 - Ensure HUD, warnings, and controls remain readable on mobile screens.
 
-## 12. Technical implementation guidance
+## 13. Technical implementation guidance
 
 Recommended architecture:
 
@@ -252,7 +329,7 @@ Do not:
 - Use random patterns that can produce unavoidable collisions.
 - Add fantasy creatures, supernatural attacks, or unrealistic vehicles.
 
-## 13. Acceptance criteria
+## 14. Acceptance criteria
 
 The feature is ready for release only when:
 
@@ -261,6 +338,12 @@ The feature is ready for release only when:
 - [ ] Each chapter has a distinct, believable visual skin.
 - [ ] Each chapter has its own tested encounter pattern and phase progression.
 - [ ] Every encounter has accurate warnings and at least one reachable safe route.
+- [ ] Each chapter's story item and money target are both required before its set-piece can trigger.
+- [ ] Money targets are guaranteed reachable through authored schedules or deterministic top-ups, with at least a 20% available-value buffer.
+- [ ] The HUD displays current Naira progress and the target accurately.
+- [ ] The set-piece trigger stops ordinary spawning, shows a warning, and starts its authored three phases.
+- [ ] Set-piece completion requires surviving all phases and reaching the exit trigger.
+- [ ] A boss-trigger checkpoint preserves completed collection requirements for encounter retries, or the documented fallback keeps the full collection phase short.
 - [ ] Required collectibles and chapter objectives register through the original engine's events.
 - [ ] Perfect dodge rewards are optional and work consistently, if implemented.
 - [ ] Hidden challenges can be discovered and completed fairly.
