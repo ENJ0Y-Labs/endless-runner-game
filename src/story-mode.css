@@ -35,8 +35,11 @@
 .japa-launch-note{color:#cbb99d;line-height:1.5}
 @media(max-width:640px){.japa-run-shell{padding:14px 10px 30px}.japa-run-hud{grid-template-columns:repeat(2,minmax(0,1fr))}.japa-pause-button{min-height:52px}.japa-game-scene{height:54vh;min-height:300px}.japa-run-topbar{align-items:flex-start}.japa-result-stats{grid-template-columns:1fr}}
 
-.japa-hero-backdrop { background-image:linear-gradient(90deg,rgb(20 14 10 / 88%) 0%,rgb(20 14 10 / 52%) 52%,rgb(20 14 10 / 12%) 100%),linear-gradient(0deg,rgb(20 14 10 / 70%),transparent 68%),url("./assets/environment/lagos-hustle.jpg"); }
+.japa-hero-backdrop { background-image:linear-gradient(90deg,rgb(20 14 10 / 88%) 0%,rgb(20 14 10 / 52%) 52%,rgb(20 14 10 / 12%) 100%),linear-gradient(0deg,rgb(20 14 10 / 70%),transparent 68%),linear-gradient(135deg,#9c603a,#d99a58 55%,#35261d); }
 .japa-chapter-image { position:relative; overflow:hidden; background:linear-gradient(135deg,#8d5837,#d59b5a 55%,#4b5142); }
 .japa-chapter-image img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
 .japa-chapter-image::after { position:absolute; inset:0; content:""; background:linear-gradient(0deg,rgb(0 0 0 / 48%),transparent 70%); pointer-events:none; }
 .japa-chapter-image img[hidden] { display:none; }
+
+.japa-hero-backdrop img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 48%; z-index:-1; }
+.japa-hero-backdrop { background:linear-gradient(135deg,#9c603a,#d99a58 55%,#35261d); }
