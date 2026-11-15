@@ -2187,3 +2187,172 @@ body[data-page="story"] .leaderboard-panel {
 @media (prefers-reduced-motion: reduce) {
   .japa-chapter-card { transition: none; }
 }
+
+
+/* Main menu mode selection, art-directed from the supplied mode-selection reference. */
+body[data-page="welcome"] .game-shell {
+  position: relative;
+  isolation: isolate;
+  min-height: 100svh;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  background: #101820;
+}
+body[data-page="welcome"] .welcome-page.mode-selection-page {
+  position: relative;
+  display: grid;
+  width: min(100%, 1280px);
+  min-height: min(760px, calc(100svh - 100px));
+  align-content: center;
+  justify-self: center;
+  overflow: hidden;
+  isolation: isolate;
+  padding: clamp(1.25rem, 5vw, 4.5rem);
+  border: 1px solid rgb(255 211 145 / 25%);
+  border-radius: 24px;
+  background: #17120f;
+  box-shadow: 0 28px 90px rgb(0 0 0 / 38%);
+}
+.mode-selection-backdrop {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgb(12 15 18 / 94%) 0%, rgb(12 15 18 / 76%) 48%, rgb(12 15 18 / 24%) 100%),
+    linear-gradient(0deg, rgb(12 15 18 / 78%), transparent 72%),
+    url("/assets/ui/mode-selection.jpg") center 44% / cover;
+  transform: scale(1.015);
+}
+.mode-selection-content {
+  width: min(100%, 860px);
+}
+.mode-selection-content > .eyebrow {
+  color: #f5b35e;
+  font-size: .72rem;
+  letter-spacing: .2em;
+}
+.mode-selection-content .title-art {
+  margin: 0;
+  color: #fff4e2;
+  font-size: clamp(3.2rem, 9vw, 7rem);
+  font-weight: 950;
+  letter-spacing: -.075em;
+  line-height: .88;
+  text-shadow: 0 5px 28px rgb(0 0 0 / 35%);
+}
+.mode-selection-intro {
+  margin: 1rem 0 1.7rem;
+  color: #f1e4d2;
+  font-size: clamp(1rem, 2vw, 1.3rem);
+}
+.mode-selection-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.mode-choice {
+  display: flex;
+  min-height: 230px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: .75rem;
+  padding: clamp(1rem, 2.4vw, 1.6rem);
+  border: 1px solid rgb(255 238 213 / 28%);
+  border-radius: 16px;
+  color: #fff5e7;
+  background: linear-gradient(145deg, rgb(14 20 24 / 90%), rgb(14 20 24 / 72%));
+  text-decoration: none;
+  backdrop-filter: blur(8px);
+  transition: transform .18s ease, border-color .18s ease, background .18s ease;
+}
+.mode-choice:hover {
+  transform: translateY(-4px);
+  border-color: #f2a44f;
+  background: linear-gradient(145deg, rgb(37 28 20 / 94%), rgb(14 20 24 / 82%));
+}
+.mode-choice-kicker {
+  color: #f1b66d;
+  font-size: .66rem;
+  font-weight: 900;
+  letter-spacing: .16em;
+}
+.mode-choice > strong {
+  font-size: clamp(1.4rem, 3vw, 2.1rem);
+  font-weight: 950;
+  letter-spacing: -.045em;
+}
+.mode-choice > strong em {
+  display: block;
+  color: #f2a44f;
+  font-size: .72em;
+  font-style: normal;
+}
+.mode-choice > span:not(.mode-choice-kicker):not(.mode-choice-action) {
+  max-width: 36ch;
+  color: #d2c7b9;
+  font-size: .9rem;
+  line-height: 1.5;
+}
+.mode-choice-action {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: .25rem;
+  padding-top: .75rem;
+  border-top: 1px solid rgb(255 255 255 / 18%);
+  color: #ffc078;
+  font-size: .76rem;
+  font-weight: 950;
+  letter-spacing: .12em;
+}
+.mode-choice-action b { font-size: 1.25rem; }
+.mode-leaderboard-link {
+  display: inline-flex;
+  margin-top: 1.25rem;
+  color: #e5d6c4;
+  font-size: .85rem;
+  text-decoration-color: rgb(229 214 196 / 45%);
+  text-underline-offset: 4px;
+}
+.japa-big-man-sprite {
+  position: absolute;
+  z-index: 0;
+  right: 1.5%;
+  bottom: 0;
+  width: min(39%, 390px);
+  height: 92%;
+  background-image: url("/assets/character/the-big-man.jpg");
+  background-repeat: no-repeat;
+  background-size: 300% 200%;
+  background-position: 0% 100%;
+  filter: drop-shadow(-18px 12px 22px rgb(0 0 0 / 45%));
+}
+.japa-hero-copy { z-index: 1; }
+@media (max-width: 700px) {
+  body[data-page="welcome"] .game-shell { padding: .7rem; }
+  body[data-page="welcome"] .welcome-page.mode-selection-page {
+    min-height: calc(100svh - 82px);
+    padding: 1.2rem;
+    border-radius: 16px;
+  }
+  .mode-selection-backdrop {
+    background:
+      linear-gradient(0deg, rgb(12 15 18 / 96%) 0%, rgb(12 15 18 / 82%) 62%, rgb(12 15 18 / 26%) 100%),
+      url("/assets/ui/mode-selection.jpg") center / cover;
+  }
+  .mode-selection-content .title-art { font-size: clamp(2.7rem, 12vw, 4.5rem); }
+  .mode-selection-grid { grid-template-columns: 1fr; gap: .7rem; }
+  .mode-choice { min-height: 165px; gap: .5rem; padding: 1rem; }
+  .japa-big-man-sprite {
+    right: -2%;
+    top: 0;
+    bottom: auto;
+    width: 45%;
+    height: 56%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mode-choice { transition: none; }
+}
