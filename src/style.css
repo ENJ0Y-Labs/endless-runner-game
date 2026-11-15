@@ -1901,3 +1901,152 @@ body[data-page="play"] #start-overlay #play-button:active {
     transform: translateY(2px);
   }
 }
+
+
+/* Japa Rush Story Mode: chapter hub foundation */
+body[data-page="story"] .welcome-page,
+body[data-page="story"] .game-hud,
+body[data-page="story"] .scene-container,
+body[data-page="story"] .story-teaser,
+body[data-page="story"] .leaderboard-panel {
+  display: none !important;
+}
+.japa-story-root {
+  width: min(100%, 1200px);
+  margin: 0 auto;
+  color: #f7eee1;
+}
+.japa-shell {
+  display: grid;
+  gap: 1.5rem;
+  padding: clamp(1rem, 3vw, 2.5rem);
+  border: 1px solid #4b3528;
+  border-radius: 20px;
+  background:
+    linear-gradient(135deg, rgb(34 22 16 / 96%), rgb(17 24 29 / 98%)),
+    #17120f;
+  box-shadow: 0 24px 70px rgb(0 0 0 / 30%);
+}
+.japa-heading { max-width: 760px; }
+.japa-eyebrow {
+  margin: 0 0 .55rem;
+  color: #f3a64b;
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .19em;
+  text-transform: uppercase;
+}
+.japa-heading h1, .japa-intro-shell h1 {
+  margin: 0;
+  color: #fff5e7;
+  font-size: clamp(3rem, 9vw, 6rem);
+  font-weight: 950;
+  letter-spacing: -.07em;
+  line-height: .95;
+}
+.japa-heading h1 span { color: #f39b3d; }
+.japa-lede {
+  margin: .9rem 0 .35rem;
+  color: #fff0d8;
+  font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+  font-weight: 750;
+}
+.japa-premise {
+  max-width: 62ch;
+  color: #c4b7a8;
+  line-height: 1.65;
+}
+.japa-chapter-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.japa-chapter-heading h2, .japa-objective-panel h2 {
+  margin: 0;
+  color: #fff5e7;
+  font-size: clamp(1.5rem, 4vw, 2.1rem);
+}
+.japa-back-link {
+  color: #f3b46f;
+  font-size: .88rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+.japa-back-link:hover { color: #fff; text-decoration: underline; }
+.japa-chapter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.japa-chapter-card {
+  overflow: hidden;
+  border: 1px solid #594230;
+  border-radius: 15px;
+  background: #211a16;
+}
+.japa-chapter-card.is-locked { opacity: .62; }
+.japa-chapter-image, .japa-chapter-art {
+  display: grid;
+  min-height: 170px;
+  place-items: center;
+  background-position: center;
+  background-size: cover;
+}
+.japa-chapter-image { background-image: linear-gradient(0deg, rgb(0 0 0 / 25%), transparent); }
+.japa-chapter-art span {
+  color: rgb(255 245 231 / 75%);
+  font-size: 4rem;
+  font-weight: 950;
+  letter-spacing: -.08em;
+}
+.japa-art-1 { background: linear-gradient(135deg, #a34d27, #e2a24d 48%, #36534b); }
+.japa-art-3 { background: linear-gradient(135deg, #202b31, #68533e 55%, #b17942); }
+.japa-art-4 { background: linear-gradient(135deg, #263c4a, #7697a0 55%, #d8b87d); }
+.japa-card-copy { padding: 1rem; }
+.japa-card-status {
+  margin: 0 0 .45rem;
+  color: #e6a65d;
+  font-size: .68rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.japa-card-copy h3 { margin: 0; color: #fff3e2; font-size: 1.15rem; }
+.japa-card-copy > p:not(.japa-card-status) {
+  min-height: 2.7em;
+  color: #c4b7a8;
+  font-size: .9rem;
+  line-height: 1.5;
+}
+.japa-select-button, .japa-primary-button {
+  min-height: 2.75rem;
+  border: 1px solid #d98638;
+  border-radius: 999px;
+  padding: .65rem 1rem;
+  color: #1e160f;
+  background: #f0a04a;
+  font-weight: 850;
+}
+.japa-select-button:disabled { color: #a89a8c; background: #39312a; border-color: #51473e; }
+.japa-credit { margin: 0; color: #9f9284; font-size: .8rem; }
+.japa-credit strong { color: #e6b47b; }
+.japa-intro-shell { min-height: 55vh; align-content: center; }
+.japa-inline-back { justify-self: start; border: 0; background: transparent; padding: 0; }
+.japa-objective-panel {
+  max-width: 680px;
+  margin: .75rem 0;
+  padding: 1.25rem;
+  border: 1px solid #5a4430;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 4%);
+}
+.japa-objective-panel > p:last-child { color: #c4b7a8; line-height: 1.6; }
+.japa-launch-note { max-width: 68ch; color: #c4b7a8; line-height: 1.6; }
+.japa-primary-button { justify-self: start; }
+.japa-teaser-button { width: fit-content; margin-top: .4rem; text-decoration: none; }
+@media (max-width: 680px) {
+  .japa-chapter-grid { grid-template-columns: 1fr; }
+  .japa-chapter-heading { align-items: start; flex-direction: column; }
+  .japa-chapter-image, .japa-chapter-art { min-height: 135px; }
+}
