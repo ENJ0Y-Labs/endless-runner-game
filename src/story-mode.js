@@ -56,7 +56,7 @@ export function mountJapaRush(root) {
     root.innerHTML = `
       <div class="japa-shell">
         <section class="japa-visual-hero" aria-label="Japa Rush story mode">
-          <div class="japa-hero-backdrop" role="img" aria-label="Japa Rush mode selection artwork"></div>
+          <div class="japa-hero-backdrop" role="img" aria-label="Lagos Hustle streetscape"></div>
           <div class="japa-hero-copy">
             <p class="japa-eyebrow">Relic Rush 3D presents</p>
             <h1>JAPA <span>RUSH</span></h1>
@@ -76,7 +76,7 @@ export function mountJapaRush(root) {
             const locked = status === "Locked";
             return `
               <article class="japa-chapter-card ${locked ? "is-locked" : ""} ${status === "Completed" ? "is-complete" : ""}">
-                <div class="japa-chapter-image" style="background-image:linear-gradient(0deg, rgb(0 0 0 / 55%), transparent 70%),url('${chapter.image}')" role="img" aria-label="${escapeHtml(chapter.title)} environment"></div>
+                <div class="japa-chapter-image" role="img" aria-label="${escapeHtml(chapter.title)} environment"><img src="${chapter.image}" alt="" loading="lazy" onerror="this.hidden=true"></div>
                 <div class="japa-card-copy">
                   <p class="japa-card-status">${status}</p>
                   <h3>${chapter.number}. ${escapeHtml(chapter.title)}</h3>
