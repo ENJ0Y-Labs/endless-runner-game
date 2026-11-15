@@ -498,6 +498,25 @@ function buildBackdrop() {
     }
     add(box(30,1.1,2.4), "#82705c", [0,8.5,-104]);
     add(box(30,.45,1.2), "#b18a5b", [0,7.8,-104]);
+    // Parked danfos sit beyond the curb as environmental set dressing, never as surprise hitboxes.
+    for (const [x,z,body] of [[-6.25,-38,"#e7b928"],[6.25,-82,"#d6a52b"]]) {
+      add(box(2.55,1.65,4.9), body, [x,1.45,z]);
+      add(box(2.42,.72,2.15), "#252f34", [x,2.58,z-1.02]);
+      add(box(2.25,.62,1.65), "#dce1d9", [x,2.52,z+.95]);
+      add(box(2.7,.22,4.95), "#202a2d", [x,.62,z]);
+      add(box(2.62,.2,4.9), "#f1d7a0", [x,2.33,z]);
+      for (const wx of [-1.12,1.12]) for (const wz of [-1.45,1.45])
+        add(new THREE.CylinderGeometry(.34,.34,.18,10), "#202326", [x+wx,.42,z+wz], [Math.PI/2,0,0]);
+    }
+    // A small okada silhouette and generator complete the roadside clutter.
+    for (const [x,z] of [[-5.9,-58],[6.0,-104]]) {
+      add(new THREE.CylinderGeometry(.28,.28,.14,10), "#24282a", [x-.65,.34,z], [Math.PI/2,0,0]);
+      add(new THREE.CylinderGeometry(.28,.28,.14,10), "#24282a", [x+.65,.34,z], [Math.PI/2,0,0]);
+      add(box(1.35,.22,.3), "#b94f2d", [x,.72,z]);
+      add(box(.42,.42,.42), "#343b3d", [x+.1,1.02,z-.1]);
+    }
+    add(box(1.5,1.1,1.1), "#4c5550", [-7.1,.55,-68]);
+    add(box(.12,.16,1.25), "#d7b15e", [-7.1,1.18,-68]);
     for (const side of [-1,1]) {
       add(box(1.2,2.8,130), "#79614b", [side*9.1,1.4,-74]);
       add(box(.28,3.2,130), "#d8bd8d", [side*8.45,1.6,-74]);
