@@ -4,10 +4,10 @@
 
 **Status:** Design proposal, revised  
 **Creative reference:** *Shangri-La Frontier* (encounter structure only)  
-**Parent documents:** \`PRD.md\`, \`docs/STORY-MODE-PLAN.md\`  
+**Parent documents:** `PRD.md`, `docs/STORY-MODE-PLAN.md`  
 **Implementation constraint:** Use the existing Relic Rush engine. This document describes proposed work. Nothing here is implemented unless it says so.
 
-This revision replaces the earlier draft. It keeps Story Mode compatible with \`STORY-MODE-PLAN.md\`, makes every hazard and location grounded in real Nigerian life, and ties the design to what the engine can actually do today.
+This revision replaces the earlier draft. It keeps Story Mode compatible with `STORY-MODE-PLAN.md`, makes every hazard and location grounded in real Nigerian life, and ties the design to what the engine can actually do today.
 
 ---
 
@@ -55,7 +55,7 @@ Every chapter uses the same loop, so the player always knows what is being asked
 - **Order:** the story item is placed early enough that the money phase never feels like it is waiting on a missed item. If the item is missed, see 3.3.
 - **Money is guaranteed reachable.** Notes come from an authored schedule whose total is at least **120% of the target**. A random spawner must never leave the target mathematically out of reach.
 - **Money is fictional.** Naira-note tokens are generic banknote-shaped game objects with no real currency design, no cash value, and no redemption. Use "₦" only as a display symbol for in-game tokens.
-- **No timers.** \`STORY-MODE-PLAN.md\` excludes timed missions in the first release. "Pressure" comes from speed, pattern density, and the encounter, never a countdown.
+- **No timers.** `STORY-MODE-PLAN.md` excludes timed missions in the first release. "Pressure" comes from speed, pattern density, and the encounter, never a countdown.
 - **Notes never require a collision** and are always on a reachable route.
 
 ### 3.2 Chapter summary
@@ -191,7 +191,7 @@ Each hazard definition records: lane(s) occupied, class, static or moving, colli
 
 ## 7. Calibration from the current engine
 
-These figures come from \`src/game/config.js\` and \`src/main.js\`. They are derived, not measured. Verify them in playtests before authoring patterns.
+These figures come from `src/game/config.js` and `src/main.js`. They are derived, not measured. Verify them in playtests before authoring patterns.
 
 - **Speed:** starts at 13 units/s, rises 0.22/s, caps at 25.
 - **Lanes:** x = -2.46, 0, 2.46. Lane spacing 2.46 units.
@@ -232,7 +232,7 @@ These are good ideas but are explicitly **out of the first Story Mode release**,
 
 **Difficulty modes (Adventurer / Veteran / Legend).** Deferred. Three modes across four chapters and three phases multiplies tuning work. Add only after a single tuned difficulty has been playtested. If added, they change speed, density, and warning length, never the realism of the setting.
 
-**Unlockables.** Badges, titles, and story details only. Do **not** add runner outfits. \`PRD.md\` and \`AGENT.md\` require the runner's appearance to come from Start.ng style data. Do not add gameplay-affecting upgrades such as invulnerability or permanent speed.
+**Unlockables.** Badges, titles, and story details only. Do **not** add runner outfits. `PRD.md` and `AGENT.md` require the runner's appearance to come from Start.ng style data. Do not add gameplay-affecting upgrades such as invulnerability or permanent speed.
 
 **Health, Pure Water, Japa Forms, PVC multipliers.** Deferred. They conflict with the one-hit-failure model. Revisit only if a health system is deliberately added.
 
@@ -259,9 +259,9 @@ Retry rules:
 
 Keep campaign content as data and let the original engine consume it.
 
-- Chapter metadata in a story configuration module (\`src/story/chapters.js\`): id, title, environment id, story item, money target, bonus-note count, encounter pattern id.
+- Chapter metadata in a story configuration module (`src/story/chapters.js`): id, title, environment id, story item, money target, bonus-note count, encounter pattern id.
 - Encounter patterns as data: a list of rows, each with lane contents, hazard class, and warning cue.
-- **Pattern validator as a unit test.** CI already runs \`node --test\`. A test can assert that every row of every pattern leaves a reachable lane given the previous row, that jumpable hazards are within the depth limit, and that the money schedule total is at least 120% of the target. This enforces "every pattern is solvable".
+- **Pattern validator as a unit test.** The repository's `npm test` script invokes Node's built-in `node --test` runner. Add deterministic tests that assert every row of every pattern leaves a reachable lane given the previous row, jumpable hazards are within the depth limit, and each money schedule totals at least 120% of its target. Confirm the CI workflow runs `npm test`; do not assume that a local script is already part of CI. This enforces "every pattern is solvable".
 - Objectives through hooks on existing collect and collision events, not a second collision system.
 - Story progression saved in versioned, namespaced local storage, separate from Classic Mode records. Handle missing, malformed, old-schema, and blocked storage.
 - Story results do not go to the Classic leaderboard. No new Start.ng endpoints are invented.
@@ -269,7 +269,7 @@ Keep campaign content as data and let the original engine consume it.
 
 ## 12. Engine dependencies (what the engine cannot do today)
 
-\`src/main.js\` currently builds its scene, seasonal palette, spawner, and UI at load time with module-level state. There is no chapter initialisation path yet. Before Story Mode content can plug in, the following need to be added or extracted, with Classic regression checks at each step.
+`src/main.js` currently builds its scene, seasonal palette, spawner, and UI at load time with module-level state. There is no chapter initialisation path yet. Before Story Mode content can plug in, the following need to be added or extracted, with Classic regression checks at each step.
 
 | Need | Today | Required change |
 |---|---|---|
@@ -336,7 +336,7 @@ Story Mode is ready for release only when all of these pass.
 
 **Quality**
 
-- [ ] \`npm test\` and \`npm run build\` pass.
+- [ ] `npm test` and `npm run build` pass.
 - [ ] Desktop and mobile controls, pause, audio, and HUD are manually tested.
 - [ ] No new unhandled console errors.
 
