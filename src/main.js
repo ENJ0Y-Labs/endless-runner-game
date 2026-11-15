@@ -1203,29 +1203,33 @@ function drawSeasonSky(current, next, blend) {
   skyContext.fillRect(0, 0, skyCanvas.width, skyCanvas.height);
   scene.background.needsUpdate = true;
 }
+let storySkinApplied = false;
 function updateSeasonEnvironment(distance) {
   if (storySkin) {
-    const gradient = skyContext.createLinearGradient(0, 0, 0, skyCanvas.height);
-    gradient.addColorStop(0, PAL.skyTop);
-    gradient.addColorStop(0.38, PAL.skyMid);
-    gradient.addColorStop(0.62, PAL.skyLow);
-    gradient.addColorStop(1, PAL.fog);
-    skyContext.fillStyle = gradient;
-    skyContext.fillRect(0, 0, skyCanvas.width, skyCanvas.height);
-    scene.background.needsUpdate = true;
-    scene.fog.color.set(PAL.fog);
-    groundMaterial.color.set(PAL.stoneDeep);
-    trackTop.map = null;
-    trackTop.color.set(PAL.stoneDark);
-    trackTop.needsUpdate = true;
-    trackSide.color.set(PAL.stoneDark);
-    curbMaterial.color.set(PAL.stone);
-    railMaterial.color.set(PAL.gold);
-    hemisphere.color.set(PAL.skyMid);
-    hemisphere.groundColor.set(PAL.stoneDeep);
-    sun.color.set(PAL.skyLow);
-    seasonalBackdropMeshes.forEach((mesh) => { mesh.visible = false; });
-    if (seasonalMeshes[0]) seasonalMeshes[0].visible = false;
+    if (!storySkinApplied) {
+      const gradient = skyContext.createLinearGradient(0, 0, 0, skyCanvas.height);
+      gradient.addColorStop(0, PAL.skyTop);
+      gradient.addColorStop(0.38, PAL.skyMid);
+      gradient.addColorStop(0.62, PAL.skyLow);
+      gradient.addColorStop(1, PAL.fog);
+      skyContext.fillStyle = gradient;
+      skyContext.fillRect(0, 0, skyCanvas.width, skyCanvas.height);
+      scene.background.needsUpdate = true;
+      scene.fog.color.set(PAL.fog);
+      groundMaterial.color.set(PAL.stoneDeep);
+      trackTop.map = null;
+      trackTop.color.set(PAL.stoneDark);
+      trackTop.needsUpdate = true;
+      trackSide.color.set(PAL.stoneDark);
+      curbMaterial.color.set(PAL.stone);
+      railMaterial.color.set(PAL.gold);
+      hemisphere.color.set(PAL.skyMid);
+      hemisphere.groundColor.set(PAL.stoneDeep);
+      sun.color.set(PAL.skyLow);
+      seasonalBackdropMeshes.forEach((mesh) => { mesh.visible = false; });
+      if (seasonalMeshes[0]) seasonalMeshes[0].visible = false;
+      storySkinApplied = true;
+    }
     return;
   }
   const seasonLength = CFG.seasonLength;
