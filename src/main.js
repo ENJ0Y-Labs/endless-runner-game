@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import "./style.css";
+import { mountJapaRush } from "./story-mode.js";
 import { GAME_CONFIG as CFG } from "./game/config.js";
 
 const app = document.querySelector("#app");
@@ -127,9 +128,11 @@ app.innerHTML = `
         <h2 id="story-teaser-title">Japa Rush <span>Story Mode</span></h2>
         <p class="story-hook">“You think you can Japa? The Big Man is coming for you!” One suitcase. One-way ticket. A never-ending highway. Dodge the country’s problems as they come flying at you, and try to reach the terminal before the system catches up.</p>
         <p class="story-teaser-detail">Race through Lagos Hustle, survive the Emilokan Expressway, face the system, and make a final dash for the Japa Terminal.</p>
+        <a class="primary-button japa-teaser-button" href="./?page=story">Enter Japa Rush</a>
         <div class="story-credit"><span class="credit-mark" aria-hidden="true">✦</span><span><strong>Story concept by ambh4ck3r</strong><small>Fam-submitted story concept</small></span></div>
       </div>
     </section>
+    <section id="japa-story-root" class="japa-story-root" hidden aria-live="polite"></section>
     <section class="leaderboard-panel" aria-labelledby="leaderboard-title">
       <div class="leaderboard-heading">
         <div><p class="eyebrow">Community best runs</p><h2 id="leaderboard-title">Leaderboard</h2></div>
@@ -146,6 +149,12 @@ app.innerHTML = `
       <p class="leaderboard-note">Ranked by score, then distance and relics. Start.ng stores each signed-in player’s best run.</p>
     </section>
   </main>`;
+
+const storyRoot = app.querySelector("#japa-story-root");
+if (page === "story") {
+  storyRoot.hidden = false;
+  mountJapaRush(storyRoot);
+}
 
 const container = app.querySelector(".scene-container");
 const LANE_X = CFG.laneX;
