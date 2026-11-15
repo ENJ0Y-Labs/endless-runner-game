@@ -46,7 +46,7 @@ export function mountJapaRush(root) {
 
   const statusFor = (chapter) => progress.completed.includes(chapter.id)
     ? "Completed"
-    : "Available";
+    : chapter.number <= progress.highestUnlocked ? "Available" : "Locked";
 
   const stopRun = () => {};
 
