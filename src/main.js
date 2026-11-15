@@ -536,7 +536,6 @@ function buildBackdrop() {
       scene.add(chunk);
       storyBackdropChunks.push(chunk);
     }
-    mesh.geometry.dispose();
     return;
   }
   const parts = [];
