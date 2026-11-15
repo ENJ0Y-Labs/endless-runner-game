@@ -47,6 +47,7 @@ const storyChapterTitle = ({
   "japa-terminal": "The Japa Terminal",
 })[storyChapterId] ?? "";
 document.body.dataset.page = page;
+document.body.dataset.storyChapter = storyChapterId || "";
 
 app.innerHTML = `
   <main class="game-shell">
@@ -97,9 +98,9 @@ app.innerHTML = `
         </svg>
       </button>
       <div class="scene-loading" id="scene-loading" role="status" aria-live="polite"><span class="loading-indicator" aria-hidden="true"></span> Preparing your track…</div>
-      <section class="game-overlay" id="start-overlay">
+      <section class="game-overlay ${storySkin ? "story-start-overlay" : ""}" id="start-overlay">
         <div class="pre-game-topbar">
-          <button class="sound-button" id="sound-toggle" type="button" aria-label="Mute sound" aria-pressed="false">SOUND ON</button>
+          <button class="sound-button" id="sound-toggle" type="button" aria-label="Mute sound" aria-pressed="false">Sound on</button>
           <div class="player-identity" id="player-identity" aria-live="polite">
             <span class="player-avatar" aria-hidden="true">G</span>
             <span class="player-identity-copy">
@@ -109,14 +110,16 @@ app.innerHTML = `
             <button class="sign-in-button" id="player-sign-in" type="button" aria-label="Sign in to Start.ng" title="Sign in to Start.ng">T</button>
           </div>
         </div>
-        <h1 class="title-art" aria-label="Relic Rush 3D"><span class="t-line" aria-hidden="true">Relic</span><span class="t-line" aria-hidden="true">Rush <span class="t-3d">3D</span></span></h1>
+        ${storySkin
+          ? `<h1 class="title-art story-title-art" aria-label="Japa Rush"><span class="t-line">JAPA</span><span class="t-line">RUSH</span></h1><p class="story-chapter-subtitle">${storyChapterTitle}</p>`
+          : `<h1 class="title-art" aria-label="Relic Rush 3D"><span class="t-line" aria-hidden="true">Relic</span><span class="t-line" aria-hidden="true">Rush <span class="t-3d">3D</span></span></h1>`}
         <div class="instruction-grid" aria-label="How to play">
           <div class="instruction-card"><strong>Switch lanes</strong><small>Arrow keys or A/D</small></div>
           <div class="instruction-card"><strong>Jump</strong><small>Space, Up, or swipe up</small></div>
-          <div class="instruction-card"><strong>Collect relics</strong><small>+100 points each</small></div>
-          <div class="instruction-card"><strong>Avoid obstacles</strong><small>Jump over crates</small></div>
+          <div class="instruction-card"><strong>${storySkin ? "Collect Naira" : "Collect relics"}</strong><small>+100 points each</small></div>
+          <div class="instruction-card"><strong>Avoid hazards</strong><small>${storySkin ? "Avoid crates and cars" : "Jump over crates"}</small></div>
         </div>
-        <button class="primary-button" id="play-button" type="button">${storySkin ? "START CHAPTER" : "START RUNNING"}</button>
+        <button class="primary-button" id="play-button" type="button">START RUNNING</button>
       </section>
       <section class="game-overlay" id="pause-overlay" hidden>
         <p class="eyebrow">Run paused</p><h2>Take a breather.</h2>
