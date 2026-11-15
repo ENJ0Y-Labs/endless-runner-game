@@ -57,7 +57,7 @@ Classic Mode and Story Mode must feel like two experiences inside one game:
 
 Story Mode is a short, chapter-based, satirical adventure built with the familiar three-lane runner controls.
 
-The player follows an ordinary fictional Nigerian trying to make it from the daily chaos of the city to an international departure gate. The journey is made difficult by traffic, unpredictable roads, paperwork, queues, barriers, and a fictional powerful antagonist known as **The Big Man**.
+The player follows an ordinary fictional Nigerian with one suitcase, trying to make it from the daily chaos of Lagos to an international departure gate. The journey is made difficult by traffic, roadworks, paperwork, queues, barriers, and a fictional powerful antagonist known as **The Big Man**. Gameplay hazards must remain grounded in believable Nigerian street, road, administrative, and airport environments. See [Japa Rush Gameplay and Difficulty Design](JAPA_RUSH_GAMEPLAY_DESIGN.md) for the detailed hazard, encounter, money-target, and engine-calibration specification.
 
 The humour should come from exaggerated situations, familiar everyday frustrations, visual gags, and short character lines. It should not depend on naming or depicting a real politician, political party, ethnic group, religion, or identifiable private individual.
 
@@ -162,11 +162,11 @@ The first planned story arc contains four chapters. The names and descriptions b
 - Naira-note tokens used only as fictional in-game collectibles.
 - A route slip, ticket, or other small story item that introduces the journey.
 
-**Primary objective:** Reach the expressway exit.
+**Required objectives:** Collect the route slip or bus ticket, meet the chapter's Naira-token target, survive The Last Danfo encounter, and reach the marked expressway exit.
 
-**Optional objective:** Collect a target number of Naira-note tokens during the run. The target and reward should be tuned through playtesting.
+**Optional objective:** Collect bonus Naira-note tokens beyond the required money target or complete the chapter's hidden challenge.
 
-**Chapter completion:** The player reaches the marked expressway exit while still alive. Optional collectibles should improve the chapter result but should not unexpectedly block story progression.
+**Chapter completion:** The player has the required story item, has met the money target, survives the encounter, and crosses the exit marker. Money targets are mandatory progression gates in the revised gameplay specification; they are not optional collectibles.
 
 **Teaching focus:** Lane switching, jumping over a clearly communicated low obstacle, collecting an item, and recognising the chapter exit.
 
@@ -192,9 +192,7 @@ The first planned story arc contains four chapters. The names and descriptions b
 - A travel folder or document envelope as the required story item.
 - Optional route tokens or Naira-note tokens.
 
-**Primary objective:** Collect the travel folder and reach the next checkpoint.
-
-**Chapter completion:** The player has collected the required folder and reaches the checkpoint. If the folder is missed, the game must explain what is missing and provide a fair retry path. It must not silently complete the chapter without the required item.
+**Required objectives:** Collect the travel folder, meet the chapter's Naira-token target, survive The Tanker Convoy encounter, and reach the checkpoint. If the folder is missed, the HUD must explain what is missing and provide the fair second-chance or retry behaviour defined in the gameplay specification. The chapter must not complete without the folder or money target.
 
 **Teaching focus:** Reading obstacle patterns, planning lane changes early, and recognising a required story collectible.
 
@@ -220,9 +218,7 @@ The first planned story arc contains four chapters. The names and descriptions b
 - Three fictional clearance stamps or approval tokens.
 - Optional Naira-note tokens.
 
-**Primary objective:** Collect the required clearance stamps and reach the district exit.
-
-**Chapter completion:** The required stamps have been collected and the player reaches the exit marker.
+**Required objectives:** Collect all three clearance stamps in order, meet the chapter's Naira-token target, survive The Clearance Queue encounter, and reach the district exit. The chapter cannot complete if any stamp or the money target is missing.
 
 **Teaching focus:** Combine lane changes and jumps with an objective that requires attention to both hazards and collectibles.
 
@@ -250,9 +246,7 @@ The first planned story arc contains four chapters. The names and descriptions b
 - A boarding pass as the required story item.
 - Optional travel tokens.
 
-**Primary objective:** Obtain the boarding pass and reach the designated departure gate.
-
-**Chapter completion:** The player reaches the gate with the required boarding pass. The game displays the story-complete screen and recognises all four chapters as completed.
+**Required objectives:** Obtain the boarding pass, meet the chapter's Naira-token target, survive The Final Departure encounter, and reach the designated departure gate. The game displays the story-complete screen only after all requirements are satisfied.
 
 **Ending:** Show a short celebratory scene or transition and a final story summary. Do not imply that the player can bypass real airport security or immigration processes. The experience is a fictional arcade story, not a simulation of real travel procedures.
 
@@ -291,7 +285,8 @@ The first release should use only a small set of objective types:
 
 - **Reach exit:** The player reaches a defined end marker.
 - **Collect required item:** The player collects one or more specified story items.
-- **Collect optional items:** The player can improve a result without being blocked from completing the chapter.
+- **Collect required money:** The player gathers enough fictional Naira-note tokens to meet the chapter target. This is a required progression condition in the revised Japa Rush gameplay specification.
+- **Collect bonus items:** The player can improve a result without being blocked from completing the chapter.
 
 Do not introduce timed missions, escort missions, branching routes, or complex multi-stage objectives in the first release.
 
@@ -300,7 +295,7 @@ Do not introduce timed missions, escort missions, branching routes, or complex m
 | Category | Purpose | Required for progression? | Monetary value |
 |---|---|---:|---|
 | Story item | Advances the chapter objective | Yes, where specified | None |
-| Naira-note token | Optional chapter collectible and score input | No, unless explicitly designed for a future chapter | None |
+| Naira-note token | Fictional in-game money token used to meet the chapter target; additional tokens are bonus pickups | Yes, up to the chapter target; bonus tokens beyond the target are optional | None |
 | Classic relic | Existing Classic Mode collectible | No role in Story Mode unless a later design explicitly reuses it | None |
 
 Naira-note tokens are fictional game objects only. They have no cash value, cannot be purchased, transferred, redeemed, or represented as a real financial balance.
@@ -922,7 +917,8 @@ Story Mode is ready for release only when all applicable criteria below pass.
 - [ ] Each chapter has a distinct environment identity.
 - [ ] Each chapter uses readable and fair hazards.
 - [ ] Required story items are tracked correctly.
-- [ ] Optional collectibles do not accidentally block chapter completion.
+- [ ] The required Naira-token target is tracked independently from bonus collectibles and must be met before the encounter can begin.
+- [ ] Bonus collectibles do not block chapter completion.
 - [ ] A chapter cannot complete before its required conditions are satisfied.
 - [ ] Failure and retry reset the active chapter run correctly.
 - [ ] Completing a chapter unlocks the next chapter.
@@ -974,7 +970,7 @@ Run this checklist before merging a Story Mode implementation and again before p
 - [ ] Confirm the objective HUD updates correctly.
 - [ ] Collect a required item and confirm the counter updates.
 - [ ] Miss a required item and confirm the exit cannot incorrectly complete the chapter.
-- [ ] Collect optional items and confirm their result is separate from required progress.
+- [ ] Collect required Naira tokens and confirm the money target updates independently from bonus pickups.
 - [ ] Trigger failure and retry the same chapter.
 - [ ] Complete a chapter and confirm the next chapter unlocks.
 - [ ] Replay a completed chapter.
@@ -1021,7 +1017,7 @@ The following decisions should be confirmed during Phase 0 or the relevant imple
 | Story leaderboard | Excluded from first release | Future scope |
 | Chapter length | Tune through playtesting; keep chapters short enough for a browser session | Phases 3–5 |
 | Required item targets | One folder in Chapter 2, three stamps in Chapter 3, one boarding pass in Chapter 4 | Before each chapter is implemented |
-| Optional Naira-note target | Start with a small optional target in Chapter 1 and tune from playtests | Phase 3 |
+| Chapter money targets | Required Naira-token targets for all four chapters; use the revised gameplay specification's provisional values and tune through playtests | Before each chapter is implemented |
 | Reset campaign action | Excluded from first release | Future scope |
 | Dialogue and sound quantity | Short text and lightweight effects first | Phase 6 |
 
