@@ -242,13 +242,13 @@ export class StoryRun {
     for (const item of this.objects) {
       if (!item.active) continue;
       item.mesh.position.z += speed * delta;
-      if (item.kind !== "hazard" && item.mesh.position.z > 1.5 && item.mesh.position.z < 5.2 && item.lane === this.targetLane) {
+      if (item.kind !== "hazard" && item.mesh.position.z > 1.5 && item.mesh.position.z < 5.2 && Math.abs(this.player.position.x - LANES[item.lane]) < 0.9) {
         item.active = false;
         item.mesh.visible = false;
         if (item.kind === "required") this.collected += 1;
         else this.optional += 1;
         this.updateHud();
-      } else if (item.kind === "hazard" && item.mesh.position.z > 2.1 && item.mesh.position.z < 4.7 && item.lane === this.targetLane) {
+      } else if (item.kind === "hazard" && item.mesh.position.z > 2.1 && item.mesh.position.z < 4.7 && Math.abs(this.player.position.x - LANES[item.lane]) < 0.9) {
         this.finish(false, "You were caught in the traffic. Your chapter objectives have been reset.");
         return;
       }
