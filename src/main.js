@@ -40,6 +40,12 @@ const STORY_SKINS = {
   "japa-terminal": { fog: "#91a9b5", skyTop: "#607d91", skyMid: "#a8c3d0", skyLow: "#d9e3e5", stone: "#879da5", stoneDark: "#4c626c", stoneDeep: "#293b45", stoneBand: "#d7a94c", stoneLight: "#c0d0d1", gold: "#f4c86a", crate: "#597c91", crateBand: "#d7e0e1", leafDark: "#394f52", leafMid: "#536e70", leafLight: "#829b9a" }
 };
 const storySkin = STORY_SKINS[storyChapterId] ?? null;
+const storyChapterTitle = ({
+  "lagos-hustle": "Lagos Hustle",
+  "emilokan-expressway": "The Emilokan Expressway",
+  "the-system": "The System",
+  "japa-terminal": "The Japa Terminal",
+})[storyChapterId] ?? "";
 document.body.dataset.page = page;
 
 app.innerHTML = `
@@ -56,7 +62,7 @@ app.innerHTML = `
     <section class="welcome-page mode-selection-page" aria-labelledby="welcome-title">
       <div class="mode-selection-backdrop" aria-hidden="true"></div>
       <div class="mode-selection-content">
-        <p class="eyebrow">START.NG ORIGINAL · THREE-LANE RUNNER</p>
+        <p class="eyebrow">${storySkin ? `JAPA RUSH · ${storyChapterTitle}` : "START.NG ORIGINAL · THREE-LANE RUNNER"}</p>
         <h1 id="welcome-title" class="title-art">RELIC RUSH <span class="t-3d">3D</span></h1>
         <p class="mode-selection-intro">Two ways to run. Choose your escape.</p>
         <div class="mode-selection-grid">
@@ -110,7 +116,7 @@ app.innerHTML = `
           <div class="instruction-card"><strong>Collect relics</strong><small>+100 points each</small></div>
           <div class="instruction-card"><strong>Avoid obstacles</strong><small>Jump over crates</small></div>
         </div>
-        <button class="primary-button" id="play-button" type="button">START RUNNING</button>
+        <button class="primary-button" id="play-button" type="button">${storySkin ? "START CHAPTER" : "START RUNNING"}</button>
       </section>
       <section class="game-overlay" id="pause-overlay" hidden>
         <p class="eyebrow">Run paused</p><h2>Take a breather.</h2>
