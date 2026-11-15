@@ -113,15 +113,28 @@ export class StoryRun {
   }
 
   buildCourse() {
-    const hazardMat = new THREE.MeshStandardMaterial({ color: "#c44f32", roughness: 0.8 });
+    const hazardColors = {
+      "lagos-hustle": "#d45a35",
+      "emilokan-expressway": "#68747b",
+      "the-system": "#a88e70",
+      "japa-terminal": "#477d91",
+    };
+    const hazardMat = new THREE.MeshStandardMaterial({ color: hazardColors[this.chapter.id], roughness: 0.82 });
     const itemMat = new THREE.MeshStandardMaterial({
       color: this.tuning.accent, emissive: this.tuning.accent, emissiveIntensity: 0.28, metalness: 0.35,
     });
     const optionalMat = new THREE.MeshStandardMaterial({ color: "#f5d65e", emissive: "#8b5b08", emissiveIntensity: 0.35 });
-    const hazardGeo = new THREE.BoxGeometry(1.45, 1.45, 1.15);
+    const hazardGeo = this.chapter.id === "emilokan-expressway"
+      ? new THREE.CylinderGeometry(0.78, 0.78, 1.5, 12)
+      : this.chapter.id === "the-system"
+        ? new THREE.BoxGeometry(1.55, 1.1, 0.38)
+        : this.chapter.id === "japa-terminal"
+          ? new THREE.BoxGeometry(1.1, 1.55, 0.95)
+          : new THREE.BoxGeometry(1.55, 1.3, 1.15);
     const itemGeo = new THREE.OctahedronGeometry(0.58, 0);
     const addHazardRow = (distance, lanes) => lanes.forEach((lane) => {
       const mesh = new THREE.Mesh(hazardGeo, hazardMat);
+      if (this.chapter.id === "emilokan-expressway") mesh.rotation.x = Math.PI / 2;
       this.addObject(mesh, -distance, lane, "hazard");
     });
     for (let d = 45, row = 0; d < this.tuning.length - 28; d += 29, row++) {
