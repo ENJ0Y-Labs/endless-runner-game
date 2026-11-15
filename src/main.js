@@ -1204,6 +1204,30 @@ function drawSeasonSky(current, next, blend) {
   scene.background.needsUpdate = true;
 }
 function updateSeasonEnvironment(distance) {
+  if (storySkin) {
+    const gradient = skyContext.createLinearGradient(0, 0, 0, skyCanvas.height);
+    gradient.addColorStop(0, PAL.skyTop);
+    gradient.addColorStop(0.38, PAL.skyMid);
+    gradient.addColorStop(0.62, PAL.skyLow);
+    gradient.addColorStop(1, PAL.fog);
+    skyContext.fillStyle = gradient;
+    skyContext.fillRect(0, 0, skyCanvas.width, skyCanvas.height);
+    scene.background.needsUpdate = true;
+    scene.fog.color.set(PAL.fog);
+    groundMaterial.color.set(PAL.stoneDeep);
+    trackTop.map = null;
+    trackTop.color.set(PAL.stoneDark);
+    trackTop.needsUpdate = true;
+    trackSide.color.set(PAL.stoneDark);
+    curbMaterial.color.set(PAL.stone);
+    railMaterial.color.set(PAL.gold);
+    hemisphere.color.set(PAL.skyMid);
+    hemisphere.groundColor.set(PAL.stoneDeep);
+    sun.color.set(PAL.skyLow);
+    seasonalBackdropMeshes.forEach((mesh) => { mesh.visible = false; });
+    if (seasonalMeshes[0]) seasonalMeshes[0].visible = false;
+    return;
+  }
   const seasonLength = CFG.seasonLength;
   const rawIndex = Math.floor(distance / seasonLength);
   const seasonIndex = rawIndex % SEASONS.length;
@@ -1328,13 +1352,28 @@ const urnGeometry = (() => {
     ),
   ]);
 })();
-const coinGeometry = mergeParts([
-  part(
-    new THREE.CylinderGeometry(0.38, 0.38, 0.12, 14),
-    "#ffd45c",
-    [0, 0, 0],
-    [Math.PI / 2, 0, 0],
-  ),
+const coinGeometry = mergeParts(storyChapterId === "lagos-hustle" ? [
+  // Naira note collectible.
+  part(box(0.9, 0.055, 0.48), "#2d9b69", [0, 0, 0]),
+  part(box(0.62, 0.025, 0.28), "#d6f0d9", [0, 0.04, 0]),
+  part(new THREE.CylinderGeometry(0.09, 0.09, 0.025, 10), "#f1d27b", [0, 0.055, 0], [Math.PI / 2, 0, 0]),
+] : storyChapterId === "emilokan-expressway" ? [
+  // Travel folder.
+  part(box(0.72, 0.12, 0.9), "#b87936", [0, 0, 0]),
+  part(box(0.66, 0.04, 0.78), "#e6d5ae", [0, 0.08, 0]),
+  part(box(0.2, 0.03, 0.08), "#d4a13d", [0, 0.105, -0.36]),
+] : storyChapterId === "the-system" ? [
+  // Official clearance stamp.
+  part(new THREE.CylinderGeometry(0.3, 0.34, 0.18, 10), "#b34a43", [0, 0, 0]),
+  part(new THREE.CylinderGeometry(0.13, 0.13, 0.34, 8), "#d8c4a1", [0, 0.24, 0]),
+] : storyChapterId === "japa-terminal" ? [
+  // Boarding pass.
+  part(box(0.92, 0.055, 0.42), "#e9e4d5", [0, 0, 0]),
+  part(box(0.56, 0.025, 0.08), "#4d8198", [0, 0.04, -0.12]),
+  part(box(0.28, 0.025, 0.04), "#4d8198", [0, 0.04, 0.08]),
+  part(box(0.1, 0.025, 0.26), "#d4a13d", [0.34, 0.04, 0.02]),
+] : [
+  part(new THREE.CylinderGeometry(0.38, 0.38, 0.12, 14), "#ffd45c", [0, 0, 0], [Math.PI / 2, 0, 0]),
   part(new THREE.TorusGeometry(0.3, 0.05, 4, 14), "#fff0a8", [0, 0, 0.07]),
 ]);
 const relicMaterial = new THREE.MeshStandardMaterial({
