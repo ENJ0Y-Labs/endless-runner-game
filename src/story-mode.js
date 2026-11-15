@@ -8,7 +8,7 @@ const CHAPTERS = [
     description: "Leave the bus stop, navigate the city traffic, and reach the expressway exit.",
     objective: "Reach the expressway exit",
     hazards: "Danfo buses, okadas, potholes, and roadside barricades",
-    image: "/assets/lagos-hustle.jpg",
+    image: "/assets/environment/lagos-hustle.jpg",
   },
   {
     id: "emilokan-expressway",
@@ -18,7 +18,7 @@ const CHAPTERS = [
     description: "Survive the highway and secure the travel folder.",
     objective: "Find the travel folder and reach the checkpoint",
     hazards: "Fuel tankers, broken-down trucks, and road barriers",
-    image: "/assets/expressway.jpg",
+    image: "/assets/environment/expressway.jpg",
   },
   {
     id: "the-system",
@@ -28,7 +28,7 @@ const CHAPTERS = [
     description: "Navigate the fictional administrative district and collect the required clearances.",
     objective: "Collect three clearance stamps and reach the exit",
     hazards: "Queue barriers, document carts, and security barricades",
-    image: "/assets/the-system.jpg",
+    image: "/assets/environment/the-system.jpg",
   },
   {
     id: "japa-terminal",
@@ -38,7 +38,7 @@ const CHAPTERS = [
     description: "Secure your boarding pass and reach the departure gate.",
     objective: "Collect the boarding pass and reach the gate",
     hazards: "Luggage trolleys, queue ropes, and terminal barriers",
-    image: "/assets/japa-terminal.jpg",
+    image: "/assets/environment/japa-terminal.jpg",
   },
 ];
 
@@ -82,7 +82,7 @@ export function mountJapaRush(root) {
             <p class="japa-lede">One bag. One destination. A whole country standing in the way.</p>
             <p class="japa-premise">You only wanted a better life. Now the Big Man has made your departure a national emergency. Run.</p>
           </div>
-          <img class="japa-big-man" src="/assets/the-big-man.jpg" alt="The Big Man, the fictional antagonist of Japa Rush" />
+          <div class="japa-big-man-sprite" role="img" aria-label="The Big Man, front view"></div>
           <p class="japa-antagonist-label">THE BIG MAN <span>“You think you can Japa?”</span></p>
         </section>
         <div class="japa-chapter-heading">
