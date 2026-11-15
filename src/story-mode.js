@@ -8,7 +8,7 @@ const CHAPTERS = [
     description: "Leave the bus stop, navigate the city traffic, and reach the expressway exit.",
     objective: "Reach the expressway exit",
     hazards: "Danfo buses, okadas, potholes, and roadside barricades",
-    unlocked: true,
+    image: "/assets/lagos-hustle.jpg",
   },
   {
     id: "emilokan-expressway",
@@ -28,6 +28,7 @@ const CHAPTERS = [
     description: "Navigate the fictional administrative district and collect the required clearances.",
     objective: "Collect three clearance stamps and reach the exit",
     hazards: "Queue barriers, document carts, and security barricades",
+    image: "/assets/the-system.jpg",
   },
   {
     id: "japa-terminal",
@@ -37,6 +38,7 @@ const CHAPTERS = [
     description: "Secure your boarding pass and reach the departure gate.",
     objective: "Collect the boarding pass and reach the gate",
     hazards: "Luggage trolleys, queue ropes, and terminal barriers",
+    image: "/assets/japa-terminal.jpg",
   },
 ];
 
@@ -68,15 +70,21 @@ function chapterStatus(chapter, progress) {
 export function mountJapaRush(root) {
   if (!root) return () => {};
   const progress = readProgress();
+
   const renderChapters = () => {
     root.innerHTML = `
       <div class="japa-shell">
-        <div class="japa-heading">
-          <p class="japa-eyebrow">Relic Rush 3D presents</p>
-          <h1>JAPA <span>RUSH</span></h1>
-          <p class="japa-lede">One bag. One destination. A whole country standing in the way.</p>
-          <p class="japa-premise">You only wanted a better life. Now the Big Man has made your departure a national emergency. Run.</p>
-        </div>
+        <section class="japa-visual-hero" aria-label="Japa Rush story mode">
+          <div class="japa-hero-backdrop" role="img" aria-label="Japa Rush mode selection artwork"></div>
+          <div class="japa-hero-copy">
+            <p class="japa-eyebrow">Relic Rush 3D presents</p>
+            <h1>JAPA <span>RUSH</span></h1>
+            <p class="japa-lede">One bag. One destination. A whole country standing in the way.</p>
+            <p class="japa-premise">You only wanted a better life. Now the Big Man has made your departure a national emergency. Run.</p>
+          </div>
+          <img class="japa-big-man" src="/assets/the-big-man.jpg" alt="The Big Man, the fictional antagonist of Japa Rush" />
+          <p class="japa-antagonist-label">THE BIG MAN <span>“You think you can Japa?”</span></p>
+        </section>
         <div class="japa-chapter-heading">
           <div><p class="japa-eyebrow">Your journey</p><h2>Choose a chapter</h2></div>
           <a class="japa-back-link" href="./">Back to Relic Rush</a>
@@ -87,7 +95,7 @@ export function mountJapaRush(root) {
             const locked = status === "Locked";
             return `
               <article class="japa-chapter-card ${locked ? "is-locked" : ""} ${status === "Completed" ? "is-complete" : ""}">
-                ${chapter.image ? `<div class="japa-chapter-image" style="background-image:url('${chapter.image}')"></div>` : `<div class="japa-chapter-art japa-art-${chapter.number}"><span>0${chapter.number}</span></div>`}
+                <div class="japa-chapter-image" style="background-image:linear-gradient(0deg, rgb(0 0 0 / 45%), transparent 65%),url('${chapter.image}')" role="img" aria-label="${chapter.title} environment"></div>
                 <div class="japa-card-copy">
                   <p class="japa-card-status">${status}</p>
                   <h3>${chapter.number}. ${chapter.title}</h3>
@@ -107,15 +115,19 @@ export function mountJapaRush(root) {
     root.innerHTML = `
       <div class="japa-shell japa-intro-shell">
         <button class="japa-back-link japa-inline-back" type="button" data-action="chapters">← All chapters</button>
-        <p class="japa-eyebrow">Chapter 0${chapter.number}</p>
-        <h1>${chapter.title}</h1>
-        <p class="japa-lede">${chapter.subtitle}</p>
+        <div class="japa-intro-art" style="background-image:linear-gradient(90deg, rgb(15 12 10 / 92%), rgb(15 12 10 / 15%)),url('${chapter.image}')">
+          <div>
+            <p class="japa-eyebrow">Chapter 0${chapter.number}</p>
+            <h1>${chapter.title}</h1>
+            <p class="japa-lede">${chapter.subtitle}</p>
+          </div>
+        </div>
         <div class="japa-objective-panel">
           <p class="japa-eyebrow">Your objective</p>
           <h2>${chapter.objective}</h2>
           <p><strong>Watch out for:</strong> ${chapter.hazards}.</p>
         </div>
-        <p class="japa-launch-note">Chapter selection and progress tracking are in place. The chapter's 3D environment and gameplay are the next development milestone.</p>
+        <p class="japa-launch-note">The chapter artwork is now connected. The playable 3D chapter, hazards, and objective logic are the next development milestone.</p>
         <button class="japa-primary-button" type="button" data-action="chapters">Return to chapter selection</button>
       </div>`;
   };
