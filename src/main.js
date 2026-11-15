@@ -66,7 +66,7 @@ app.innerHTML = `
         <h1 id="welcome-title" class="title-art">RELIC RUSH <span class="t-3d">3D</span></h1>
         <p class="mode-selection-intro">Two ways to run. Choose your escape.</p>
         <div class="mode-selection-grid">
-          <a class="mode-choice mode-choice-classic" href="./?page=play">\n            <img class="mode-choice-image" src="./assets/ui/mode-selection.jpg" alt="" loading="eager" onerror="this.hidden=true">
+          <a class="mode-choice mode-choice-classic" href="./?page=play">
             <span class="mode-choice-kicker">ENDLESS SURVIVAL</span>
             <strong>CLASSIC MODE</strong>
             <span>Run, dodge obstacles, collect relics, and chase your best score.</span>
