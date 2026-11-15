@@ -68,10 +68,7 @@ function chapterStatus(chapter, progress) {
 export function mountJapaRush(root) {
   if (!root) return () => {};
   const progress = readProgress();
-  let selectedChapter = null;
-
   const renderChapters = () => {
-    selectedChapter = null;
     root.innerHTML = `
       <div class="japa-shell">
         <div class="japa-heading">
@@ -107,7 +104,6 @@ export function mountJapaRush(root) {
   };
 
   const renderIntro = (chapter) => {
-    selectedChapter = chapter;
     root.innerHTML = `
       <div class="japa-shell japa-intro-shell">
         <button class="japa-back-link japa-inline-back" type="button" data-action="chapters">← All chapters</button>
@@ -135,7 +131,28 @@ export function mountJapaRush(root) {
     if (action === "chapters") renderChapters();
   };
 
+  const onChapterCompleted = (event) => {
+    const chapterId = event.detail?.chapterId;
+    const chapter = CHAPTERS.find((item) => item.id === chapterId);
+    if (!chapter || chapter.number > progress.highestUnlocked) return;
+    if (!progress.completed.includes(chapterId)) progress.completed.push(chapterId);
+    progress.highestUnlocked = Math.min(
+      CHAPTERS.length,
+      Math.max(progress.highestUnlocked, chapter.number + 1),
+    );
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+    } catch {
+      // Keep the current session usable when browser storage is blocked or full.
+    }
+    renderChapters();
+  };
+
   root.addEventListener("click", onClick);
+  window.addEventListener("japarush:chapter-completed", onChapterCompleted);
   renderChapters();
-  return () => root.removeEventListener("click", onClick);
+  return () => {
+    root.removeEventListener("click", onClick);
+    window.removeEventListener("japarush:chapter-completed", onChapterCompleted);
+  };
 }
