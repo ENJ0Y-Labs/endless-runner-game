@@ -34,7 +34,7 @@ const requestedPage = new URLSearchParams(window.location.search).get("page");
 const page = ["play", "leaderboard", "story"].includes(requestedPage) ? requestedPage : "welcome";
 const storyChapterId = new URLSearchParams(window.location.search).get("storyChapter");
 const STORY_SKINS = {
-  "lagos-hustle": { fog: "#bd855f", skyTop: "#9e6b51", skyMid: "#e4a36d", skyLow: "#f4bd7e", stone: "#8c6348", stoneDark: "#554034", stoneDeep: "#30251f", stoneBand: "#e1a33f", stoneLight: "#c28c5e", gold: "#f2b73c", crate: "#f0b52f", crateBand: "#e7e0c6", leafDark: "#34452d", leafMid: "#4b6337", leafLight: "#70864b" },
+  "lagos-hustle": { fog: "#d6a47b", skyTop: "#b77c57", skyMid: "#e6aa75", skyLow: "#ffd49a", stone: "#a66c45", stoneDark: "#70442f", stoneDeep: "#39271f", stoneBand: "#e5a94a", stoneLight: "#d49a62", gold: "#f5bd48", crate: "#e8a92d", crateBand: "#f0dcae", leafDark: "#34452d", leafMid: "#4b6337", leafLight: "#70864b" },
   "emilokan-expressway": { fog: "#899da4", skyTop: "#718b9b", skyMid: "#a9c2ce", skyLow: "#d4dfe0", stone: "#68777c", stoneDark: "#3f4c53", stoneDeep: "#28343b", stoneBand: "#d5a13a", stoneLight: "#9ba9a9", gold: "#f2b73c", crate: "#66737a", crateBand: "#d9dadd", leafDark: "#344b43", leafMid: "#4b6558", leafLight: "#789083" },
   "the-system": { fog: "#8d8988", skyTop: "#625f63", skyMid: "#a39b98", skyLow: "#c7bcb1", stone: "#77716e", stoneDark: "#494548", stoneDeep: "#29272b", stoneBand: "#b58b4d", stoneLight: "#b3a69a", gold: "#e5b95e", crate: "#b9a68f", crateBand: "#e0d3bd", leafDark: "#3f4943", leafMid: "#58645b", leafLight: "#7c8577" },
   "japa-terminal": { fog: "#91a9b5", skyTop: "#607d91", skyMid: "#a8c3d0", skyLow: "#d9e3e5", stone: "#879da5", stoneDark: "#4c626c", stoneDeep: "#293b45", stoneBand: "#d7a94c", stoneLight: "#c0d0d1", gold: "#f4c86a", crate: "#597c91", crateBand: "#d7e0e1", leafDark: "#394f52", leafMid: "#536e70", leafLight: "#829b9a" }
@@ -254,9 +254,9 @@ renderer.toneMappingExposure = 1.05;
 container.appendChild(renderer.domElement);
 
 // Warm golden-hour light: low sun from the upper right, like the cover.
-const hemisphere = new THREE.HemisphereLight("#ffe2b4", "#5a4330", 1.55);
+const hemisphere = new THREE.HemisphereLight("#ffe8c8", storyChapterId === "lagos-hustle" ? "#80604a" : "#5a4330", storyChapterId === "lagos-hustle" ? 2.0 : 1.55);
 scene.add(hemisphere);
-const sun = new THREE.DirectionalLight("#ffd08a", 3.4);
+const sun = new THREE.DirectionalLight("#ffcf91", storyChapterId === "lagos-hustle" ? 4.1 : 3.4);
 sun.position.set(9, 13, -2);
 sun.target.position.set(0, 0, -8);
 sun.castShadow = true;
@@ -343,8 +343,17 @@ function createSlabTexture() {
   canvas.height = 256;
   const ctx = canvas.getContext("2d");
   const random = seeded(7);
-  ctx.fillStyle = "#b8946a";
+  ctx.fillStyle = storySkin ? "#55443a" : "#b8946a";
   ctx.fillRect(0, 0, 512, 256);
+  if (storyChapterId === "lagos-hustle") {
+    // Continuous asphalt with broken white lane dividers, matching the reference road.
+    for (const x of [170, 342]) {
+      ctx.fillStyle = "#e7d2a7";
+      for (let y = 0; y < 256; y += 128) ctx.fillRect(x - 3, y + 12, 6, 62);
+    }
+    ctx.fillStyle = "rgba(35,25,20,.18)";
+    for (let i=0;i<1800;i++) ctx.fillRect(random()*512,random()*256,1+random()*2,1+random()*2);
+  } else
   // Two staggered rows of four slabs per tile, each with its own tint.
   for (let row = 0; row < 2; row++) {
     for (let col = 0; col < 4; col++) {
@@ -391,12 +400,13 @@ function createSlabTexture() {
 }
 const slabTexture = createSlabTexture();
 const trackSide = new THREE.MeshStandardMaterial({
-  color: PAL.stoneDark,
+  color: storyChapterId === "lagos-hustle" ? "#55443a" : PAL.stoneDark,
   roughness: 1,
 });
 const trackTop = new THREE.MeshStandardMaterial({
   map: slabTexture,
-  roughness: 0.9,
+  color: storyChapterId === "lagos-hustle" ? "#8c6146" : "#ffffff",
+  roughness: 0.96,
 });
 const track = new THREE.Mesh(
   new THREE.BoxGeometry(CFG.trackWidth, 0.22, TRACK_LENGTH),
@@ -407,7 +417,7 @@ track.receiveShadow = true;
 scene.add(track);
 
 const groundMaterial = new THREE.MeshStandardMaterial({
-  color: "#5b4a2c",
+  color: storyChapterId === "lagos-hustle" ? "#b18b68" : "#5b4a2c",
   roughness: 1,
 });
 const ground = new THREE.Mesh(
@@ -480,8 +490,8 @@ function buildBackdrop() {
     const shopColors = ["#b85b35", "#d69a48", "#557b72", "#8f4d38", "#c1a06a"];
     for (const side of [-1, 1]) {
       for (let i = 0; i < 7; i++) {
-        const z = -24 - i * 21, x = side * (10.2 + rand() * 2.4);
-        const w = 4.2 + rand() * 2.6, h = 4.2 + rand() * 3.8;
+        const z = -18 - i * 21, x = side * (7.5 + rand() * 1.0);
+        const w = 3.8 + rand() * 1.2, h = 3.2 + rand() * 2.1;
         add(box(w,h,7.5), shopColors[i % shopColors.length], [x,h/2,z]);
         add(box(w+.35,.35,7.8), "#4b3429", [x,h+.18,z]);
         add(box(w+.4,.22,1.1), i%2 ? "#d8a34e" : "#397a78", [x,2.45,z+3.9]);
@@ -501,17 +511,16 @@ function buildBackdrop() {
       }
     }
     // Distant lagoon flyover and exit landmark: the reference image's main vanishing-point silhouette.
-    add(box(34,1.05,3.2), "#82705c", [0,8.1,-104]);
-    add(box(34,.32,3.35), "#b18a5b", [0,7.48,-104]);
-    add(box(1.1,7.6,2.8), "#75624f", [-12.8,3.8,-104]);
-    add(box(1.1,7.6,2.8), "#75624f", [12.8,3.8,-104]);
+    add(box(34,.38,2.0), "#8d806f", [0,7.2,-142]);
+    add(box(34,.16,2.1), "#c49a70", [0,6.94,-142]);
+    add(box(.7,6.6,1.6), "#75624f", [-12.8,3.3,-142]);
+    add(box(.7,6.6,1.6), "#75624f", [12.8,3.3,-142]);
     // Green overhead EXIT sign, kept as geometry so it remains legible in perspective.
-    add(box(4.5,2.1,.22), "#315d39", [0,6.35,-101.8]);
-    add(box(4.25,1.85,.08), "#6c9860", [0,6.35,-101.64]);
-    add(box(.08,1.55,.05), "#f1e8c8", [-1.72,6.35,-101.57]);
-    add(box(.08,1.55,.05), "#f1e8c8", [1.72,6.35,-101.57]);
-    add(box(2.9,.07,.05), "#f1e8c8", [0,6.86,-101.55]);
-    add(box(.55,.07,.05), "#f1e8c8", [0,5.92,-101.55]);
+    add(box(3.8,1.65,.18), "#315d39", [0,5.9,-139.8]);
+    add(box(3.58,1.43,.06), "#6c9860", [0,5.9,-139.66]);
+    add(box(.06,1.18,.04), "#f1e8c8", [-1.48,5.9,-139.59]);
+    add(box(.06,1.18,.04), "#f1e8c8", [1.48,5.9,-139.59]);
+    add(box(2.5,.06,.04), "#f1e8c8", [0,6.28,-139.56]);
     // Utility poles, crossarms and sagging-looking cable runs on both verges.
     for (const side of [-1, 1]) {
       for (let i=0;i<5;i++) {
@@ -562,8 +571,8 @@ function buildBackdrop() {
     add(box(1.5,1.1,1.1), "#4c5550", [-7.1,.55,-68]);
     add(box(.12,.16,1.25), "#d7b15e", [-7.1,1.18,-68]);
     for (const side of [-1,1]) {
-      add(box(1.2,2.8,130), "#79614b", [side*9.1,1.4,-74]);
-      add(box(.28,3.2,130), "#d8bd8d", [side*8.45,1.6,-74]);
+      add(box(2.0,.22,130), "#c9a27a", [side*6.5,.02,-74]);
+      add(box(.16,.12,130), "#e4c28e", [side*5.45,.13,-74]);
     }
     const mesh = new THREE.Mesh(mergeParts(parts), vertexMaterial);
     mesh.castShadow = false; mesh.receiveShadow = true;
