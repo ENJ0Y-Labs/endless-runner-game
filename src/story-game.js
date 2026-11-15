@@ -134,13 +134,13 @@ export class StoryRun {
       mesh.userData.requiredLabel = label;
       this.addObject(mesh, -distance, lane, "required");
     };
-    if (this.chapter.number === 2) addRequired(165, 1, "TRAVEL FOLDER");
+    if (this.chapter.number === 2) addRequired(180, 1, "TRAVEL FOLDER");
     if (this.chapter.number === 3) {
-      addRequired(105, 0, "CLEARANCE STAMP");
-      addRequired(220, 2, "CLEARANCE STAMP");
-      addRequired(335, 1, "CLEARANCE STAMP");
+      addRequired(115, 0, "CLEARANCE STAMP");
+      addRequired(230, 2, "CLEARANCE STAMP");
+      addRequired(345, 1, "CLEARANCE STAMP");
     }
-    if (this.chapter.number === 4) addRequired(250, 1, "BOARDING PASS");
+    if (this.chapter.number === 4) addRequired(260, 1, "BOARDING PASS");
     if (this.chapter.number === 1) {
       [85, 165, 245, 315].forEach((d, i) => {
         const mesh = new THREE.Mesh(itemGeo, optionalMat);
