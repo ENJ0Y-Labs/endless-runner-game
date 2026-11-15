@@ -193,12 +193,6 @@ export function mountJapaRush(root) {
     }
   };
 
-  // Keep the active chapter ID on the root so retry never relies on display copy.
-  const originalRenderRun = renderRun;
-  const safeRenderRun = (chapter) => {
-    root.dataset.chapterTitle = chapter.title;
-    originalRenderRun(chapter);
-  };
   root.addEventListener("click", onClick);
   renderChapters();
   return () => {
