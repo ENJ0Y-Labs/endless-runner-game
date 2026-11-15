@@ -504,7 +504,7 @@ function buildBackdrop() {
     }
     const mesh = new THREE.Mesh(mergeParts(parts), vertexMaterial);
     mesh.castShadow = false; mesh.receiveShadow = true;
-    scene.add(mesh); registerSeasonalMesh(mesh);
+    scene.add(mesh);
     return;
   }
   const parts = [];
