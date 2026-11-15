@@ -56,7 +56,7 @@ export function mountJapaRush(root) {
     root.innerHTML = `
       <div class="japa-shell">
         <section class="japa-visual-hero" aria-label="Japa Rush story mode">
-          <div class="japa-hero-backdrop" role="img" aria-label="Lagos Hustle streetscape"></div>
+          <div class="japa-hero-backdrop" role="img" aria-label="Lagos Hustle streetscape"><img src="./assets/environment/lagos-hustle.jpg" alt="" onerror="this.hidden=true"></div>
           <div class="japa-hero-copy">
             <p class="japa-eyebrow">Relic Rush 3D presents</p>
             <h1>JAPA <span>RUSH</span></h1>
