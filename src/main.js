@@ -405,7 +405,7 @@ const trackSide = new THREE.MeshStandardMaterial({
 });
 const trackTop = new THREE.MeshStandardMaterial({
   map: slabTexture,
-  color: storyChapterId === "lagos-hustle" ? "#8c6146" : "#ffffff",
+  color: "#ffffff",
   roughness: 0.96,
 });
 const track = new THREE.Mesh(
