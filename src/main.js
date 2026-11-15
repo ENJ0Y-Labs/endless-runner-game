@@ -45,13 +45,27 @@ app.innerHTML = `
         <a id="admin-nav-link" href="./admin/" hidden>Admin</a>
       </div>
     </nav>
-    <section class="welcome-page" aria-labelledby="welcome-title">
-      <p class="eyebrow">A three-lane endless runner</p>
-      <h1 id="welcome-title" class="title-art">Relic Rush <span class="t-3d">3D</span></h1>
-      <p>Run through ancient worlds, dodge obstacles, and collect relics. Your next run starts on the track, not inside a crowded menu.</p>
-      <div class="welcome-actions">
-        <a class="primary-button welcome-play-button" href="./?page=play">Play</a>
-        <a class="secondary-button" href="./?page=leaderboard">View leaderboard</a>
+    <section class="welcome-page mode-selection-page" aria-labelledby="welcome-title">
+      <div class="mode-selection-backdrop" aria-hidden="true"></div>
+      <div class="mode-selection-content">
+        <p class="eyebrow">START.NG ORIGINAL · THREE-LANE RUNNER</p>
+        <h1 id="welcome-title" class="title-art">RELIC RUSH <span class="t-3d">3D</span></h1>
+        <p class="mode-selection-intro">Two ways to run. Choose your escape.</p>
+        <div class="mode-selection-grid">
+          <a class="mode-choice mode-choice-classic" href="./?page=play">
+            <span class="mode-choice-kicker">ENDLESS SURVIVAL</span>
+            <strong>CLASSIC MODE</strong>
+            <span>Run, dodge obstacles, collect relics, and chase your best score.</span>
+            <span class="mode-choice-action">PLAY CLASSIC <b aria-hidden="true">→</b></span>
+          </a>
+          <a class="mode-choice mode-choice-story" href="./?page=story">
+            <span class="mode-choice-kicker">THE GREAT ESCAPE</span>
+            <strong>JAPA RUSH <em>STORY MODE</em></strong>
+            <span>Outrun the Big Man across Lagos, the expressway, the system, and the terminal.</span>
+            <span class="mode-choice-action">ENTER STORY <b aria-hidden="true">→</b></span>
+          </a>
+        </div>
+        <a class="mode-leaderboard-link" href="./?page=leaderboard">View leaderboard</a>
       </div>
     </section>
     <header class="game-hud" id="game-hud" hidden>
