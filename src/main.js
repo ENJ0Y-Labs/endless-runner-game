@@ -66,13 +66,13 @@ app.innerHTML = `
         <h1 id="welcome-title" class="title-art">RELIC RUSH <span class="t-3d">3D</span></h1>
         <p class="mode-selection-intro">Two ways to run. Choose your escape.</p>
         <div class="mode-selection-grid">
-          <a class="mode-choice mode-choice-classic" href="./?page=play">
+          <a class="mode-choice mode-choice-classic" href="./?page=play">\n            <img class="mode-choice-image" src="./assets/ui/mode-selection.jpg" alt="" loading="eager" onerror="this.hidden=true">
             <span class="mode-choice-kicker">ENDLESS SURVIVAL</span>
             <strong>CLASSIC MODE</strong>
             <span>Run, dodge obstacles, collect relics, and chase your best score.</span>
             <span class="mode-choice-action">PLAY CLASSIC <b aria-hidden="true">→</b></span>
           </a>
-          <a class="mode-choice mode-choice-story" href="./?page=story">
+          <a class="mode-choice mode-choice-story" href="./?page=story">\n            <img class="mode-choice-image" src="./assets/environment/lagos-hustle.jpg" alt="" loading="eager" onerror="this.hidden=true">
             <span class="mode-choice-kicker">THE GREAT ESCAPE</span>
             <strong>JAPA RUSH <em>STORY MODE</em></strong>
             <span>Outrun the Big Man across Lagos, the expressway, the system, and the terminal.</span>
@@ -469,6 +469,44 @@ function registerSeasonalMesh(mesh) {
   seasonalMeshes.push(mesh);
 }
 function buildBackdrop() {
+  if (storyChapterId === "lagos-hustle") {
+    const parts = [];
+    const rand = seeded(21);
+    const add = (geometry, color, position, rotation = [0,0,0], scale = [1,1,1]) => parts.push(part(geometry, color, position, rotation, scale));
+    const shopColors = ["#b85b35", "#d69a48", "#557b72", "#8f4d38", "#c1a06a"];
+    for (const side of [-1, 1]) {
+      for (let i = 0; i < 7; i++) {
+        const z = -24 - i * 21, x = side * (10.2 + rand() * 2.4);
+        const w = 4.2 + rand() * 2.6, h = 4.2 + rand() * 3.8;
+        add(box(w,h,7.5), shopColors[i % shopColors.length], [x,h/2,z]);
+        add(box(w+.35,.35,7.8), "#4b3429", [x,h+.18,z]);
+        add(box(w+.4,.22,1.1), i%2 ? "#d8a34e" : "#397a78", [x,2.45,z+3.9]);
+        add(box(.16,1.5,.18), "#e5d1aa", [x-w*.28,1.05,z+4]);
+        add(box(.16,1.5,.18), "#e5d1aa", [x+w*.28,1.05,z+4]);
+        if (i%2===0) add(new THREE.CylinderGeometry(.48,.52,1.2,8), "#687276", [x+side*1.1,h+.85,z-1]);
+        if (i<4) {
+          add(box(3.8,.16,2.4), "#d9b77b", [x-side*1.4,2.25,z+5.2]);
+          add(box(3.3,1.1,.75), "#765039", [x-side*1.4,.75,z+6]);
+        }
+      }
+      for (let i=0;i<5;i++) {
+        const z=-18-i*27, x=side*(7.4+(i%2)*.4);
+        add(new THREE.CylinderGeometry(.09,.13,8,6), "#393b39", [x,4,z]);
+        add(box(3.5,.12,.12), "#393b39", [x-side*1.5,7.4,z]);
+        add(box(.08,.08,2.2), "#252b2c", [x-side*.7,7.1,z+.8]);
+      }
+    }
+    add(box(30,1.1,2.4), "#82705c", [0,8.5,-104]);
+    add(box(30,.45,1.2), "#b18a5b", [0,7.8,-104]);
+    for (const side of [-1,1]) {
+      add(box(1.2,2.8,130), "#79614b", [side*9.1,1.4,-74]);
+      add(box(.28,3.2,130), "#d8bd8d", [side*8.45,1.6,-74]);
+    }
+    const mesh = new THREE.Mesh(mergeParts(parts), vertexMaterial);
+    mesh.castShadow = false; mesh.receiveShadow = true;
+    scene.add(mesh); registerSeasonalMesh(mesh);
+    return;
+  }
   const parts = [];
   const rand = seeded(21);
   const temple = [0, 0, -160];
@@ -1233,7 +1271,7 @@ function updateSeasonEnvironment(distance) {
       hemisphere.groundColor.set(PAL.stoneDeep);
       sun.color.set(PAL.skyLow);
       seasonalBackdropMeshes.forEach((mesh) => { mesh.visible = false; });
-      if (seasonalMeshes[0]) seasonalMeshes[0].visible = false;
+      seasonalMeshes.forEach((mesh) => { mesh.visible = false; });
       storySkinApplied = true;
     }
     return;
