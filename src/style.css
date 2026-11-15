@@ -2050,3 +2050,140 @@ body[data-page="story"] .leaderboard-panel {
   .japa-chapter-heading { align-items: start; flex-direction: column; }
   .japa-chapter-image, .japa-chapter-art { min-height: 135px; }
 }
+
+
+/* Japa Rush supplied concept artwork */
+.japa-visual-hero {
+  position: relative;
+  display: grid;
+  min-height: clamp(300px, 42vw, 490px);
+  overflow: hidden;
+  align-items: end;
+  isolation: isolate;
+  border: 1px solid #68452f;
+  border-radius: 16px;
+  background: #17120f;
+}
+.japa-hero-backdrop {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgb(13 12 11 / 94%) 0%, rgb(13 12 11 / 70%) 48%, rgb(13 12 11 / 10%) 100%),
+    linear-gradient(0deg, rgb(13 12 11 / 65%), transparent 60%),
+    url("/assets/mode-selection.jpg") center 42% / cover;
+  transform: scale(1.01);
+}
+.japa-hero-copy {
+  position: relative;
+  z-index: 1;
+  width: min(68%, 690px);
+  padding: clamp(1.25rem, 4vw, 3rem);
+}
+.japa-hero-copy h1 {
+  margin: 0;
+  color: #fff5e7;
+  font-size: clamp(3rem, 9vw, 6.3rem);
+  font-weight: 950;
+  letter-spacing: -.075em;
+  line-height: .9;
+}
+.japa-hero-copy h1 span { color: #f39b3d; }
+.japa-hero-copy .japa-lede { max-width: 28ch; }
+.japa-hero-copy .japa-premise { max-width: 48ch; }
+.japa-big-man {
+  position: absolute;
+  z-index: 0;
+  right: 1.5%;
+  bottom: 0;
+  width: min(39%, 390px);
+  max-height: 94%;
+  object-fit: contain;
+  object-position: bottom center;
+  filter: drop-shadow(-18px 12px 22px rgb(0 0 0 / 45%));
+}
+.japa-antagonist-label {
+  position: absolute;
+  right: 1.5rem;
+  bottom: 1rem;
+  z-index: 2;
+  display: grid;
+  gap: .15rem;
+  max-width: 190px;
+  margin: 0;
+  color: #ffc16f;
+  font-size: .72rem;
+  font-weight: 950;
+  letter-spacing: .13em;
+  text-align: right;
+}
+.japa-antagonist-label span {
+  color: #fff2df;
+  font-size: .68rem;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+.japa-chapter-image {
+  min-height: clamp(155px, 17vw, 220px);
+  background-position: center;
+  background-size: cover;
+}
+.japa-chapter-card {
+  transition: transform .18s ease, border-color .18s ease, opacity .18s ease;
+}
+.japa-chapter-card:not(.is-locked):hover {
+  transform: translateY(-3px);
+  border-color: #d98638;
+}
+.japa-chapter-card.is-complete { border-color: #7c9a6b; }
+.japa-intro-art {
+  display: flex;
+  min-height: clamp(210px, 30vw, 330px);
+  align-items: end;
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+  border: 1px solid #594230;
+  border-radius: 15px;
+  background-position: center;
+  background-size: cover;
+}
+.japa-intro-art > div { max-width: 620px; }
+.japa-intro-art h1 {
+  margin: 0;
+  color: #fff5e7;
+  font-size: clamp(2.4rem, 7vw, 4.5rem);
+  font-weight: 950;
+  letter-spacing: -.065em;
+  line-height: .98;
+}
+@media (max-width: 680px) {
+  .japa-visual-hero { min-height: 380px; }
+  .japa-hero-backdrop {
+    background:
+      linear-gradient(0deg, rgb(13 12 11 / 96%) 0%, rgb(13 12 11 / 76%) 56%, rgb(13 12 11 / 15%) 100%),
+      url("/assets/mode-selection.jpg") center / cover;
+  }
+  .japa-hero-copy {
+    align-self: end;
+    width: 100%;
+    padding: 1.2rem;
+  }
+  .japa-big-man {
+    right: -2%;
+    top: 0;
+    bottom: auto;
+    width: 45%;
+    max-height: 56%;
+    opacity: .92;
+  }
+  .japa-antagonist-label {
+    right: .9rem;
+    bottom: auto;
+    top: 52%;
+    max-width: 145px;
+    font-size: .6rem;
+  }
+  .japa-antagonist-label span { font-size: .58rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .japa-chapter-card { transition: none; }
+}
