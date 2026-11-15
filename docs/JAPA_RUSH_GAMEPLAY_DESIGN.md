@@ -1,361 +1,347 @@
 # Japa Rush: The Great Escape
-## Gameplay and difficulty design specification
 
-**Status:** Design proposal  
-**Reference:** *Shangri-La Frontier*  
-**Implementation constraint:** Use the existing Relic Rush game engine. This document describes proposed design work; it does not claim that these mechanics are already implemented.
+## Gameplay and difficulty design specification (revised)
+
+**Status:** Design proposal, revised  
+**Creative reference:** *Shangri-La Frontier* (encounter structure only)  
+**Parent documents:** \`PRD.md\`, \`docs/STORY-MODE-PLAN.md\`  
+**Implementation constraint:** Use the existing Relic Rush engine. This document describes proposed work. Nothing here is implemented unless it says so.
+
+This revision replaces the earlier draft. It keeps Story Mode compatible with \`STORY-MODE-PLAN.md\`, makes every hazard and location grounded in real Nigerian life, and ties the design to what the engine can actually do today.
 
 ---
 
 ## 1. Creative direction
 
-Japa Rush is a grounded, fast-paced Nigerian escape adventure. The player is trying to make it from the chaos of Lagos to an international departure gate while navigating believable traffic, roadworks, paperwork queues, security checks, and airport crowds.
+Japa Rush is a grounded, fast-paced Nigerian escape story. An ordinary person with one suitcase has to get from Lagos street traffic to an international departure gate. Every obstacle must be something you could actually meet on that journey.
 
-Use *Shangri-La Frontier* as a reference for the **quality of the challenge**, not its fantasy setting. Borrow its readable enemy patterns, escalating encounters, mastery through repetition, hidden objectives, and satisfying high-skill ranks.
+**Realism rules**
 
-**Do not introduce fantasy beasts, monsters, supernatural enemies, giant robots, or impossible hazards.** Every threat must be a believable person, vehicle, object, or situation that could exist in the chapter's location.
+1. Every hazard is a believable vehicle, object, or situation for its location. No fantasy creatures, monsters, giant machines, or supernatural events.
+2. Vehicles behave like vehicles: they stay in lanes, signal before merging, brake, and stall. They do not teleport, hover, or change direction without a cue.
+3. Local detail should be specific and respectful: yellow-and-black danfo minibuses, okadas, keke tricycles, roadside kiosks and hand-painted signs, go-slow traffic, generators, queue-and-ticket-number offices, airport check-in and security lines.
+4. Institutions, signs, and brands are fictional. No real agency logos, airline liveries, uniforms with real insignia, politicians, or party symbols.
+5. No graphic harm. A failed run ends in a stop, stumble, or blocked path, not injury.
+6. People are never the joke. Use situations (queues, traffic, paperwork) rather than ethnicity, religion, disability, or poverty.
 
-The player should lose because they misread a pattern, mistimed a move, or chose a risky route, not because the game generated an unavoidable obstacle.
+**Fairness rule:** the player should lose because they misread a pattern or mistimed a move, never because the game produced an unavoidable obstacle.
+
+**Tone decision.** The plan and teaser use satire. This spec makes the *gameplay* grounded and keeps the humour in signage, billboards, announcements, and short dialogue. The Big Man stays a comic, believable, human presence (see 3.5). Do not mix a satirical HUD with surreal hazards.
 
 ## 2. Non-negotiable engine rule
 
-Build this campaign on the original Relic Rush engine.
+Story Mode is a content layer on the original Relic Rush engine.
 
-- Preserve the existing runner character and animation system.
-- Preserve original movement, lane switching, jumping, sliding (if supported), physics, collision detection, camera, rendering loop, audio, input handling, pause behaviour, and responsive controls.
-- Do not create a second Three.js scene, runner controller, physics loop, or parallel gameplay implementation for story mode.
-- Japa Rush should be a campaign/content layer: chapter configuration, visual skins, obstacle and collectible variants, encounter patterns, objectives, progression, and results.
-- Classic Mode must remain unchanged. Story-specific settings must be scoped to Story Mode and must not leak into Classic Mode.
-- Reuse original engine systems wherever possible. If the engine does not support a proposed action (for example, sliding or a perfect-dodge window), document that dependency and extend the original system rather than creating a competing one.
+- Preserve the runner, animation, lane movement, jump, collision, camera, render loop, audio, input, pause, and responsive controls.
+- Do not create a second Three.js scene, runner controller, physics loop, or parallel gameplay implementation.
+- Classic Mode must not change. Story settings are scoped to Story Mode only.
+- If the engine lacks something this document needs, extend the original system and document it in section 12. Do not build a competing one.
 
-## 3. Campaign structure and chapter encounters
+## 3. The chapter loop: three requirements
 
-Each chapter follows one finite loop: **collect the chapter story item, earn the chapter's money target, then survive its set-piece encounter and reach the exit**. Each chapter has a distinctive environment, ordinary hazards, and one memorable set-piece encounter. These set-pieces serve the role of boss fights: they introduce a recognisable pattern, escalate through phases, and test what the player has learned. They are not literal monsters or supernatural bosses.
+Every chapter uses the same loop, so the player always knows what is being asked.
 
-The money target is a required progression gate, not an optional collectible goal. Naira notes are the primary money pickups. The chapter story item is a separate requirement. The boss encounter starts only when both requirements are complete. The chapter ends when the player survives the encounter and crosses its exit trigger.
+| # | Requirement | What it means |
+|---|---|---|
+| 1 | **Story item** | Collect the chapter's required item (route slip, travel folder, clearance stamps, boarding pass). |
+| 2 | **Money target** | Collect enough Naira-note tokens to reach the chapter's target. |
+| 3 | **Boss encounter** | When requirements 1 and 2 are both complete, normal spawning stops and the chapter's set-piece encounter begins. Surviving it to the exit completes the chapter. |
+
+"Boss" here means a recognisable, phased traffic or crowd encounter, not a monster.
+
+### 3.1 Loop rules
+
+- **Trigger:** the encounter starts only when the story item is collected AND the money target is met. The HUD shows both.
+- **Order:** the story item is placed early enough that the money phase never feels like it is waiting on a missed item. If the item is missed, see 3.3.
+- **Money is guaranteed reachable.** Notes come from an authored schedule whose total is at least **120% of the target**. A random spawner must never leave the target mathematically out of reach.
+- **Money is fictional.** Naira-note tokens are generic banknote-shaped game objects with no real currency design, no cash value, and no redemption. Use "₦" only as a display symbol for in-game tokens.
+- **No timers.** \`STORY-MODE-PLAN.md\` excludes timed missions in the first release. "Pressure" comes from speed, pattern density, and the encounter, never a countdown.
+- **Notes never require a collision** and are always on a reachable route.
+
+### 3.2 Chapter summary
+
+Targets below are **placeholders** until the collect rate is measured in playtests. Aim for roughly 60 to 90 seconds of collecting before the encounter.
+
+| Chapter | 1. Story item | 2. Money target (placeholder) | 3. Encounter |
+|---|---|---:|---|
+| 1. Lagos Hustle | Route slip / bus ticket | ₦500 | The Last Danfo |
+| 2. The Expressway | Travel folder | ₦800 | The Tanker Convoy |
+| 3. The System | 3 clearance stamps | ₦1,200 | The Clearance Queue |
+| 4. Japa Terminal | Boarding pass | ₦1,800 | The Final Departure |
+
+### 3.3 Missing the story item
+
+The item must be collectible with ordinary movement and is never behind an unavoidable hazard. If the player passes it:
+
+- The HUD says it was missed and what is required.
+- Either the item **re-appears once** at a later, clearly signposted point (preferred: a second chance in the same chapter), or the run ends with a clear explanation and a retry.
+- The chapter never completes without the item.
+
+### 3.4 Boss start sequence
+
+1. Requirements 1 and 2 are met.
+2. Normal spawning stops. Rows already on screen finish scrolling off.
+3. A readable warning plays (sign, announcement, siren, or horn) and the encounter title card shows. The play area stays visible.
+4. The authored three-phase encounter begins.
+5. Surviving the last phase reaches the exit marker and completes the chapter.
+
+**Checkpoint at the encounter.** One-hit failure plus a long money phase is punishing. A failure *during* the encounter restarts at the encounter start with the story item and money kept. A failure *before* it restarts the chapter. The rank reflects this (section 8).
+
+### 3.5 The Big Man
+
+The Big Man is an original fictional character, not any real person. He is a believable, influential figure, not a supernatural chaser.
+
+- **Where he appears:** opening cutscene, propaganda-style billboards, short phone-call lines, and a motorcade.
+- **Gameplay role:** a VIP motorcade is a real traffic event. Escort vehicles with sirens push traffic aside. In Chapter 2 it can add lane-clearing pressure to the encounter. It follows normal vehicle movement and is always telegraphed by siren audio and a lane marker.
+- **Tone:** funny early, more intimidating later, never physically impossible.
+- **Lines** (placeholders, keep short and literal where instructions matter): "You want to Japa? Japa from this!", "Collect your renewed hope!", "Don't you know I'm a national leader?!"
+
+## 4. Chapter design
 
 ### Chapter 1: Lagos Hustle
 
-**Setting:** Busy Lagos streets leading towards the expressway.
+**Setting:** A busy Lagos commercial street at golden hour, leading to an expressway on-ramp.
 
-**Story pressure:** The player is trying to get out of the neighbourhood and reach the expressway.
+**Realistic hazards:** danfo minibuses, okadas, keke tricycles, parked vehicles, potholes, roadside barricades, hawkers' carts and stalls (static objects, not people in the lane), crates and drums, traffic cones.
 
-**Hazards:** Danfo minibuses, okadas, potholes, road barricades, street traders' carts, parked vehicles, and sudden but signalled traffic merges.
+**Encounter: The Last Danfo**
 
-**Set-piece: The Last Danfo**
-A persistent danfo/minibus and its unpredictable driver create a moving traffic challenge.
+- **Phase 1, Read the road.** One danfo signals (indicator blink and slight drift) before moving into a lane. Teaches that moving vehicles warn first.
+- **Phase 2, Go-slow squeeze.** The danfo slows while a parked vehicle or keke occupies a neighbouring lane. The safe lane is visible early.
+- **Phase 3, On-ramp merge.** A final sequence of cones and barricades closes lanes one at a time toward the exit sign.
 
-- Phase 1, Read the road: the danfo signals or drifts towards one lane. The player learns to recognise its approach.
-- Phase 2, Traffic squeeze: the danfo slows or changes lane while another ordinary traffic obstacle occupies a neighbouring lane.
-- Phase 3, Expressway merge: the player must read a final sequence of lane closures and reach the exit safely.
+**Story item:** route slip or bus ticket (placed on the first stretch, teaching collection).  
+**Hidden challenge:** collect every bonus note, or clear a marked traffic section without changing lanes.
 
-**Requirement 1, story item:** Collect the route slip/ticket.
+### Chapter 2: The Expressway
 
-**Requirement 2, money target:** Earn the chapter target in Naira from money pickups. Initial tuning placeholder: **₦300**.
+**Setting:** A busy intercity expressway with long vehicles, roadworks, and breakdowns.
 
-**Requirement 3, set-piece:** Trigger and survive The Last Danfo encounter, then reach the expressway exit.
+**Realistic hazards:** tankers and trailers, commercial buses, trucks, broken-down vehicles with hazard triangles, cones, barriers, road debris, and lane closures for roadworks.
 
-Naira notes count towards the money target and are therefore required in sufficient quantity. Additional notes beyond the target are optional score/rank pickups. Place every required pickup on a plausible, reachable route.
+**Encounter: The Tanker Convoy**
 
-### Chapter 2: The Emilokan Expressway
+- **Phase 1, Keep your distance.** A tanker holds a lane at steady speed. Choose a safe route around it.
+- **Phase 2, Narrow passage.** Roadworks or a stalled vehicle reduce open lanes. Cones and a "lane closed ahead" sign show the opening in advance.
+- **Phase 3, Convoy break.** Two or more vehicles create a short sequence of lane choices before the checkpoint. If the Big Man's motorcade appears, its siren and lane marker give advance warning.
 
-**Setting:** A busy intercity expressway with long vehicles, roadworks, and broken-down traffic.
+**Story item:** travel folder.  
+**Hidden challenge:** a narrow but safe service-lane route, or a secondary travel document.
 
-**Hazards:** Tankers, commercial buses, trucks, broken-down vehicles, cones, barriers, road debris, and lane closures.
-
-**Set-piece: The Tanker Convoy**
-A large tanker and surrounding traffic create a multi-stage traffic pattern.
-
-- Phase 1, Keep distance: the tanker occupies a lane and the player must choose a safe route around it.
-- Phase 2, Narrow passage: roadworks or a stalled vehicle reduce the available lanes. Warnings show the safe opening in advance.
-- Phase 3, Convoy break: two or more vehicles create a timed sequence of lane choices before the checkpoint.
-
-**Requirement 1, story item:** Collect the travel folder.
-
-**Requirement 2, money target:** Earn the chapter target in Naira. Initial tuning placeholder: **₦500**.
-
-**Requirement 3, set-piece:** Trigger and survive The Tanker Convoy encounter, then reach the checkpoint.
-
-The tanker is a traffic obstacle, not a pursuing monster. It must obey plausible vehicle movement and have visible warning cues.
+The tanker is a tall traffic obstacle. It is never jumped and never chases the player.
 
 ### Chapter 3: The System
 
-**Setting:** A crowded government or administrative processing centre.
+**Setting:** A crowded, fictional government processing centre: numbered windows, ticket-number displays, queue rails, noticeboards, metal benches, ceiling fans, a standby generator hum, and paperwork everywhere. Signs and institutions are invented.
 
-**Hazards:** Queue barriers, rope stanchions, document carts, benches, misplaced files, security desks, and people moving through clearly marked paths.
+**Realistic hazards:** queue barriers and rope stanchions, rolling document carts, benches, stacked files, security desks, floor-marked walkways.
 
-**Set-piece: The Clearance Queue**
-A sequence of queue-control changes and document checks creates the encounter.
+**Encounter: The Clearance Queue**
 
-- Phase 1, Find the right queue: barriers guide the player through a changing but readable route.
-- Phase 2, Document rush: a document cart and queue ropes create a timed obstacle sequence.
-- Phase 3, Final verification: the player must navigate the final security/verification area and collect the last required stamp.
+- **Phase 1, Find the right queue.** Barriers redirect the route along a changing but readable path, with floor arrows as the cue.
+- **Phase 2, Document rush.** A document cart moves along a visible track while queue ropes narrow the lanes.
+- **Phase 3, Final verification.** Navigate the last desk area to collect the final stamp and reach the exit.
 
-**Requirement 1, story item:** Collect all 3 clearance stamps in the intended sequence.
+**Story item:** three clearance stamps, placed in order along the run. Collect all three.  
+**Hidden challenge:** find a side queue and complete an optional document task.
 
-**Requirement 2, money target:** Earn the chapter target in Naira. Initial tuning placeholder: **₦800**.
-
-**Requirement 3, set-piece:** Trigger and survive The Clearance Queue encounter, then reach the processing-centre exit.
-
-The challenge comes from route reading and timing, not hostile security staff or implausible machinery.
+The challenge is route reading and timing. There are no hostile staff and no implausible machinery.
 
 ### Chapter 4: Japa Terminal
 
-**Setting:** A realistic international airport departure terminal.
+**Setting:** An international airport departure terminal: check-in hall, security lanes, concourse, departure boards, and gate. All airlines and destinations are invented.
 
-**Hazards:** Luggage trolleys, queue ropes, airport carts, passengers with luggage, temporary barriers, security lanes, and boarding-gate crowd flow.
+**Realistic hazards:** luggage trolleys, airport carts, queue ropes, passengers with luggage (rendered as static or on-path groups, not in the way of a blocked lane), temporary barriers, security-lane equipment.
 
-**Set-piece: The Final Departure**
-A time-pressured sequence through check-in, security, and the departure concourse.
+**Encounter: The Final Departure**
 
-- Phase 1, Check-in rush: navigate luggage carts and queue lanes.
-- Phase 2, Security bottleneck: follow visible lane openings while avoiding moving airport equipment and temporary barriers.
-- Phase 3, Gate closing: a faster but clearly telegraphed sequence leads to the departure gate.
+- **Phase 1, Check-in rush.** Luggage carts and queue lanes.
+- **Phase 2, Security bottleneck.** Follow visible lane openings past moving carts and temporary barriers.
+- **Phase 3, Gate closing.** A faster, clearly telegraphed run to the gate, announced by the boarding-call audio.
 
-**Requirement 1, story item:** Collect the boarding pass.
+**Story item:** boarding pass.  
+**Hidden challenge:** a quieter route to the gate, or a secondary travel item.
 
-**Requirement 2, money target:** Earn the chapter target in Naira. Initial tuning placeholder: **₦1,200**.
+This is a fictional arcade story. It must not imply that real airport security or immigration can be bypassed. The Big Man may appear on a phone call or billboard, never as a physical pursuer.
 
-**Requirement 3, set-piece:** Trigger and survive The Final Departure encounter, then cross the departure-gate exit.
+## 5. Hazard classification (what is realistic and what is fair)
 
-**Final human antagonist (optional story presentation):** “The Big Man” can be a realistic, influential character who creates social or administrative pressure through dialogue, phone calls, or a brief cutscene. He must not become a supernatural boss or physically impossible pursuer. The actual gameplay challenge remains the airport route and its hazards.
+The engine currently has one obstacle hitbox and one jump clearance. Realistic vehicles need different rules, so every hazard declares a class:
 
-## 4. Chapter loop, money economy, and boss trigger
+| Class | Examples | Player response |
+|---|---|---|
+| **Low** | cones, crates, low barricades, potholes, luggage | Jump or change lane |
+| **Tall** | tanker, bus, danfo, truck, security desk | Change lane only; never jumpable |
+| **Moving** | merging danfo, document cart, airport cart | Change lane; must be telegraphed |
+| **Span** | road gap, closed-lane section | Jump (if low) or reach the open lane |
 
-Every chapter uses the same clearly communicated sequence:
+Never present a tall obstacle with a low-obstacle silhouette, or the reverse. A decorative vehicle must be visually distinguishable from an active one.
 
-1. **Play and collect:** The player enters the chapter and searches for its story item while collecting Naira pickups.
-2. **Earn the target:** The money HUD tracks the amount earned against the chapter target. Reaching the target does not end the chapter by itself.
-3. **Trigger the encounter:** The set-piece begins only when the story item requirement and money target are both complete.
-4. **Survive the encounter:** Normal chapter spawning stops. A clear warning and encounter title appear, then the authored three-phase set-piece runs.
-5. **Reach the exit:** Beating the set-piece means surviving all three phases and crossing its exit trigger. There is no separate health bar or requirement to attack a vehicle/person.
+Each hazard definition records: lane(s) occupied, class, static or moving, collision depth and width, warning cue, and whether it may sit beside or before a required item.
 
-### Initial money targets
+## 6. Encounter design principles
 
-| Chapter | Story item requirement | Initial money target | Set-piece |
-|---|---|---:|---|
-| Lagos Hustle | 1 route slip/ticket | ₦300 | The Last Danfo |
-| The Emilokan Expressway | 1 travel folder | ₦500 | The Tanker Convoy |
-| The System | 3 clearance stamps, in order | ₦800 | The Clearance Queue |
-| Japa Terminal | 1 boarding pass | ₦1,200 | The Final Departure |
+1. **Telegraph before impact.** Indicator blink, siren, lane marker, sign, or announcement before danger.
+2. **Teach, then test.** Introduce a pattern safely, repeat with a small change, then combine with an earlier pattern.
+3. **Escalate fairly.** Raise density and complexity, not just speed.
+4. **Always leave a reachable safe path**, counting the lane the player is in and the actions available.
+5. **No fake warnings.** A cue must describe the real hazard.
+6. **Authored patterns with bounded variation**, not unconstrained random placement.
+7. **Calibrate to the real movement model** (section 7).
 
-These amounts are **playtest placeholders**, not final balance values. Tune them against measured pickup rates and the target chapter collection duration. Aim for roughly **60 to 90 seconds of collecting** before the encounter trigger on a competent run. Do not add a countdown timer to force this duration.
+## 7. Calibration from the current engine
 
-### Fair and guaranteed money availability
+These figures come from \`src/game/config.js\` and \`src/main.js\`. They are derived, not measured. Verify them in playtests before authoring patterns.
 
-A required money target must never become mathematically unreachable because of random spawning.
+- **Speed:** starts at 13 units/s, rises 0.22/s, caps at 25.
+- **Lanes:** x = -2.46, 0, 2.46. Lane spacing 2.46 units.
+- **Lane change:** the runner eases toward the target at roughly 12 per second, so a one-lane move is mostly complete in about 0.25 s. A two-lane move (edge to edge) takes noticeably longer, so avoid patterns that demand one.
+- **Jump:** initial velocity 9.5, gravity 25, so about 0.76 s airtime and about 1.8 units peak height. Clearance is 1.05, so the player is above clearance for about **0.49 s**.
+- **Hit window:** obstacle z-range relative to the player is -0.75 to 0.95, about 1.7 units deep.
+- **Reaction distance:** rows spawn at 120 units. At 13 units/s that is about 9 s of visibility, at 25 units/s about 4.8 s.
 
-- Use an authored pickup schedule or a seeded, testable spawn plan with a known available total of at least **120% of the target** (target plus approximately 20% buffer).
-- If the existing spawner is retained, add a deterministic top-up rule that schedules enough reachable pickups to make the remaining target achievable.
-- The spawner must account for pickups already collected, missed pickups, upcoming scheduled value, and the player's reachable lanes.
-- Never place required money behind an unavoidable obstacle, inside a collision volume, or on a route that requires an unsupported movement action.
-- If the player misses a pickup, later scheduled opportunities must still allow the target to be reached. The buffer is a fairness margin, not an excuse to hide all remaining money in one difficult sequence.
-- Add deterministic test seeds and a debug readout for total available value, collected value, and remaining reachable value.
-- If the target can no longer be reached due to a spawn bug, fail safely with a clear recovery/retry state. Never leave the player running indefinitely with no possible boss trigger.
+**What this means for authors**
 
-### Money HUD and exchange-rate presentation
+- Jumpable ("low") obstacles must be shallow. The jump covers roughly 6.4 units of travel at the start speed (13 × 0.49), minus the 1.7-unit hit window, so keep jumpable depth to about **3 units or less** to stay safe across the speed range. Deep or tall vehicles must be lane-avoid only.
+- Telegraph a moving hazard at least **1 s** before it becomes dangerous, and more at higher speed.
+- The existing spawner already guarantees a reachable lane between rows. Authored patterns must meet the same guarantee and be checked by a test (section 11).
 
-Show money progress throughout the collection phase in a persistent, readable HUD element, for example **₦320 / ₦500** with a progress bar. Update it immediately when a pickup is collected. The bar must distinguish current collected value from the target and remain legible on mobile.
+## 8. Ranks (compatible with one-hit failure)
 
-A falling exchange-rate display may appear as a cosmetic story-pressure detail beside the money HUD. It must not secretly change pickup values, target requirements, collision behaviour, or difficulty unless a future design explicitly specifies and tests that mechanic. The player should never confuse it with the actual money target.
+The engine ends the run on the first collision, so "limited mistakes" is not measurable. Ranks use things the engine can track:
 
-### Boss trigger and three-phase resolution
-
-When both the chapter story item and money target are complete:
-
-- Stop spawning ordinary hazards and collectibles after any already-active entities have been safely cleared or removed.
-- Play a distinct warning cue and show a short chapter-specific message, such as **“The Last Danfo is coming.”**
-- Display the set-piece title and phase indicator without obscuring the runner or the safe route.
-- Start the authored three-phase encounter. Each phase must have a defined start condition, pattern, warning, safe response, and completion condition.
-- On completion of phase three, present the exit route. The chapter is won when the player survives to and crosses the exit trigger.
-
-The boss/set-piece is not defeated by attacking it. It is overcome by reading and surviving its traffic, queue, or terminal patterns. Do not continue ordinary random spawning during the encounter.
-
-### Checkpoint and one-hit-fail fairness
-
-The original runner's collision/failure rules remain authoritative. If a collision causes an immediate run failure, the collecting phase should be short enough that a retry is reasonable. Target approximately 60 to 90 seconds of collection before the encounter, subject to playtesting.
-
-Create a checkpoint at the boss trigger. Once the player has collected the story item and met the money target, save that chapter attempt state so a failure during the set-piece can restart at the encounter without requiring the player to earn the money again. The checkpoint must preserve the completed requirements but reset encounter phase state and temporary encounter entities. If checkpoint support cannot be added safely to the original engine, use a shorter collection phase and clearly document that boss retries restart the chapter; do not pretend a checkpoint exists.
-
-On chapter restart from the beginning, reset the current attempt's story item, money total, and encounter state. Previously completed chapters and permanent campaign unlocks remain saved.
-
-## 5. Encounter design principles
-
-Apply the following principles to every chapter encounter.
-
-1. **Telegraph before impact.** Show an animation, lane marker, sound cue, road sign, or environmental signal before an obstacle becomes dangerous.
-2. **Teach, then test.** Introduce one pattern safely, repeat it with a small variation, then combine it with a previously learned pattern.
-3. **Escalate fairly.** Increase speed, pattern complexity, and decision pressure gradually. Do not simply shorten reaction time until the game becomes unreadable.
-4. **Preserve a valid route.** Every generated obstacle combination must leave at least one physically reachable safe path, accounting for the player's current lane and available actions.
-5. **Avoid fake warnings.** Warning indicators must accurately describe the upcoming hazard. Difficulty should test reaction and planning, not punish trust.
-6. **Use controlled variation.** Build encounters from tested pattern sets with bounded variation rather than unconstrained random placement.
-7. **Respect the engine's movement model.** Pattern timing and spacing must be calibrated to actual Relic Rush movement speed, lane-change duration, jump/slide behaviour, and collision bounds.
-
-## 6. Precision movement: dodge and counter
-
-If supported by the original engine, add a timing-based reward window around selected, clearly telegraphed hazards.
-
-- **Standard evade:** The player avoids the obstacle using normal movement.
-- **Perfect dodge:** The player clears the hazard inside a small, tested timing window.
-- **Perfect-dodge reward:** A brief score multiplier, small boost, or bonus meter increase.
-
-Do not require a perfect dodge to survive or complete a chapter. It is a mastery reward, not a mandatory mechanic. Avoid adding a combat attack unless it has a believable in-world action and fits the runner's existing controls.
-
-## 7. Hidden challenges and optional routes
-
-Add optional objectives for replay value. They should be discoverable through environmental clues and should not block ordinary chapter completion. The chapter story item and money target described in Section 3 are mandatory progression requirements; optional objectives are separate.
-
-Examples:
-
-- **Lagos Hustle:** collect all four Naira notes, or complete a difficult traffic section without changing lanes.
-- **Expressway:** take a narrow but safe service-lane route, or collect a secondary travel document.
-- **The System:** discover a side queue and complete an optional document task.
-- **Japa Terminal:** find a quieter route to the gate or collect a secondary travel item.
-
-Hidden objectives must be fair: give a clue, ensure the route is reachable, and make the reward clear. They can unlock cosmetic items, story details, profile badges, or challenge variants.
-
-## 8. Unlockable abilities and progression
-
-Progression should reward demonstrated skill without making later chapters trivial or pay-to-win.
-
-| Demonstrated play | Possible unlock |
+| Rank | Criteria |
 |---|---|
-| Repeated perfect dodges | Reflex cosmetic/effect or a small score bonus |
-| Consistent collision-free runs | Adrenaline score multiplier |
-| Completing optional routes | Route Finder hint or cosmetic |
-| Collecting all chapter items | Chapter-specific badge |
-| High-rank campaign completion | Special runner outfit or title |
+| **C** | Complete the chapter (items, money target, encounter). |
+| **B** | C, plus at least half of the available bonus notes. |
+| **A** | Complete in one attempt (no failed attempts and no encounter checkpoint used). |
+| **S** | A, plus all bonus notes and the chapter's hidden challenge. |
+| **S+** | S, plus the perfect-dodge target (if perfect dodge is implemented). |
 
-Any gameplay-affecting ability must be modest, optional, and tested against the campaign's difficulty. Prefer cosmetics, score bonuses, and informational assists over permanent speed or invulnerability upgrades.
+"Bonus notes" are notes beyond the required target (the 20% buffer and extras). Thresholds are placeholders until playtested. S+ must not depend on an unreasonably narrow timing window.
 
-## 9. Difficulty modes
+### Perfect Escape challenge (optional, late phase)
 
-Offer three tuned difficulty presets. These change obstacle pacing and pattern complexity, not the realism of the setting.
+Complete all four chapters in one session without a failed attempt and with the S-level conditions. A failed attempt resets the challenge streak only. It never erases chapter unlocks or saved progress.
 
-### Adventurer
-- Standard Relic Rush speed or a carefully calibrated slight increase.
-- Longer warning windows.
-- More forgiving spacing between complex patterns.
-- Checkpoint/retry support where appropriate.
+## 9. Optional systems (later phases, not first release)
 
-### Veteran
-- Faster chapter pacing.
-- More combinations of previously introduced patterns.
-- Shorter, but still readable, warning windows.
-- Fewer recovery opportunities during set-piece encounters.
+These are good ideas but are explicitly **out of the first Story Mode release**, to protect the plan's four-chapter scope.
 
-### Legend
-- Highest tested speed and pattern complexity.
-- No mid-encounter checkpoint during the set-piece.
-- Strict collision-free performance expectations.
-- All hazards remain telegraphed and every pattern remains solvable.
+**Perfect dodge.** The engine has no near-miss detection, but it is easy to add: when a telegraphed hazard passes the player within a small z-window and a lane change or jump was completed shortly before, award a small score bonus. It is a mastery reward, never required to finish.
 
-Difficulty must be playtested. Do not choose arbitrary speed multipliers without measuring the time needed for a player to switch lanes or use other supported actions.
+**Difficulty modes (Adventurer / Veteran / Legend).** Deferred. Three modes across four chapters and three phases multiplies tuning work. Add only after a single tuned difficulty has been playtested. If added, they change speed, density, and warning length, never the realism of the setting.
 
-## 10. Chapter ranks and campaign completion
+**Unlockables.** Badges, titles, and story details only. Do **not** add runner outfits. \`PRD.md\` and \`AGENT.md\` require the runner's appearance to come from Start.ng style data. Do not add gameplay-affecting upgrades such as invulnerability or permanent speed.
 
-Award a rank after each chapter based on objective completion, collisions, collectibles, and optional challenges.
+**Health, Pure Water, Japa Forms, PVC multipliers.** Deferred. They conflict with the one-hit-failure model. Revisit only if a health system is deliberately added.
 
-| Rank | Suggested criteria |
-|---|---|
-| C | Complete the chapter's required objective |
-| B | Complete with limited mistakes and required items |
-| A | Complete with zero collisions |
-| S | Zero collisions, all required items, and the chapter's hidden challenge |
-| S+ | Zero collisions, all required and optional collectibles, hidden challenge, and perfect-dodge target |
+**Cosmetic exchange-rate indicator.** Optional HUD flavour that drifts downward with distance. Not a financial calculation.
 
-Final thresholds should be tuned through playtesting. Do not make S+ depend on an unreasonably narrow timing window.
+## 10. Failure feedback and retry
 
-### Perfect Escape campaign challenge
+After a failure, show a short, factual summary:
 
-The ultimate optional achievement:
+- What was hit (for example, "tanker in the centre lane").
+- The warning cue that preceded it, where one existed.
+- The requirement still missing (item or money).
+- A clear Retry button.
 
-- Complete all four chapters in one campaign attempt.
-- Collect every mandatory item.
-- Collect at least 3 of the 4 Naira notes in Chapter 1.
-- Complete all four set-piece encounters.
-- Finish with zero collisions.
-- Complete the hidden challenge in each chapter for the S+ campaign medal.
+Retry rules:
 
-Ordinary chapter completion must remain available to casual players. A failed Perfect Escape attempt should not erase previously unlocked chapters or permanently delete chapter progress.
+- Before the encounter: restart the chapter. Reset money, item, hazards, and temporary state.
+- During the encounter: restart at the encounter start with the item and money kept.
+- Never erase completed chapters or unlocks.
+- A refresh must never convert an incomplete run into a completed chapter.
+- Never blame the player for an unavoidable collision. If one is found, treat it as a bug.
 
-## 11. Failure feedback and retry loop
+## 11. Technical approach
 
-Failure should teach the player what happened.
+Keep campaign content as data and let the original engine consume it.
 
-After a collision or failed objective, show:
+- Chapter metadata in a story configuration module (\`src/story/chapters.js\`): id, title, environment id, story item, money target, bonus-note count, encounter pattern id.
+- Encounter patterns as data: a list of rows, each with lane contents, hazard class, and warning cue.
+- **Pattern validator as a unit test.** CI already runs \`node --test\`. A test can assert that every row of every pattern leaves a reachable lane given the previous row, that jumpable hazards are within the depth limit, and that the money schedule total is at least 120% of the target. This enforces "every pattern is solvable".
+- Objectives through hooks on existing collect and collision events, not a second collision system.
+- Story progression saved in versioned, namespaced local storage, separate from Classic Mode records. Handle missing, malformed, old-schema, and blocked storage.
+- Story results do not go to the Classic leaderboard. No new Start.ng endpoints are invented.
+- Clean up chapter listeners and temporary entities through the engine's lifecycle.
 
-- The obstacle or pattern that caused the failure.
-- The lane or route that was unsafe.
-- The warning cue that preceded the hazard.
-- The objective item still missing, if applicable.
-- A clear retry option.
+## 12. Engine dependencies (what the engine cannot do today)
 
-Keep feedback concise and factual. Do not blame the player or imply that an unavoidable collision was their fault.
+\`src/main.js\` currently builds its scene, seasonal palette, spawner, and UI at load time with module-level state. There is no chapter initialisation path yet. Before Story Mode content can plug in, the following need to be added or extracted, with Classic regression checks at each step.
 
-Retry behaviour:
-- Retry the current chapter from its beginning or its explicitly designed checkpoint.
-- Reset that chapter's temporary collectibles and objectives.
-- Preserve previously completed chapters and campaign unlocks.
-- A failed campaign-wide Perfect Escape attempt resets the challenge streak, not the player's saved chapter progress.
+| Need | Today | Required change |
+|---|---|---|
+| Finite chapter with an exit | Endless run only | Add an exit marker and a completion trigger scoped to Story Mode |
+| Authored encounter patterns | Random row spawner | A pattern-driven spawn path used only in Story Mode |
+| Per-hazard hitboxes and classes | One obstacle hitbox and one jump clearance | Per-hazard collision data and a "not jumpable" flag |
+| Per-chapter environments | One temple palette plus seasons | Environment config selected by chapter, without touching Classic seasons |
+| Money and item objectives | Relic count only | Story-scoped collectible types and counters |
+| Sliding | Not supported | Out of scope for the first release |
 
-## 12. UI, audio, and presentation
+## 13. Phased delivery
 
-- Give each chapter a distinct, realistic environment palette and recognisable local details.
-- Use obstacle silhouettes that communicate their real-world identity at a glance.
-- Use consistent warning language and iconography across all chapters.
-- Give each set-piece a title card and phase indicator, but keep the play area visible.
-- Use audio cues for approaching traffic, barrier movement, queue announcements, and the final gate warning.
-- Keep existing Relic Rush sound effects and audio controls; add story-specific sounds as layers, not replacements.
-- Ensure HUD, warnings, and controls remain readable on mobile screens.
+1. **Foundation:** mode selection, story state, chapter data model, versioned save, retry. Classic unchanged.
+2. **Chapter 1 vertical slice:** exit marker, authored patterns, route slip, money target, The Last Danfo, retry. Playtest the collect rate and set the real target.
+3. **Chapters 2 and 3,** one at a time, each with its own patterns and validator tests.
+4. **Chapter 4 and ending.**
+5. **Polish:** ranks, hidden challenges, accessibility, audio layers.
+6. **Later, only if playtests justify:** perfect dodge, difficulty modes, Perfect Escape.
 
-## 13. Technical implementation guidance
+Do not develop all four chapters at once.
 
-Recommended architecture:
+## 14. UI, audio, accessibility
 
-- Keep chapter metadata in a dedicated story configuration module.
-- Pass a validated chapter skin/configuration into the original engine's existing initialization path.
-- Reuse existing obstacle, collectible, spawn, collision, HUD, scoring, audio, and animation systems.
-- Add encounter patterns as data/configuration consumed by the original spawn system.
-- Add story objectives through hooks/events from existing collision and collection events.
-- Keep campaign persistence separate from Classic Mode records.
-- Validate saved progress and handle unavailable local storage gracefully.
-- Clean up chapter-specific listeners, timers, and temporary entities using the original engine's lifecycle.
+- Each chapter has a distinct, realistic palette and recognisable local detail.
+- HUD shows: chapter name, story-item status, money progress ("₦320 / ₦500"), and an encounter phase indicator when active.
+- Use text and icons together. Never rely on colour alone for warnings or required states.
+- Consistent warning language and icons across chapters (indicator blink, siren, lane marker).
+- Audio cues: approaching traffic, horns, sirens, queue announcements, boarding call. Keep existing Relic Rush sounds and controls and layer story audio on top.
+- Keep touch targets large, HUD readable on narrow screens, and respect reduced-motion preferences.
 
-Do not:
-- Add a separate gameplay renderer or animation loop.
-- Duplicate player movement or collision logic.
-- Change Classic Mode balance or visuals when Story Mode is not active.
-- Use random patterns that can produce unavoidable collisions.
-- Add fantasy creatures, supernatural attacks, or unrealistic vehicles.
+## 15. Acceptance criteria
 
-## 14. Acceptance criteria
+Story Mode is ready for release only when all of these pass.
 
-The feature is ready for release only when:
+**Engine and regression**
 
-- [ ] Story Mode launches through the original Relic Rush gameplay engine.
-- [ ] Classic Mode behaves exactly as before.
-- [ ] Each chapter has a distinct, believable visual skin.
-- [ ] Each chapter has its own tested encounter pattern and phase progression.
-- [ ] Every encounter has accurate warnings and at least one reachable safe route.
-- [ ] Each chapter's story item and money target are both required before its set-piece can trigger.
-- [ ] Money targets are guaranteed reachable through authored schedules or deterministic top-ups, with at least a 20% available-value buffer.
-- [ ] The HUD displays current Naira progress and the target accurately.
-- [ ] The set-piece trigger stops ordinary spawning, shows a warning, and starts its authored three phases.
-- [ ] Set-piece completion requires surviving all phases and reaching the exit trigger.
-- [ ] A boss-trigger checkpoint preserves completed collection requirements for encounter retries, or the documented fallback keeps the full collection phase short.
-- [ ] Required collectibles and chapter objectives register through the original engine's events.
-- [ ] Perfect dodge rewards are optional and work consistently, if implemented.
-- [ ] Hidden challenges can be discovered and completed fairly.
-- [ ] Chapter ranks reflect the documented criteria.
-- [ ] Failure feedback identifies the relevant hazard or missing objective.
-- [ ] Retry resets the current chapter attempt without erasing prior campaign progress.
-- [ ] Campaign completion and the Perfect Escape challenge save and restore correctly.
-- [ ] Desktop and mobile controls, audio, pause, and responsive HUD are tested.
-- [ ] No fantasy beasts, monsters, or impossible hazards appear in the campaign.
+- [ ] Story Mode runs through the original Relic Rush engine with no second scene, loop, or controller.
+- [ ] Classic Mode gameplay, score, and leaderboard behaviour are unchanged.
+- [ ] Story HUD and assets never appear in Classic Mode.
+
+**Chapter loop**
+
+- [ ] Each chapter has a story item, a money target, and an encounter.
+- [ ] The encounter starts only when both the item and the money target are complete.
+- [ ] The money schedule totals at least 120% of the target, verified by a test.
+- [ ] A missed story item gives a clear message and a fair second chance or retry.
+- [ ] The chapter never completes without its required item.
+
+**Fairness and realism**
+
+- [ ] Every pattern leaves a reachable safe path, verified by a test.
+- [ ] Every hazard has a class; tall hazards are never jumpable; jumpable hazards respect the depth limit.
+- [ ] Every moving hazard is telegraphed at least 1 s ahead with an accurate cue.
+- [ ] No fantasy creatures, supernatural events, or impossible hazards appear.
+- [ ] No real logos, politicians, insignia, or currency designs appear.
+
+**Progression and persistence**
+
+- [ ] Ranks follow the documented criteria.
+- [ ] Retry behaves as specified and never erases prior progress.
+- [ ] Saved progress uses a versioned local schema and survives refresh.
+- [ ] Malformed or unavailable storage does not crash the game.
+- [ ] Story results are not sent to the Classic leaderboard.
+
+**Quality**
+
+- [ ] \`npm test\` and \`npm run build\` pass.
+- [ ] Desktop and mobile controls, pause, audio, and HUD are manually tested.
+- [ ] No new unhandled console errors.
 
 ---
 
 ## Reference note
 
-*Shangri-La Frontier* is a creative reference for encounter structure: pattern recognition, escalation, mastery, optional discoveries, and rewarding difficult achievements. Japa Rush translates those principles into a grounded Nigerian setting. It should not copy the anime's characters, monsters, names, artwork, dialogue, or story.
+*Shangri-La Frontier* is a reference for encounter structure only: readable patterns, escalation, mastery through repetition, and optional discoveries. Japa Rush must not copy its characters, monsters, names, artwork, dialogue, or story.
