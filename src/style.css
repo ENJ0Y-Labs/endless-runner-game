@@ -2366,3 +2366,64 @@ body[data-page="welcome"] .welcome-page.mode-selection-page {
 .mode-choice-action b { display:none; }
 .mode-choice:hover { border-color:#ffdc8c; transform:translateY(-3px); }
 @media(max-width:700px){ .mode-choice{min-height:205px;} .mode-choice-image{object-position:center 40%;} }
+
+/* Chapter 1 intro: match the supplied Japa Rush / Lagos Hustle portrait reference. */
+body[data-page="play"][data-story-chapter="lagos-hustle"] .game-overlay.story-start-overlay {
+  align-items: stretch; justify-content: flex-start; padding: 0; text-align: left;
+  background: linear-gradient(180deg, rgb(38 22 12 / 10%) 0%, transparent 38%, rgb(28 16 9 / 12%) 62%, rgb(28 16 9 / 35%) 100%);
+  backdrop-filter: none;
+}
+body[data-page="play"][data-story-chapter="lagos-hustle"] #start-overlay .pre-game-topbar {
+  top: max(1.1rem, env(safe-area-inset-top)); right: max(1rem, env(safe-area-inset-right)); left: max(1rem, env(safe-area-inset-left)); width: auto; margin: 0;
+}
+body[data-page="play"][data-story-chapter="lagos-hustle"] #start-overlay .sound-button,
+body[data-page="play"][data-story-chapter="lagos-hustle"] #start-overlay .player-identity {
+  border: 1px solid rgb(255 225 174 / 34%); border-radius: 999px; background: rgb(54 35 22 / 78%);
+  box-shadow: 0 3px 12px rgb(35 19 10 / 24%); backdrop-filter: blur(8px); color: #fff0d4; text-transform: none; letter-spacing: 0;
+}
+body[data-page="play"][data-story-chapter="lagos-hustle"] #start-overlay .title-art.story-title-art {
+  position: absolute; top: clamp(6.2rem, 15vh, 9rem); left: clamp(1.1rem, 7.5vw, 4.6rem);
+  display: grid; gap: 0; width: auto; margin: 0; color: #fff7e7; font-size: clamp(3.1rem, 9vw, 6rem);
+  font-weight: 1000; letter-spacing: -.065em; line-height: .82; text-align: left;
+  text-shadow: 0 4px 0 #8c552b, 0 7px 15px rgb(38 20 9 / 60%);
+}
+body[data-page="play"][data-story-chapter="lagos-hustle"] .story-chapter-subtitle {
+  position: absolute; top: clamp(13rem, 31vh, 15rem); left: clamp(1.15rem, 7.5vw, 4.65rem);
+  margin: 0; color: #ffd078; font-size: clamp(1.35rem, 4.2vw, 2.45rem); font-weight: 900;
+  letter-spacing: -.025em; text-shadow: 0 3px 8px rgb(55 29 12 / 70%);
+}
+body[data-page="play"][data-story-chapter="lagos-hustle"] #start-overlay .instruction-grid {
+  right: max(2.7rem, env(safe-area-inset-right)); bottom: calc(max(5.6rem, env(safe-area-inset-bottom) + 4.8rem));
+  left: max(2.7rem, env(safe-area-inset-left)); width: auto; max-width: 760px; gap: .55rem;
+}
+body[data-page="play"][data-story-chapter="lagos-hustle"] #start-overlay .instruction-card {
+  min-height: 4.15rem; border: 1px solid rgb(255 221 171 / 24%); border-radius: 13px;
+  background: rgb(39 25 16 / 83%); box-shadow: 0 4px 16px rgb(28 16 9 / 28%); backdrop-filter: blur(8px);
+}
+body[data-page="play"][data-story-chapter="lagos-hustle"] #start-overlay .instruction-card strong { color: #fff4df; font-size: clamp(.8rem, 1.8vw, 1rem); }
+body[data-page="play"][data-story-chapter="lagos-hustle"] #start-overlay .instruction-card small { color: #ddc7a9; font-size: clamp(.66rem, 1.5vw, .85rem); }
+body[data-page="play"][data-story-chapter="lagos-hustle"] #start-overlay #play-button {
+  bottom: max(1rem, env(safe-area-inset-bottom)); min-width: min(350px, calc(100% - 3rem)); min-height: 3.6rem;
+  border: 1px solid #ffd17a; border-radius: 999px; color: #42250d; background: linear-gradient(180deg, #ffd477, #f3a52f);
+  box-shadow: 0 5px 0 #9b5b1d, 0 12px 28px rgb(34 18 8 / 35%); font-size: clamp(1rem, 2.2vw, 1.2rem);
+  letter-spacing: .02em; font-weight: 950;
+}
+@media (max-width: 700px) {
+  body[data-page="play"][data-story-chapter="lagos-hustle"] #start-overlay .title-art.story-title-art {
+    top: calc(max(.8rem, env(safe-area-inset-top)) + 6rem); left: 1.1rem; font-size: clamp(3rem, 13vw, 5.1rem);
+  }
+  body[data-page="play"][data-story-chapter="lagos-hustle"] .story-chapter-subtitle {
+    top: calc(max(.8rem, env(safe-area-inset-top)) + 13.4rem); left: 1.15rem; font-size: clamp(1.35rem, 5vw, 2rem);
+  }
+  body[data-page="play"][data-story-chapter="lagos-hustle"] #start-overlay .instruction-grid {
+    right: .7rem; bottom: calc(max(5.35rem, env(safe-area-inset-bottom) + 4.6rem)); left: .7rem; width: auto; gap: .42rem;
+  }
+  body[data-page="play"][data-story-chapter="lagos-hustle"] #start-overlay .instruction-card {
+    min-height: clamp(3.65rem, 9vh, 4.4rem); padding: .45rem .3rem;
+  }
+  body[data-page="play"][data-story-chapter="lagos-hustle"] #start-overlay #play-button { min-width: min(350px, calc(100% - 3rem)); min-height: 3.2rem; }
+}
+@media (max-height: 650px) {
+  body[data-page="play"][data-story-chapter="lagos-hustle"] #start-overlay .title-art.story-title-art { top: 5.3rem; font-size: clamp(2.8rem, 8vh, 4.2rem); }
+  body[data-page="play"][data-story-chapter="lagos-hustle"] .story-chapter-subtitle { top: 10.2rem; font-size: 1.3rem; }
+}
