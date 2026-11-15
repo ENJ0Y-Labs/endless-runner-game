@@ -100,7 +100,7 @@ app.innerHTML = `
       <div class="scene-loading" id="scene-loading" role="status" aria-live="polite"><span class="loading-indicator" aria-hidden="true"></span> Preparing your track…</div>
       <section class="game-overlay ${storySkin ? "story-start-overlay" : ""}" id="start-overlay">
         <div class="pre-game-topbar">
-          <button class="sound-button" id="sound-toggle" type="button" aria-label="Mute sound" aria-pressed="false">Sound on</button>
+          <button class="sound-button" id="sound-toggle" type="button" aria-label="Mute sound" aria-pressed="false">${storySkin ? "Sound on" : "SOUND ON"}</button>
           <div class="player-identity" id="player-identity" aria-live="polite">
             <span class="player-avatar" aria-hidden="true">G</span>
             <span class="player-identity-copy">
@@ -117,7 +117,7 @@ app.innerHTML = `
           <div class="instruction-card"><strong>Switch lanes</strong><small>Arrow keys or A/D</small></div>
           <div class="instruction-card"><strong>Jump</strong><small>Space, Up, or swipe up</small></div>
           <div class="instruction-card"><strong>${storySkin ? "Collect Naira" : "Collect relics"}</strong><small>+100 points each</small></div>
-          <div class="instruction-card"><strong>Avoid hazards</strong><small>${storySkin ? "Avoid crates and cars" : "Jump over crates"}</small></div>
+          <div class="instruction-card"><strong>${storySkin ? "Avoid hazards" : "Avoid obstacles"}</strong><small>${storySkin ? "Avoid crates and cars" : "Jump over crates"}</small></div>
         </div>
         <button class="primary-button" id="play-button" type="button">START RUNNING</button>
       </section>
