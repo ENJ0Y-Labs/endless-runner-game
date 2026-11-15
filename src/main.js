@@ -463,6 +463,7 @@ for (const x of [-(CFG.trackWidth / 2 + 0.3), CFG.trackWidth / 2 + 0.3]) {
 // Seasonal color variants reuse the same merged geometry to keep mobile draw calls low.
 // ---------------------------------------------------------------------------
 const seasonalMeshes = [];
+const storyBackdropChunks = [];
 function registerSeasonalMesh(mesh) {
   const colors = mesh.geometry.getAttribute("color");
   if (colors) mesh.geometry.userData.baseVertexColors = colors.array.slice();
@@ -523,7 +524,12 @@ function buildBackdrop() {
     }
     const mesh = new THREE.Mesh(mergeParts(parts), vertexMaterial);
     mesh.castShadow = false; mesh.receiveShadow = true;
-    scene.add(mesh);
+    // Keep the authored Lagos streetscape as a moving world chunk. Its geometry
+    // is merged for performance, while the parent group lets the whole scene scroll.
+    const chunk = new THREE.Group();
+    chunk.add(mesh);
+    scene.add(chunk);
+    storyBackdropChunks.push(chunk);
     return;
   }
   const parts = [];
@@ -2323,6 +2329,12 @@ function animate() {
     for (const item of scenery) {
       item.group.position.z += dz;
       if (item.group.position.z > 12) item.group.position.z -= SEGMENT_SPAN;
+    }
+    // Move the entire Chapter 1 streetscape with the road, then recycle it
+    // behind the camera so buildings and roadside props never stay frozen.
+    for (const chunk of storyBackdropChunks) {
+      chunk.position.z += dz;
+      if (chunk.position.z > 112) chunk.position.z -= 150;
     }
     spawn.frontier += dz;
     streamWorld(attract ? 0 : state.elapsed, attract);
