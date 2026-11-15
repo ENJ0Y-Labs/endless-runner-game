@@ -1,4 +1,3 @@
-import { StoryRun } from "./story-game.js";
 import "./story-mode.css";
 
 const STORAGE_KEY = "relic-rush:japa-rush:progress:v1";
@@ -44,16 +43,12 @@ function escapeHtml(value) {
 export function mountJapaRush(root) {
   if (!root) return () => {};
   let progress = readProgress();
-  let activeRun = null;
 
   const statusFor = (chapter) => progress.completed.includes(chapter.id)
     ? "Completed"
     : chapter.number <= progress.highestUnlocked ? "Available" : "Locked";
 
-  const stopRun = () => {
-    activeRun?.destroy();
-    activeRun = null;
-  };
+  const stopRun = () => {};
 
   const renderChapters = () => {
     stopRun();
@@ -118,34 +113,9 @@ export function mountJapaRush(root) {
   };
 
   const renderRun = (chapter) => {
-    stopRun();
-    root.dataset.chapterTitle = chapter.title;
-    root.innerHTML = `
-      <div class="japa-shell japa-run-shell">
-        <div class="japa-run-topbar">
-          <div><p class="japa-eyebrow">Chapter 0${chapter.number}</p><h2>${escapeHtml(chapter.title)}</h2></div>
-          <button class="japa-back-link" type="button" data-action="quit">Exit chapter</button>
-        </div>
-        <div class="japa-run-hud">
-          <div><span>OBJECTIVE</span><strong data-objective-count>0 / ${chapter.requiredCount}</strong></div>
-          <div><span>OPTIONAL NAIRA</span><strong data-optional-count>0</strong></div>
-          <div><span>ROUTE</span><strong data-distance>0%</strong></div>
-          <button class="japa-pause-button" type="button" data-run-action="pause">PAUSE</button>
-        </div>
-        <div class="japa-game-frame">
-          <div class="japa-game-scene" data-scene aria-label="Japa Rush 3D chapter gameplay"></div>
-          <div class="japa-paused-overlay" data-paused hidden><strong>PAUSED</strong><span>Take a breath. The traffic won't.</span></div>
-        </div>
-        <div class="japa-touch-controls" aria-label="Movement controls">
-          <button type="button" data-run-action="left" aria-label="Move left">←</button>
-          <span>SWITCH LANES</span>
-          <button type="button" data-run-action="right" aria-label="Move right">→</button>
-        </div>
-      </div>`;
-
-    activeRun = new StoryRun(root, chapter, {
-      onFinish: (result) => renderResult(chapter, result),
-    });
+    // Story chapters deliberately launch the original Relic Rush runner.
+    // The chapter identifier selects its visual skin; movement and physics stay untouched.
+    window.location.href = `./?page=play&storyChapter=${encodeURIComponent(chapter.id)}`;
   };
 
   const renderResult = (chapter, result) => {
@@ -188,7 +158,7 @@ export function mountJapaRush(root) {
       if (chapter) renderRun(chapter);
     }
     if (action === "retry") {
-      const chapter = CHAPTERS.find((item) => root.querySelector(".japa-result-shell h1") && item.title === root.dataset.chapterTitle);
+      const chapter = CHAPTERS.find((item) => item.number <= progress.highestUnlocked && root.querySelector(".japa-intro-art h1")?.textContent === item.title);
       if (chapter) renderRun(chapter);
     }
   };
@@ -198,6 +168,5 @@ export function mountJapaRush(root) {
   return () => {
     stopRun();
     root.removeEventListener("click", onClick);
-    delete root.dataset.chapterTitle;
   };
 }
