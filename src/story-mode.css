@@ -43,3 +43,6 @@
 
 .japa-hero-backdrop img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 48%; z-index:-1; }
 .japa-hero-backdrop { background:linear-gradient(135deg,#9c603a,#d99a58 55%,#35261d); }
+
+.japa-chapter-card.is-locked .japa-chapter-image img { filter:grayscale(1) blur(1.5px) brightness(.48); transform:scale(1.04); }
+.japa-chapter-card.is-locked .japa-chapter-image::before { position:absolute; z-index:2; inset:0; display:grid; place-items:center; content:"LOCKED"; color:#f2d9ad; font-size:.72rem; font-weight:950; letter-spacing:.2em; text-shadow:0 2px 8px #000; }
