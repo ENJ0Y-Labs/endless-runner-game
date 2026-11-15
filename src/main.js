@@ -497,8 +497,48 @@ function buildBackdrop() {
         add(box(.08,.08,2.2), "#252b2c", [x-side*.7,7.1,z+.8]);
       }
     }
-    add(box(30,1.1,2.4), "#82705c", [0,8.5,-104]);
-    add(box(30,.45,1.2), "#b18a5b", [0,7.8,-104]);
+    // Distant lagoon flyover and exit landmark: the reference image's main vanishing-point silhouette.
+    add(box(34,1.05,3.2), "#82705c", [0,8.1,-104]);
+    add(box(34,.32,3.35), "#b18a5b", [0,7.48,-104]);
+    add(box(1.1,7.6,2.8), "#75624f", [-12.8,3.8,-104]);
+    add(box(1.1,7.6,2.8), "#75624f", [12.8,3.8,-104]);
+    // Green overhead EXIT sign, kept as geometry so it remains legible in perspective.
+    add(box(4.5,2.1,.22), "#315d39", [0,6.35,-101.8]);
+    add(box(4.25,1.85,.08), "#6c9860", [0,6.35,-101.64]);
+    add(box(.08,1.55,.05), "#f1e8c8", [-1.72,6.35,-101.57]);
+    add(box(.08,1.55,.05), "#f1e8c8", [1.72,6.35,-101.57]);
+    add(box(2.9,.07,.05), "#f1e8c8", [0,6.86,-101.55]);
+    add(box(.55,.07,.05), "#f1e8c8", [0,5.92,-101.55]);
+    // Utility poles, crossarms and sagging-looking cable runs on both verges.
+    for (const side of [-1, 1]) {
+      for (let i=0;i<5;i++) {
+        const z=-13-i*25;
+        const x=side*(9.25+(i%2)*.25);
+        add(box(.24,8.8,.24), "#493c35", [x,4.4,z]);
+        add(box(2.6,.18,.2), "#493c35", [x-side*.55,8.35,z]);
+        add(box(.12,.55,.12), "#302b29", [x-side*1.05,8.55,z]);
+      }
+      for (let i=0;i<4;i++) {
+        const z=-25-i*25;
+        add(box(.075,.075,25.5), "#28282a", [side*9.25,8.45,z], [0,0,side*.025]);
+        add(box(.055,.055,25.5), "#3b3030", [side*8.55,8.05,z], [0,0,-side*.018]);
+      }
+    }
+    // Roadside stall details: striped awnings, signboards and stools reinforce the busy street.
+    for (const side of [-1,1]) {
+      for (let i=0;i<5;i++) {
+        const z=-18-i*25;
+        const x=side*(8.1+(i%2)*.3);
+        add(box(3.7,.22,2.1), i%2 ? "#4c8b78" : "#d5a34f", [x,3.0,z]);
+        for(let stripe=0;stripe<5;stripe++) {
+          add(box(.68,.24,2.12), stripe%2 ? "#e5d1a0" : "#b85a3c", [x-1.48+stripe*.74,3.02,z]);
+        }
+        add(box(2.6,1.5,.18), "#e7d2a3", [x,4.05,z-1.25]);
+        add(box(2.35,1.22,.08), "#7a4b35", [x,4.05,z-1.13]);
+        add(box(.62,.12,.62), "#6c4935", [x-side*.8,.62,z+1.5]);
+        add(box(.12,.58,.12), "#59402f", [x-side*.8,.32,z+1.5]);
+      }
+    }
     // Parked danfos sit beyond the curb as environmental set dressing, never as surprise hitboxes.
     for (const [x,z,body] of [[-6.25,-38,"#e7b928"],[6.25,-82,"#d6a52b"]]) {
       add(box(2.55,1.65,4.9), body, [x,1.45,z]);
