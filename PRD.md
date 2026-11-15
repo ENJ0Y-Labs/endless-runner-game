@@ -196,6 +196,8 @@ The following features are excluded from the initial release:
 
 Story Mode is planned as a separate post-MVP expansion. Its proposed scope, chapter design, progression rules, technical boundaries, implementation phases, and acceptance criteria are documented in [docs/STORY-MODE-PLAN.md](docs/STORY-MODE-PLAN.md). The exclusions above remain in force for the current MVP; Story Mode must be implemented as a separate experience and must not replace or regress Classic Mode.
 
+The revised four-zone environment and encounter roster for Japa Rush is documented in [docs/JAPA-RUSH-ZONE-CONTENT-UPDATE.md](docs/JAPA-RUSH-ZONE-CONTENT-UPDATE.md). This is Story Mode content direction only and does not change the Classic Mode MVP scope or authorise implementation of all four zones.
+
 A persistent leaderboard is not required for the core gameplay loop, but the score data must be structured to support Start.ng leaderboard integration.
 
 ## 10. Acceptance Criteria
@@ -236,6 +238,4 @@ Each phase must be tested before proceeding to the next.
 
 ## 12. Definition of Done
 
-The MVP is done when all required acceptance criteria pass, the game is available on Start.ng, and the live version has been tested for gameplay, character styling, and production reliability.
-
-The project must remain focused on delivering a complete and functional core experience before introducing additional features.
+The MVP is done when all required acceptance criteria are met, the game is available on Start.ng, and the live version has been tested for gameplay, character styling, and production reliability.
