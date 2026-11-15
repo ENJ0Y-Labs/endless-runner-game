@@ -1081,8 +1081,10 @@ function buildSegment(side, index) {
   scene.add(group);
   scenery.push({ group, startZ: group.position.z });
 }
-for (let i = 0; i < SEGMENT_COUNT; i++)
-  for (const side of [-1, 1]) buildSegment(side, i);
+if (!storySkin) {
+  for (let i = 0; i < SEGMENT_COUNT; i++)
+    for (const side of [-1, 1]) buildSegment(side, i);
+}
 
 // ---------------------------------------------------------------------------
 // Seasonal environment. Palette changes are driven by distance, not frame count.
