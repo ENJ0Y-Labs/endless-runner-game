@@ -46,7 +46,7 @@ export function mountJapaRush(root) {
 
   const statusFor = (chapter) => progress.completed.includes(chapter.id)
     ? "Completed"
-    : chapter.number <= progress.highestUnlocked ? "Available" : "Locked";
+    : "Available";
 
   const stopRun = () => {};
 
@@ -148,13 +148,13 @@ export function mountJapaRush(root) {
     const chapterButton = event.target.closest("[data-chapter]");
     if (chapterButton && root.contains(chapterButton)) {
       const chapter = CHAPTERS.find((item) => item.id === chapterButton.dataset.chapter);
-      if (chapter && chapter.number <= progress.highestUnlocked) renderIntro(chapter);
+      if (chapter) renderIntro(chapter);
       return;
     }
     const action = event.target.closest("[data-action]")?.dataset.action;
     if (action === "chapters" || action === "quit") renderChapters();
     if (action === "start") {
-      const chapter = CHAPTERS.find((item) => item.number <= progress.highestUnlocked && root.querySelector(".japa-intro-art h1")?.textContent === item.title);
+      const chapter = CHAPTERS.find((item) => root.querySelector(".japa-intro-art h1")?.textContent === item.title);
       if (chapter) renderRun(chapter);
     }
     if (action === "retry") {
