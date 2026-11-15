@@ -119,6 +119,7 @@ export function mountJapaRush(root) {
 
   const renderRun = (chapter) => {
     stopRun();
+    root.dataset.chapterTitle = chapter.title;
     root.innerHTML = `
       <div class="japa-shell japa-run-shell">
         <div class="japa-run-topbar">
