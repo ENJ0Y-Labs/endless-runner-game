@@ -524,12 +524,19 @@ function buildBackdrop() {
     }
     const mesh = new THREE.Mesh(mergeParts(parts), vertexMaterial);
     mesh.castShadow = false; mesh.receiveShadow = true;
-    // Keep the authored Lagos streetscape as a moving world chunk. Its geometry
-    // is merged for performance, while the parent group lets the whole scene scroll.
-    const chunk = new THREE.Group();
-    chunk.add(mesh);
-    scene.add(chunk);
-    storyBackdropChunks.push(chunk);
+    // Repeat the authored streetscape as three overlapping-in-time chunks.
+    // The road streams in 135-unit segments; this 130-unit streetscape module
+    // keeps both sides populated through every recycle instead of showing a reset.
+    for (let i = 0; i < 3; i++) {
+      const chunk = new THREE.Group();
+      const copy = mesh.clone();
+      copy.position.z = 0;
+      chunk.add(copy);
+      chunk.position.z = -i * 130;
+      scene.add(chunk);
+      storyBackdropChunks.push(chunk);
+    }
+    mesh.geometry.dispose();
     return;
   }
   const parts = [];
@@ -1461,8 +1468,27 @@ const relicMaterial = new THREE.MeshStandardMaterial({
 });
 const obstaclePool = [];
 const relicPool = [];
+// Chapter 1 traffic uses believable road-vehicle proportions in world units:
+// roughly 1.9m wide, 1.5m tall and 4.2m long for a compact car.
+const storyCarGeometry = storySkin && storyChapterId === "lagos-hustle"
+  ? mergeParts([
+      part(box(1.82, 0.62, 3.65), "#b83e2e", [0, 0.78, 0]),
+      part(box(1.58, 0.68, 1.62), "#b83e2e", [0, 1.38, -0.34]),
+      part(box(1.46, 0.48, 1.42), "#8fb6c0", [0, 1.42, -0.34]),
+      part(box(0.66, 0.42, 0.08), "#b9d2d7", [-0.39, 1.43, -1.11]),
+      part(box(0.66, 0.42, 0.08), "#b9d2d7", [0.39, 1.43, -1.11]),
+      part(box(0.08, 0.28, 0.08), "#24292c", [-0.88, 0.38, -1.12]),
+      part(box(0.08, 0.28, 0.08), "#24292c", [0.88, 0.38, -1.12]),
+      part(box(0.08, 0.28, 0.08), "#24292c", [-0.88, 0.38, 1.12]),
+      part(box(0.08, 0.28, 0.08), "#24292c", [0.88, 0.38, 1.12]),
+      part(box(0.18, 0.16, 0.08), "#f4e7c5", [-0.68, 0.83, -1.85]),
+      part(box(0.18, 0.16, 0.08), "#f4e7c5", [0.68, 0.83, -1.85]),
+      part(box(0.18, 0.16, 0.08), "#a72b22", [-0.68, 0.83, 1.85]),
+      part(box(0.18, 0.16, 0.08), "#a72b22", [0.68, 0.83, 1.85]),
+    ])
+  : null;
 function createObstacle() {
-  const mesh = new THREE.Mesh(crateGeometry, vertexMaterial);
+  const mesh = new THREE.Mesh(storyCarGeometry ?? crateGeometry, vertexMaterial);
   mesh.castShadow = true;
   mesh.receiveShadow = true;
   mesh.visible = false;
@@ -2334,7 +2360,7 @@ function animate() {
     // behind the camera so buildings and roadside props never stay frozen.
     for (const chunk of storyBackdropChunks) {
       chunk.position.z += dz;
-      if (chunk.position.z > 112) chunk.position.z -= 150;
+      if (chunk.position.z > 112) chunk.position.z -= 390;
     }
     spawn.frontier += dz;
     streamWorld(attract ? 0 : state.elapsed, attract);
@@ -2385,8 +2411,8 @@ function animate() {
       item.shiftProgress = 0;
       continue;
     }
-    // Crates rise out of the haze instead of popping into view.
-    item.mesh.scale.setScalar(clamp01((z + CFG.spawnDistance) / 14));
+    // Traffic and props fade in at their authored physical size, not by growing. 
+    item.mesh.scale.setScalar(storyCarGeometry ? 1 : clamp01((z + CFG.spawnDistance) / 14));
 
     if (item.moving) {
       // Start shifting only once visible and still far enough away to react.
