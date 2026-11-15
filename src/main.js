@@ -156,6 +156,7 @@ if (page === "story") {
   mountJapaRush(storyRoot);
 }
 
+if (page !== "story") {
 const container = app.querySelector(".scene-container");
 const LANE_X = CFG.laneX;
 
@@ -2350,3 +2351,4 @@ window.addEventListener("beforeunload", () => {
   resizeObserver.disconnect();
   renderer.dispose();
 });
+}
