@@ -3,6 +3,7 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 import "./style.css";
 import { mountJapaRush } from "./story-mode.js";
 import { GAME_CONFIG as CFG } from "./game/config.js";
+import { recycleSceneryChunks, resetSceneryChunks } from "./game/scenery-stream.js";
 
 const app = document.querySelector("#app");
 
@@ -477,6 +478,8 @@ for (const x of [-(CFG.trackWidth / 2 + 0.3), CFG.trackWidth / 2 + 0.3]) {
 // ---------------------------------------------------------------------------
 const seasonalMeshes = [];
 const storyBackdropChunks = [];
+const storyBackdropInitialPositions = [];
+let storyBackdropBounds = null;
 function registerSeasonalMesh(mesh) {
   const colors = mesh.geometry.getAttribute("color");
   if (colors) mesh.geometry.userData.baseVertexColors = colors.array.slice();
@@ -576,18 +579,26 @@ function buildBackdrop() {
     }
     const mesh = new THREE.Mesh(mergeParts(parts), vertexMaterial);
     mesh.castShadow = false; mesh.receiveShadow = true;
-    // Repeat the authored streetscape as three overlapping-in-time chunks.
-    // The road streams in 135-unit segments; this 130-unit streetscape module
-    // keeps both sides populated through every recycle instead of showing a reset.
+    // Use the authored mesh bounds to know when the nearest edge has passed
+    // the runner. The 130-unit spacing is the existing streetscape module pitch.
+    mesh.geometry.computeBoundingBox();
+    const localBounds = mesh.geometry.boundingBox;
     for (let i = 0; i < 3; i++) {
       const chunk = new THREE.Group();
       const copy = mesh.clone();
       copy.position.z = 0;
       chunk.add(copy);
-      chunk.position.z = -i * 130;
+      const initialZ = -i * 130;
+      chunk.position.z = initialZ;
+      storyBackdropInitialPositions.push(initialZ);
       scene.add(chunk);
       storyBackdropChunks.push(chunk);
     }
+    storyBackdropBounds = {
+      minZ: localBounds.min.z,
+      maxZ: localBounds.max.z,
+      spacing: Math.abs(storyBackdropInitialPositions[0] - storyBackdropInitialPositions[1]),
+    };
     return;
   }
   const parts = [];
@@ -2265,6 +2276,7 @@ function resetRun() {
   menuShift = 0;
   shake = 0;
   for (const item of scenery) item.group.position.z = item.startZ;
+  resetSceneryChunks(storyBackdropChunks, storyBackdropInitialPositions);
   resetWorldObjects(false);
   updateHud();
 }
@@ -2412,10 +2424,7 @@ function animate() {
     }
     // Move the entire Chapter 1 streetscape with the road, then recycle it
     // behind the camera so buildings and roadside props never stay frozen.
-    for (const chunk of storyBackdropChunks) {
-      chunk.position.z += dz;
-      if (chunk.position.z > 112) chunk.position.z -= 390;
-    }
+    recycleSceneryChunks(storyBackdropChunks, storyBackdropBounds, CFG.playerZ);
     spawn.frontier += dz;
     streamWorld(attract ? 0 : state.elapsed, attract);
   }
