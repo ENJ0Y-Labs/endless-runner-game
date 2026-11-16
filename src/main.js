@@ -1557,7 +1557,7 @@ function createObstacle() {
     shiftProgress: 0,
     fallVelocity: 0,
     falling: false,
-    forwardSpeed: 0,
+    forwardSpeedFactor: 0,
   };
 }
 function createRelic() {
@@ -1597,7 +1597,7 @@ function placeObstacle(lane, z, elapsed = state.elapsed, allowMovement = true) {
   item.falling = false;
   item.fallVelocity = 0;
    // Story traffic drives forward, but slower than the runner.
-   item.forwardSpeed = storyCarGeometry ? state.speed * 0.35 : 0;
+   item.forwardSpeedFactor = storyCarGeometry ? 0.35 : 0;
   item.mesh.rotation.set(0, 0, 0);
   item.mesh.position.set(LANE_X[lane], 0.11, z);
   item.mesh.scale.setScalar(0.01);
@@ -2461,7 +2461,7 @@ function animate() {
     if (!item.active) continue;
     // Convert each car's forward speed into its relative motion past the runner.
     const relativeScrollSpeed = storyCarGeometry
-      ? Math.max(0, worldSpeed - item.forwardSpeed)
+      ? Math.max(0, worldSpeed * (1 - item.forwardSpeedFactor))
       : worldSpeed;
     const z = (item.mesh.position.z += delta * relativeScrollSpeed);
     if (z > CFG.despawnZ) {
