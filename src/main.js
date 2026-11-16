@@ -129,14 +129,21 @@ app.innerHTML = `
           <button class="quiet-button" id="pause-restart-button" type="button">Restart run</button>
         </div>
       </section>
-      <section class="game-overlay" id="gameover-overlay" hidden>
-        <p class="eyebrow">Run complete</p><h2>Game over</h2>
-        <p>Final score: <strong id="final-score">0</strong> · Distance: <strong id="final-distance">0 m</strong> · Relics: <strong id="final-relics">0</strong></p><p class="best-run-summary">Best run: <strong id="final-best-score">0</strong></p>
-        <p class="startng-branding">Play more on start.ng</p>
-        <div class="overlay-actions">
-          <a class="secondary-button" id="share-result-button" href="https://twitter.com/intent/tweet" target="_blank" rel="noopener noreferrer">Share result on X</a>
-          <button class="primary-button" id="restart-button" type="button">Run again</button>
-        </div>
+      <section class="game-overlay ${storySkin ? "story-gameover-overlay" : ""}" id="gameover-overlay" hidden>
+        ${storySkin
+          ? `<div class="story-gameover-copy" aria-live="assertive">
+              <p class="story-gameover-line story-gameover-line-one">You have been caught by The System.</p>
+              <p class="story-gameover-line story-gameover-line-two">Your Naira has been devalued. Your hope has been taxed. Your future has been outsourced.</p>
+              <p class="story-gameover-line story-gameover-line-three">But the hustle continues...</p>
+              <button class="primary-button story-gameover-retry" id="restart-button" type="button">Retry chapter</button>
+            </div>`
+          : `<p class="eyebrow">Run complete</p><h2>Game over</h2>
+              <p>Final score: <strong id="final-score">0</strong> · Distance: <strong id="final-distance">0 m</strong> · Relics: <strong id="final-relics">0</strong></p><p class="best-run-summary">Best run: <strong id="final-best-score">0</strong></p>
+              <p class="startng-branding">Play more on start.ng</p>
+              <div class="overlay-actions">
+                <a class="secondary-button" id="share-result-button" href="https://twitter.com/intent/tweet" target="_blank" rel="noopener noreferrer">Share result on X</a>
+                <button class="primary-button" id="restart-button" type="button">Run again</button>
+              </div>`}
       </section>
       <div class="touch-controls" aria-label="Movement and jump controls">
         <button type="button" id="left-button" aria-label="Move left">←</button>
