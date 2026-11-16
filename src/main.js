@@ -1551,7 +1551,7 @@ const storyCarGeometry = storySkin && storyChapterId === "lagos-hustle"
 // Lagos keke: compact 2.7m three-wheel tricycle with an enclosed passenger
 // cabin, open-sided silhouette, front windscreen and white side pinstripes.
 // The three paint variants are separate pooled geometries, not per-frame materials.
-const storyKekeGeometries = storyCarGeometry ? ["#f1eee5", "#202326", "#245dba"].map((bodyColor) => {
+const storyKekeGeometries = storyCarGeometry ? ["#245dba", "#e4bd28"].map((bodyColor) => {
   const stripeColor = bodyColor === "#f1eee5" ? "#303438" : "#ffffff";
   return mergeParts([
     part(box(1.28, 0.58, 2.42), bodyColor, [0, 0.83, 0.02]),
@@ -1573,6 +1573,16 @@ const storyKekeGeometries = storyCarGeometry ? ["#f1eee5", "#202326", "#245dba"]
     part(new THREE.CylinderGeometry(0.14, 0.14, 0.18, 8), "#aeb4b6", [0.67, 0.32, 0.82], [0, 0, Math.PI / 2]),
   ]);
 }) : [];
+const storyBusGeometries = storyCarGeometry ? ["#245dba", "#202326", "#287a48", "#e8e9e5"].map((bodyColor) => mergeParts([
+  part(box(2.08, 2.25, 7.8), bodyColor, [0, 1.42, 0]),
+  part(box(1.94, 0.78, 6.85), "#28343a", [0, 2.02, -0.12]),
+  part(box(1.82, 0.56, 6.5), "#9fc3cb", [0, 2.04, -0.18]),
+  part(box(2.1, 0.16, 7.82), "#202326", [0, 0.36, 0]),
+  part(box(0.22, 0.2, 0.08), "#f8e6ad", [-0.78, 0.84, -3.92]),
+  part(box(0.22, 0.2, 0.08), "#f8e6ad", [0.78, 0.84, -3.92]),
+  part(box(0.22, 0.2, 0.08), "#c64a36", [-0.78, 0.84, 3.92]),
+  part(box(0.22, 0.2, 0.08), "#c64a36", [0.78, 0.84, 3.92]),
+])) : [];
 function createObstacle() {
   const mesh = new THREE.Mesh(storyCarGeometry ?? crateGeometry, vertexMaterial);
   mesh.castShadow = true;
@@ -1592,6 +1602,7 @@ function createObstacle() {
     falling: false,
     forwardSpeedFactor: 0,
     isKeke: false,
+    isPublicBus: false,
   };
 }
 function createRelic() {
@@ -1632,10 +1643,13 @@ function placeObstacle(lane, z, elapsed = state.elapsed, allowMovement = true) {
   item.fallVelocity = 0;
   // Mix compact Lagos kekes into Chapter 1 traffic. Each uses a 2.7m
   // tricycle silhouette and one of the white, black or blue/white-stripe liveries.
-  item.isKeke = Boolean(storyKekeGeometries.length && Math.random() < 0.34);
+  item.isKeke = Boolean(storyKekeGeometries.length && Math.random() < 0.3);
+  item.isPublicBus = Boolean(!item.isKeke && storyBusGeometries.length && Math.random() < 0.28);
   item.mesh.geometry = item.isKeke
     ? storyKekeGeometries[Math.floor(Math.random() * storyKekeGeometries.length)]
-    : storyCarGeometry ?? crateGeometry;
+    : item.isPublicBus
+      ? storyBusGeometries[Math.floor(Math.random() * storyBusGeometries.length)]
+      : storyCarGeometry ?? crateGeometry;
   // Moving traffic scales with game speed while remaining slower than the runner.
   item.forwardSpeedFactor = storyCarGeometry ? 0.35 : 0;
   item.mesh.rotation.set(0, 0, 0);
@@ -2544,7 +2558,7 @@ function animate() {
         relativeZ > CFG.obstacleHitZ[0] &&
         relativeZ < CFG.obstacleHitZ[1] &&
         Math.abs(item.mesh.position.x - playerX) < CFG.obstacleHitX &&
-        state.jumpHeight < CFG.jumpObstacleClearance
+        (item.isKeke || item.isPublicBus || state.jumpHeight < CFG.jumpObstacleClearance)
       ) {
         item.falling = true;
         item.fallVelocity = 1.8;
