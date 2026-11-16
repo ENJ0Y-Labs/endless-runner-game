@@ -656,6 +656,48 @@ function buildBackdrop() {
 }
 buildBackdrop();
 
+function addStoryBillboards() {
+  if (!storySkin) return;
+  const copy = {
+    "lagos-hustle": [["BRIGHT FUTURE", "STAY AND HUSTLE"], ["MAMA T KIOSK", "PURE WATER · COLD DRINKS"], ["THE BIG MAN", "YOUR FUTURE IS OUR BUSINESS"]],
+    "emilokan-expressway": [["BETTER LIFE AHEAD", "EXIT WHEN YOU CAN"], ["JAPA AND SMILE", "MILES OF POSSIBILITIES"], ["THE BIG MAN", "WE ARE FOLLOWING YOUR PROGRESS"]],
+    "the-system": [["PERMIT 44B", "PLEASE JOIN ANOTHER QUEUE"], ["NO BRIBES", "UNOFFICIAL FEES NOT ACCEPTED"], ["THE BIG MAN", "YOUR FILE IS IMPORTANT TO US"]],
+    "japa-terminal": [["DEPARTURES", "HOPE · GATE · REPEAT"], ["FINAL CALL", "KEEP YOUR DOCUMENTS READY"], ["THE BIG MAN", "PLEASE REMAIN IN THE COUNTRY"]],
+  }[storyChapterId] ?? [];
+  copy.forEach(([headline, subline], index) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 512;
+    canvas.height = 256;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = index === 1 ? "#e6d5ae" : "#243b35";
+    ctx.fillRect(0, 0, 512, 256);
+    ctx.strokeStyle = "#d9ad55";
+    ctx.lineWidth = 12;
+    ctx.strokeRect(12, 12, 488, 232);
+    ctx.fillStyle = index === 1 ? "#342a22" : "#fff0cf";
+    ctx.textAlign = "center";
+    ctx.font = "900 46px system-ui, sans-serif";
+    ctx.fillText(headline, 256, 112, 450);
+    ctx.font = "700 25px system-ui, sans-serif";
+    ctx.fillText(subline, 256, 166, 450);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    const board = new THREE.Mesh(
+      new THREE.BoxGeometry(5.2, 2.55, 0.18),
+      new THREE.MeshStandardMaterial({ map: texture, roughness: 0.88 }),
+    );
+    board.position.set(index % 2 === 0 ? -8.1 : 8.1, 4.6, -42 - index * 36);
+    scene.add(board);
+    const postMaterial = new THREE.MeshStandardMaterial({ color: "#51483b", roughness: 1 });
+    for (const xOffset of [-2.05, 2.05]) {
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.18, 3.2, 0.2), postMaterial);
+      post.position.set(board.position.x + xOffset, 1.6, board.position.z);
+      scene.add(post);
+    }
+  });
+}
+addStoryBillboards();
+
 // Low-poly tree lines add distinct seasonal silhouettes without external assets.
 // Each season is one merged mesh; only the active backdrop is rendered.
 const seasonalBackdropMeshes = [];
@@ -1495,10 +1537,17 @@ const urnGeometry = (() => {
   ]);
 })();
 const coinGeometry = mergeParts(storyChapterId === "lagos-hustle" ? [
-  // Naira note collectible.
-  part(box(0.9, 0.055, 0.48), "#2d9b69", [0, 0, 0]),
-  part(box(0.62, 0.025, 0.28), "#d6f0d9", [0, 0.04, 0]),
-  part(new THREE.CylinderGeometry(0.09, 0.09, 0.025, 10), "#f1d27b", [0, 0.055, 0], [Math.PI / 2, 0, 0]),
+  // Fictional Naira pickup: a ₦100-inspired palette and woven geometric motif,
+  // without reproducing a real portrait, CBN mark, serial, or security device.
+  part(box(0.98, 0.055, 0.56), "#8c5a50", [0, 0, 0]),
+  part(box(0.9, 0.018, 0.48), "#c98b78", [0, 0.038, 0]),
+  part(box(0.64, 0.022, 0.34), "#e4c4a0", [0, 0.052, 0]),
+  part(box(0.12, 0.024, 0.34), "#477b68", [-0.34, 0.07, 0]),
+  part(box(0.12, 0.024, 0.34), "#477b68", [0.34, 0.07, 0]),
+  part(box(0.38, 0.025, 0.06), "#8c5a50", [0, 0.073, -0.12]),
+  part(box(0.38, 0.025, 0.06), "#8c5a50", [0, 0.073, 0.12]),
+  part(box(0.12, 0.025, 0.12), "#477b68", [0, 0.078, 0], [0, Math.PI / 4, 0]),
+  part(box(0.025, 0.024, 0.38), "#e7d9b7", [0, 0.078, 0]),
 ] : storyChapterId === "emilokan-expressway" ? [
   // Travel folder.
   part(box(0.72, 0.12, 0.9), "#b87936", [0, 0, 0]),
@@ -1650,7 +1699,7 @@ function placeObstacle(lane, z, elapsed = state.elapsed, allowMovement = true) {
       ? storyBusGeometries[Math.floor(Math.random() * storyBusGeometries.length)]
       : storyCarGeometry ?? crateGeometry;
   // Moving traffic scales with game speed while remaining slower than the runner.
-  item.forwardSpeedFactor = storyCarGeometry ? 0.35 : 0;
+  item.forwardSpeedFactor = storyCarGeometry ? (4 / 6) : 0;
   item.mesh.rotation.set(0, 0, 0);
   item.mesh.position.set(LANE_X[lane], 0.11, z);
   item.mesh.scale.setScalar(0.01);
@@ -2556,8 +2605,9 @@ function animate() {
       if (
         relativeZ > CFG.obstacleHitZ[0] &&
         relativeZ < CFG.obstacleHitZ[1] &&
-        Math.abs(item.mesh.position.x - playerX) < CFG.obstacleHitX &&
-        (item.isKeke || item.isPublicBus || state.jumpHeight < CFG.jumpObstacleClearance)
+        Math.abs(item.mesh.position.x - playerX) <
+          (storyCarGeometry ? 1.35 : CFG.obstacleHitX) &&
+        (storyCarGeometry ? true : (item.isKeke || item.isPublicBus || state.jumpHeight < CFG.jumpObstacleClearance))
       ) {
         item.falling = true;
         item.fallVelocity = 1.8;
