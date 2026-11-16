@@ -2209,28 +2209,32 @@ function setMode(mode) {
     gameoverOverlay.hidden = false;
     if (previousMode === "running") {
       shake = 0.4;
-      const result = {
-        score: state.score,
-        relics: state.relics,
-        distance: Math.floor(state.distance),
-        timestamp: new Date().toISOString(),
-      };
-      state.lastRun = result;
-      if (!state.bestRun || result.score > state.bestRun.score)
-        state.bestRun = result;
-      window.dispatchEvent(
-        new CustomEvent("relicrush:run-finished", {
-          detail: { ...result, demo: state.aiDemo },
-        }),
+      if (!storySkin) {
+        const result = {
+          score: state.score,
+          relics: state.relics,
+          distance: Math.floor(state.distance),
+          timestamp: new Date().toISOString(),
+        };
+        state.lastRun = result;
+        if (!state.bestRun || result.score > state.bestRun.score)
+          state.bestRun = result;
+        window.dispatchEvent(
+          new CustomEvent("relicrush:run-finished", {
+            detail: { ...result, demo: state.aiDemo },
+          }),
+        );
+      }
+    }
+    if (!storySkin) {
+      app.querySelector("#final-score").textContent = String(state.score);
+      app.querySelector("#final-distance").textContent =
+        `${Math.floor(state.distance)} m`;
+      app.querySelector("#final-relics").textContent = String(state.relics);
+      app.querySelector("#final-best-score").textContent = String(
+        state.bestRun?.score ?? state.score,
       );
     }
-    app.querySelector("#final-score").textContent = String(state.score);
-    app.querySelector("#final-distance").textContent =
-      `${Math.floor(state.distance)} m`;
-    app.querySelector("#final-relics").textContent = String(state.relics);
-    app.querySelector("#final-best-score").textContent = String(
-      state.bestRun?.score ?? state.score,
-    );
     updateHud();
   }
 }
