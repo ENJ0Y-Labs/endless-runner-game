@@ -1540,6 +1540,31 @@ const storyCarGeometry = storySkin && storyChapterId === "lagos-hustle"
       part(box(0.18, 0.16, 0.08), "#a72b22", [0.68, 0.83, 1.85]),
     ])
   : null;
+
+// Lagos keke: compact 2.7m three-wheel tricycle with an enclosed passenger
+// cabin, open-sided silhouette, front windscreen and white side pinstripes.
+// The three paint variants are separate pooled geometries, not per-frame materials.
+const storyKekeGeometries = storyCarGeometry ? ["#f1eee5", "#202326", "#245dba"].map((bodyColor) =>
+  mergeParts([
+    part(box(1.28, 0.58, 2.42), bodyColor, [0, 0.83, 0.02]),
+    part(box(1.12, 0.12, 2.28), "#25282b", [0, 1.18, 0.02]),
+    part(box(1.12, 0.76, 1.12), bodyColor, [0, 1.57, 0.28]),
+    part(box(1.04, 0.1, 1.2), "#24282b", [0, 2.0, 0.28]),
+    part(box(0.94, 0.48, 0.06), "#91bac8", [0, 1.62, -0.31]),
+    part(box(0.08, 0.62, 0.08), "#25282b", [-0.49, 1.55, -0.31]),
+    part(box(0.08, 0.62, 0.08), "#25282b", [0.49, 1.55, -0.31]),
+    part(box(0.12, 0.16, 1.85), "#ffffff", [-0.651, 0.95, 0.08]),
+    part(box(0.12, 0.16, 1.85), "#ffffff", [0.651, 0.95, 0.08]),
+    part(box(0.18, 0.18, 0.08), "#f8e6ad", [-0.38, 0.91, -1.2]),
+    part(box(0.18, 0.18, 0.08), "#f8e6ad", [0.38, 0.91, -1.2]),
+    part(new THREE.CylinderGeometry(0.3, 0.3, 0.16, 10), "#202326", [0, 0.32, -0.91], [0, 0, Math.PI / 2]),
+    part(new THREE.CylinderGeometry(0.3, 0.3, 0.16, 10), "#202326", [-0.67, 0.32, 0.82], [0, 0, Math.PI / 2]),
+    part(new THREE.CylinderGeometry(0.3, 0.3, 0.16, 10), "#202326", [0.67, 0.32, 0.82], [0, 0, Math.PI / 2]),
+    part(new THREE.CylinderGeometry(0.14, 0.14, 0.18, 8), "#aeb4b6", [0, 0.32, -0.91], [0, 0, Math.PI / 2]),
+    part(new THREE.CylinderGeometry(0.14, 0.14, 0.18, 8), "#aeb4b6", [-0.67, 0.32, 0.82], [0, 0, Math.PI / 2]),
+    part(new THREE.CylinderGeometry(0.14, 0.14, 0.18, 8), "#aeb4b6", [0.67, 0.32, 0.82], [0, 0, Math.PI / 2]),
+  ])
+) : [];
 function createObstacle() {
   const mesh = new THREE.Mesh(storyCarGeometry ?? crateGeometry, vertexMaterial);
   mesh.castShadow = true;
@@ -1558,6 +1583,7 @@ function createObstacle() {
     fallVelocity: 0,
     falling: false,
     forwardSpeedFactor: 0,
+    isKeke: false,
   };
 }
 function createRelic() {
@@ -1596,8 +1622,14 @@ function placeObstacle(lane, z, elapsed = state.elapsed, allowMovement = true) {
   item.shiftProgress = 0;
   item.falling = false;
   item.fallVelocity = 0;
-   // Story traffic drives forward, but slower than the runner.
-   item.forwardSpeedFactor = storyCarGeometry ? 0.35 : 0;
+  // Mix compact Lagos kekes into Chapter 1 traffic. Each uses a 2.7m
+  // tricycle silhouette and one of the white, black or blue/white-stripe liveries.
+  item.isKeke = Boolean(storyKekeGeometries.length && Math.random() < 0.34);
+  item.mesh.geometry = item.isKeke
+    ? storyKekeGeometries[Math.floor(Math.random() * storyKekeGeometries.length)]
+    : storyCarGeometry ?? crateGeometry;
+  // Moving traffic scales with game speed while remaining slower than the runner.
+  item.forwardSpeedFactor = storyCarGeometry ? 0.35 : 0;
   item.mesh.rotation.set(0, 0, 0);
   item.mesh.position.set(LANE_X[lane], 0.11, z);
   item.mesh.scale.setScalar(0.01);
