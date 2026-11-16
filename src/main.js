@@ -1528,23 +1528,22 @@ const relicMaterial = new THREE.MeshStandardMaterial({
 });
 const obstaclePool = [];
 const relicPool = [];
-// Chapter 1 traffic uses believable road-vehicle proportions in world units:
-// roughly 1.9m wide, 1.5m tall and 4.2m long for a compact car.
+// Chapter 1 traffic uses a physically plausible 4.8m black SUV silhouette.
 const storyCarGeometry = storySkin && storyChapterId === "lagos-hustle"
   ? mergeParts([
-      part(box(1.82, 0.62, 3.65), "#b83e2e", [0, 0.78, 0]),
-      part(box(1.58, 0.68, 1.62), "#b83e2e", [0, 1.38, -0.34]),
-      part(box(1.46, 0.48, 1.42), "#8fb6c0", [0, 1.42, -0.34]),
-      part(box(0.66, 0.42, 0.08), "#b9d2d7", [-0.39, 1.43, -1.11]),
-      part(box(0.66, 0.42, 0.08), "#b9d2d7", [0.39, 1.43, -1.11]),
-      part(box(0.08, 0.28, 0.08), "#24292c", [-0.88, 0.38, -1.12]),
-      part(box(0.08, 0.28, 0.08), "#24292c", [0.88, 0.38, -1.12]),
-      part(box(0.08, 0.28, 0.08), "#24292c", [-0.88, 0.38, 1.12]),
-      part(box(0.08, 0.28, 0.08), "#24292c", [0.88, 0.38, 1.12]),
-      part(box(0.18, 0.16, 0.08), "#f4e7c5", [-0.68, 0.83, -1.85]),
-      part(box(0.18, 0.16, 0.08), "#f4e7c5", [0.68, 0.83, -1.85]),
-      part(box(0.18, 0.16, 0.08), "#a72b22", [-0.68, 0.83, 1.85]),
-      part(box(0.18, 0.16, 0.08), "#a72b22", [0.68, 0.83, 1.85]),
+      part(box(1.96, 0.78, 4.1), "#17191c", [0, 0.92, 0]),
+      part(box(1.72, 0.92, 2.12), "#17191c", [0, 1.72, -0.38]),
+      part(box(1.58, 0.66, 1.88), "#78929a", [0, 1.76, -0.38]),
+      part(box(0.72, 0.5, 0.08), "#a9c3c9", [-0.43, 1.78, -1.42]),
+      part(box(0.72, 0.5, 0.08), "#a9c3c9", [0.43, 1.78, -1.42]),
+      part(box(0.08, 0.34, 0.08), "#090a0b", [-0.96, 0.42, -1.32]),
+      part(box(0.08, 0.34, 0.08), "#090a0b", [0.96, 0.42, -1.32]),
+      part(box(0.08, 0.34, 0.08), "#090a0b", [-0.96, 0.42, 1.32]),
+      part(box(0.08, 0.34, 0.08), "#090a0b", [0.96, 0.42, 1.32]),
+      part(box(0.2, 0.18, 0.08), "#f4e7c5", [-0.72, 0.92, -2.08]),
+      part(box(0.2, 0.18, 0.08), "#f4e7c5", [0.72, 0.92, -2.08]),
+      part(box(0.2, 0.18, 0.08), "#a72b22", [-0.72, 0.92, 2.08]),
+      part(box(0.2, 0.18, 0.08), "#a72b22", [0.72, 0.92, 2.08]),
     ])
   : null;
 
