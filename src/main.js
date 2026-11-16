@@ -354,10 +354,14 @@ function createSlabTexture() {
   ctx.fillRect(0, 0, 512, 256);
   if (storyChapterId === "lagos-hustle") {
     // Continuous asphalt with broken white lane dividers, matching the reference road.
-    for (const x of [170, 342]) {
-      ctx.fillStyle = "#e7d2a7";
+    for (const x of [171, 341]) {
+      ctx.fillStyle = "#f4efe2";
       for (let y = 0; y < 256; y += 128) ctx.fillRect(x - 3, y + 12, 6, 62);
     }
+    // Solid white edge lines, as in the concept art.
+    ctx.fillStyle = "#f4efe2";
+    ctx.fillRect(10, 0, 5, 256);
+    ctx.fillRect(497, 0, 5, 256);
     ctx.fillStyle = "rgba(35,25,20,.18)";
     for (let i=0;i<1800;i++) ctx.fillRect(random()*512,random()*256,1+random()*2,1+random()*2);
   } else
@@ -460,12 +464,12 @@ const railMaterial = new THREE.MeshStandardMaterial({
   roughness: 0.38,
 });
 const curbMaterial = new THREE.MeshStandardMaterial({
-  color: "#9a7a52",
+  color: storyChapterId === "lagos-hustle" ? "#cfc3ae" : "#9a7a52",
   roughness: 0.95,
 });
 const railGeometry = new THREE.BoxGeometry(0.1, 0.05, TRACK_LENGTH);
 const curbGeometry = new THREE.BoxGeometry(0.6, 0.42, TRACK_LENGTH);
-for (const x of [-1.23, 1.23, -3.45, 3.45]) {
+for (const x of storyChapterId === "lagos-hustle" ? [] : [-1.23, 1.23, -3.45, 3.45]) {
   const rail = new THREE.Mesh(railGeometry, railMaterial);
   rail.position.set(x, 0.135, TRACK_CENTER_Z);
   scene.add(rail);
@@ -492,13 +496,37 @@ function registerSeasonalMesh(mesh) {
   if (colors) mesh.geometry.userData.baseVertexColors = colors.array.slice();
   seasonalMeshes.push(mesh);
 }
+function makeStorySign(text, seed) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 64;
+  const ctx = canvas.getContext("2d");
+  const fills = ["#f2d23c", "#f4efe2", "#4aa3d6", "#ef8f3c"];
+  ctx.fillStyle = fills[Math.abs(seed) % fills.length];
+  ctx.fillRect(0, 0, 256, 64);
+  ctx.strokeStyle = "#3a2418";
+  ctx.lineWidth = 5;
+  ctx.strokeRect(3, 3, 250, 58);
+  ctx.fillStyle = "#b8281f";
+  ctx.font = "bold 26px Impact, Arial Black, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, 128, 34, 236);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.6, 0.65),
+    new THREE.MeshBasicMaterial({ map: tex }),
+  );
+  return mesh;
+}
 function buildBackdrop() {
   if (storyChapterId === "lagos-hustle") {
     // Chapter 1 deliberately uses the same small-section streaming model as
     // Classic Mode: 15 sections, 9 units apart, recycled after passing the runner.
     // This avoids the large overlapping merged chunks that caused empty roadside gaps.
     const rand = seeded(21);
-    const shopColors = ["#b85b35", "#d69a48", "#557b72", "#8f4d38", "#c1a06a"];
+    const shopColors = ["#d9506b", "#e8a62e", "#2f86b8", "#3f9a5a", "#e0703a"];
 
     for (let index = 0; index < STORY_SEGMENT_COUNT; index += 1) {
       const parts = [];
@@ -519,6 +547,16 @@ function buildBackdrop() {
           // Awning and counter details face the road.
           parts.push(part(box(4.35, 0.18, 1.55), side < 0 ? "#4c8b78" : "#b85a3c",
             [x - side * 1.55, 2.75, 1.95]));
+          // Striped awning edge (white bars) over the counter.
+          for (let stripe = -3; stripe <= 3; stripe += 2) {
+            parts.push(part(box(0.5, 0.2, 1.57), "#f3ede0",
+              [x - side * 1.55 + stripe * 0.55, 2.76, 1.95]));
+          }
+          // Bottles / drinks on the counter.
+          for (let b = 0; b < 4; b += 1) {
+            parts.push(part(box(0.18, 0.5, 0.18), ["#d93a2b", "#2c7fb8", "#3d9a4a", "#f0c040"][b],
+              [x - side * (0.7 + b * 0.5), 1.2, 2.5]));
+          }
           parts.push(part(box(2.8, 0.85, 0.65), "#765039",
             [x - side * 1.55, 0.62, 2.5]));
         }
@@ -560,14 +598,40 @@ function buildBackdrop() {
           }
         }
 
+        // Parked okada motorcycles (scenery) along the kerb.
+        if (index % 3 === 2) {
+          const ox = side * 5.55;
+          const oz = z - 2.4;
+          parts.push(part(box(0.38, 0.4, 1.7), index % 2 ? "#c93c2e" : "#2a2a2c", [ox, 0.62, oz]));
+          parts.push(part(box(0.3, 0.14, 0.7), "#1d1d1f", [ox, 0.9, oz + 0.2]));
+          parts.push(part(box(0.9, 0.08, 0.1), "#1d1d1f", [ox, 1.15, oz - 0.75]));
+          for (const wz of [-0.7, 0.7]) {
+            parts.push(part(new THREE.CylinderGeometry(0.3, 0.3, 0.12, 10),
+              "#161618", [ox, 0.3, oz + wz], [0, 0, Math.PI / 2]));
+          }
+        }
+        // Extra parked yellow-and-black danfos for a denser street.
+        if ((side < 0 && index === 9) || (side > 0 && index === 2) || (side > 0 && index === 13)) {
+          const busX = side * 5.95;
+          parts.push(part(box(2.35, 1.55, 4.5), "#f0c21c", [busX, 1.3, z]));
+          parts.push(part(box(2.4, 0.3, 4.55), "#1f1f21", [busX, 1.0, z]));
+          parts.push(part(box(2.2, 0.62, 3.2), "#222c31", [busX, 2.25, z - 0.2]));
+          for (const wx of [-0.98, 0.98]) {
+            for (const wz of [-1.3, 1.3]) {
+              parts.push(part(new THREE.CylinderGeometry(0.3, 0.3, 0.16, 10),
+                "#202326", [busX + wx, 0.33, wz], [Math.PI / 2, 0, 0]));
+            }
+          }
+        }
         // Small roadside stalls, stools and market clutter.
         if (index % 2 === 1) {
           parts.push(part(box(1.6, 0.16, 1.25), "#d9b77b",
             [side * 6.25, 1.0, z + 1.5]));
           parts.push(part(box(0.12, 0.8, 0.12), "#59402f",
             [side * 6.25, 0.45, z + 1.5]));
-          parts.push(part(box(0.9, 0.75, 0.75), "#687276",
+          parts.push(part(box(0.9, 0.75, 0.75), index % 4 === 1 ? "#2c7fb8" : "#d9d4c8",
             [side * 7.05, 0.4, z - 2.1]));
+          parts.push(part(box(0.42, 0.42, 0.42), "#d9a441", [side * 6.7, 0.21, z + 0.6]));
         }
       }
 
@@ -576,6 +640,15 @@ function buildBackdrop() {
       mesh.castShadow = false;
       mesh.receiveShadow = true;
       group.add(mesh);
+      if (index % 2 === 0 || index < 3) {
+        const labels = ["MAMA T KIOSK", "COLD DRINKS", "PEPSI · FAN YOGO", "BUKA & GRILL", "RECHARGE CARDS"];
+        for (const side of [-1, 1]) {
+          const sign = makeStorySign(labels[(index + (side > 0 ? 1 : 0)) % labels.length], index + side);
+          sign.position.set(side * 6.15, 3.15, 3.2);
+          sign.rotation.y = side * -Math.PI / 2;
+          group.add(sign);
+        }
+      }
       group.position.set(0, 0, 6 - index * STORY_SEGMENT_SPACING);
       scene.add(group);
       storyStreetSegments.push({ group, startZ: group.position.z });
@@ -583,15 +656,15 @@ function buildBackdrop() {
 
     // The flyover and EXIT sign are distant horizon landmarks, not streamed props.
     const landmarkParts = [
-      part(box(34, 0.38, 2.0), "#8d806f", [0, 7.2, -142]),
-      part(box(34, 0.16, 2.1), "#c49a70", [0, 6.94, -142]),
-      part(box(0.7, 6.6, 1.6), "#75624f", [-12.8, 3.3, -142]),
-      part(box(0.7, 6.6, 1.6), "#75624f", [12.8, 3.3, -142]),
-      part(box(3.8, 1.65, 0.18), "#315d39", [0, 5.9, -139.8]),
-      part(box(3.58, 1.43, 0.06), "#6c9860", [0, 5.9, -139.66]),
-      part(box(0.06, 1.18, 0.04), "#f1e8c8", [-1.48, 5.9, -139.59]),
-      part(box(0.06, 1.18, 0.04), "#f1e8c8", [1.48, 5.9, -139.59]),
-      part(box(2.5, 0.06, 0.04), "#f1e8c8", [0, 6.28, -139.56]),
+      part(box(34, 0.38, 2.0), "#8d806f", [0, 7.2, -112]),
+      part(box(34, 0.16, 2.1), "#c49a70", [0, 6.94, -112]),
+      part(box(0.7, 6.6, 1.6), "#75624f", [-12.8, 3.3, -112]),
+      part(box(0.7, 6.6, 1.6), "#75624f", [12.8, 3.3, -112]),
+      part(box(3.8, 1.65, 0.18), "#315d39", [0, 5.9, -109.8]),
+      part(box(3.58, 1.43, 0.06), "#6c9860", [0, 5.9, -109.66]),
+      part(box(0.06, 1.18, 0.04), "#f1e8c8", [-1.48, 5.9, -109.59]),
+      part(box(0.06, 1.18, 0.04), "#f1e8c8", [1.48, 5.9, -109.59]),
+      part(box(2.5, 0.06, 0.04), "#f1e8c8", [0, 6.28, -109.56]),
     ];
     const landmark = new THREE.Mesh(mergeParts(landmarkParts), vertexMaterial);
     landmark.castShadow = false;
@@ -1397,11 +1470,19 @@ function updateSeasonEnvironment(distance) {
       scene.background.needsUpdate = true;
       scene.fog.color.set(PAL.fog);
       groundMaterial.color.set(PAL.stoneDeep);
-      trackTop.map = null;
-      trackTop.color.set(PAL.stoneDark);
+      if (storyChapterId === "lagos-hustle") {
+        // Keep the painted asphalt (white lane lines) and pale concrete kerbs.
+        trackTop.color.set("#ffffff");
+        trackSide.color.set("#55443a");
+        curbMaterial.color.set("#cfc3ae");
+        groundMaterial.color.set("#b9976f");
+      } else {
+        trackTop.map = null;
+        trackTop.color.set(PAL.stoneDark);
+        trackSide.color.set(PAL.stoneDark);
+        curbMaterial.color.set(PAL.stone);
+      }
       trackTop.needsUpdate = true;
-      trackSide.color.set(PAL.stoneDark);
-      curbMaterial.color.set(PAL.stone);
       railMaterial.color.set(PAL.gold);
       hemisphere.color.set(PAL.skyMid);
       hemisphere.groundColor.set(PAL.stoneDeep);
