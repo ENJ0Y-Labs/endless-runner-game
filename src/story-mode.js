@@ -11,7 +11,7 @@ const CHAPTER_STORIES = {
 function readSeenIntros() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORY_SEEN_KEY) || "[]");
-    return new Set(Array.isArray(saved) ? saved.filter((id) => CHAPTERS.some((chapter) => chapter.id === id)) : []);
+    return new Set(Array.isArray(saved) ? saved.filter((id) => typeof id === "string") : []);
   } catch {
     return new Set();
   }
@@ -112,6 +112,11 @@ export function mountJapaRush(root) {
 
   const renderIntro = (chapter) => {
     stopRun();
+    const showStory = !seenIntros.has(chapter.id);
+    if (showStory) {
+      seenIntros.add(chapter.id);
+      try { localStorage.setItem(STORY_SEEN_KEY, JSON.stringify([...seenIntros])); } catch { /* session remains playable */ }
+    }
     root.innerHTML = `
       <div class="japa-shell japa-intro-shell">
         <button class="japa-back-link japa-inline-back" type="button" data-action="chapters">← All chapters</button>
@@ -119,7 +124,7 @@ export function mountJapaRush(root) {
           <div><p class="japa-eyebrow">Chapter 0${chapter.number}</p><h1>${escapeHtml(chapter.title)}</h1><p class="japa-lede">${escapeHtml(chapter.subtitle)}</p></div>
         </div>
         <div class="japa-objective-panel">
-          ${seenIntros.has(chapter.id) ? "" : `<p class="japa-eyebrow">The story so far</p><p class="japa-chapter-story">${escapeHtml(CHAPTER_STORIES[chapter.id])}</p>`}
+          ${showStory ? `<p class="japa-eyebrow">The story so far</p><p class="japa-chapter-story">${escapeHtml(CHAPTER_STORIES[chapter.id])}</p>` : ""}
           <p class="japa-eyebrow">Mission briefing</p><h2>${escapeHtml(chapter.objective)}</h2>
           <p><strong>Watch out for:</strong> ${escapeHtml(chapter.hazards)}.</p>
           <p><strong>Controls:</strong> A / ← move left · D / → move right · use the on-screen arrows on mobile.</p>
@@ -173,11 +178,7 @@ export function mountJapaRush(root) {
     if (action === "chapters" || action === "quit") renderChapters();
     if (action === "start") {
       const chapter = CHAPTERS.find((item) => root.querySelector(".japa-intro-art h1")?.textContent === item.title);
-      if (chapter) {
-        seenIntros.add(chapter.id);
-        try { localStorage.setItem(STORY_SEEN_KEY, JSON.stringify([...seenIntros])); } catch { /* session remains playable */ }
-        renderRun(chapter);
-      }
+      if (chapter) renderRun(chapter);
     }
     if (action === "retry") {
       const chapter = CHAPTERS.find((item) => item.number <= progress.highestUnlocked && root.querySelector(".japa-intro-art h1")?.textContent === item.title);
