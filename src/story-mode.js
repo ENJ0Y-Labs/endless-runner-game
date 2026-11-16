@@ -105,7 +105,7 @@ export function mountJapaRush(root) {
           <p class="japa-eyebrow">Mission briefing</p><h2>${escapeHtml(chapter.objective)}</h2>
           <p><strong>Watch out for:</strong> ${escapeHtml(chapter.hazards)}.</p>
           <p><strong>Controls:</strong> A / ← move left · D / → move right · use the on-screen arrows on mobile.</p>
-          ${chapter.number === 1 ? '<p><strong>Bonus:</strong> Collect Naira notes for a better result. They are optional.</p>' : ""}
+          ${chapter.number === 1 ? '<p><strong>To pass Chapter 1:</strong> collect the route slip / bus ticket, earn at least ₦500 in Naira-note tokens, then survive all three phases of <em>The Last Danfo</em> and reach the expressway exit. The phases teach a signalling danfo merge, a go-slow squeeze around a parked vehicle or keke, and a final on-ramp merge through cones and barricades. Naira notes beyond the ₦500 target are optional bonus notes.</p><p><strong>Traffic:</strong> Keke tricycles are blue or yellow and cannot be jumped. Blue, black, green and white public buses are tall lane-avoidance hazards.</p>' : ""}
           ${chapter.number > 1 ? `<p><strong>Required:</strong> ${chapter.requiredCount} ${escapeHtml(chapter.itemName)}. The exit will not count without them.</p>` : ""}
         </div>
         <button class="japa-primary-button" type="button" data-action="start">Start chapter</button>
