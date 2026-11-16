@@ -2424,7 +2424,7 @@ function animate() {
     }
     // Move the entire Chapter 1 streetscape with the road, then recycle it
     // behind the camera so buildings and roadside props never stay frozen.
-    recycleSceneryChunks(storyBackdropChunks, storyBackdropBounds, CFG.playerZ);
+    recycleSceneryChunks(storyBackdropChunks, storyBackdropBounds, CFG.playerZ, dz);
     spawn.frontier += dz;
     streamWorld(attract ? 0 : state.elapsed, attract);
   }
