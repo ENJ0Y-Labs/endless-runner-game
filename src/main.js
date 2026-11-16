@@ -1544,8 +1544,9 @@ const storyCarGeometry = storySkin && storyChapterId === "lagos-hustle"
 // Lagos keke: compact 2.7m three-wheel tricycle with an enclosed passenger
 // cabin, open-sided silhouette, front windscreen and white side pinstripes.
 // The three paint variants are separate pooled geometries, not per-frame materials.
-const storyKekeGeometries = storyCarGeometry ? ["#f1eee5", "#202326", "#245dba"].map((bodyColor) =>
-  mergeParts([
+const storyKekeGeometries = storyCarGeometry ? ["#f1eee5", "#202326", "#245dba"].map((bodyColor) => {
+  const stripeColor = bodyColor === "#f1eee5" ? "#303438" : "#ffffff";
+  return mergeParts([
     part(box(1.28, 0.58, 2.42), bodyColor, [0, 0.83, 0.02]),
     part(box(1.12, 0.12, 2.28), "#25282b", [0, 1.18, 0.02]),
     part(box(1.12, 0.76, 1.12), bodyColor, [0, 1.57, 0.28]),
@@ -1553,8 +1554,8 @@ const storyKekeGeometries = storyCarGeometry ? ["#f1eee5", "#202326", "#245dba"]
     part(box(0.94, 0.48, 0.06), "#91bac8", [0, 1.62, -0.31]),
     part(box(0.08, 0.62, 0.08), "#25282b", [-0.49, 1.55, -0.31]),
     part(box(0.08, 0.62, 0.08), "#25282b", [0.49, 1.55, -0.31]),
-    part(box(0.12, 0.16, 1.85), "#ffffff", [-0.651, 0.95, 0.08]),
-    part(box(0.12, 0.16, 1.85), "#ffffff", [0.651, 0.95, 0.08]),
+    part(box(0.12, 0.16, 1.85), stripeColor, [-0.651, 0.95, 0.08]),
+    part(box(0.12, 0.16, 1.85), stripeColor, [0.651, 0.95, 0.08]),
     part(box(0.18, 0.18, 0.08), "#f8e6ad", [-0.38, 0.91, -1.2]),
     part(box(0.18, 0.18, 0.08), "#f8e6ad", [0.38, 0.91, -1.2]),
     part(new THREE.CylinderGeometry(0.3, 0.3, 0.16, 10), "#202326", [0, 0.32, -0.91], [0, 0, Math.PI / 2]),
@@ -1563,8 +1564,8 @@ const storyKekeGeometries = storyCarGeometry ? ["#f1eee5", "#202326", "#245dba"]
     part(new THREE.CylinderGeometry(0.14, 0.14, 0.18, 8), "#aeb4b6", [0, 0.32, -0.91], [0, 0, Math.PI / 2]),
     part(new THREE.CylinderGeometry(0.14, 0.14, 0.18, 8), "#aeb4b6", [-0.67, 0.32, 0.82], [0, 0, Math.PI / 2]),
     part(new THREE.CylinderGeometry(0.14, 0.14, 0.18, 8), "#aeb4b6", [0.67, 0.32, 0.82], [0, 0, Math.PI / 2]),
-  ])
-) : [];
+  ]);
+}) : [];
 function createObstacle() {
   const mesh = new THREE.Mesh(storyCarGeometry ?? crateGeometry, vertexMaterial);
   mesh.castShadow = true;
