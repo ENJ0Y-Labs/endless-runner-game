@@ -1699,7 +1699,7 @@ function placeObstacle(lane, z, elapsed = state.elapsed, allowMovement = true) {
       ? storyBusGeometries[Math.floor(Math.random() * storyBusGeometries.length)]
       : storyCarGeometry ?? crateGeometry;
   // Moving traffic scales with game speed while remaining slower than the runner.
-  item.forwardSpeedFactor = storyCarGeometry ? (4 / 6) : 0;
+  item.forwardSpeedFactor = storyCarGeometry ? CFG.storyTrafficSpeedRatio : 0;
   item.mesh.rotation.set(0, 0, 0);
   item.mesh.position.set(LANE_X[lane], 0.11, z);
   item.mesh.scale.setScalar(0.01);
