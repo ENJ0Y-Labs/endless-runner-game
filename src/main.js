@@ -1597,7 +1597,7 @@ function placeObstacle(lane, z, elapsed = state.elapsed, allowMovement = true) {
   item.falling = false;
   item.fallVelocity = 0;
    // Story traffic drives forward, but slower than the runner.
-   item.forwardSpeed = storyCarGeometry ? Math.min(state.speed * 0.35, 6) : 0;
+   item.forwardSpeed = storyCarGeometry ? state.speed * 0.35 : 0;
   item.mesh.rotation.set(0, 0, 0);
   item.mesh.position.set(LANE_X[lane], 0.11, z);
   item.mesh.scale.setScalar(0.01);
