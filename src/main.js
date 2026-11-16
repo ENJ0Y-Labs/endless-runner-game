@@ -2341,19 +2341,22 @@ soundButton.addEventListener("click", () => {
 window.addEventListener("pointerdown", unlockAudio);
 app.querySelector("#play-button").addEventListener("click", () => startRun(false));
 app.querySelector("#restart-button").addEventListener("click", () => startRun(false));
-app.querySelector("#share-result-button").addEventListener("click", (event) => {
-  event.preventDefault();
-  const result = state.lastRun ?? {
-    score: state.score,
-    distance: Math.floor(state.distance),
-    relics: state.relics,
-  };
-  const text = `I scored ${result.score} points, ran ${result.distance}m, and collected ${result.relics} relics in Relic Rush 3D!`;
-  const shareUrl = new URL("https://twitter.com/intent/tweet");
-  shareUrl.searchParams.set("text", text);
-  shareUrl.searchParams.set("url", "https://relic-rush-3d.start.ng");
-  window.open(shareUrl.toString(), "_blank", "noopener,noreferrer");
-});
+const shareResultButton = app.querySelector("#share-result-button");
+if (shareResultButton) {
+  shareResultButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    const result = state.lastRun ?? {
+      score: state.score,
+      distance: Math.floor(state.distance),
+      relics: state.relics,
+    };
+    const text = `I scored ${result.score} points, ran ${result.distance}m, and collected ${result.relics} relics in Relic Rush 3D!`;
+    const shareUrl = new URL("https://twitter.com/intent/tweet");
+    shareUrl.searchParams.set("text", text);
+    shareUrl.searchParams.set("url", "https://relic-rush-3d.start.ng");
+    window.open(shareUrl.toString(), "_blank", "noopener,noreferrer");
+  });
+}
 app.querySelector("#resume-button").addEventListener("click", togglePause);
 app.querySelector("#pause-restart-button").addEventListener("click", () => startRun(false));
 pauseButton.addEventListener("click", togglePause);
