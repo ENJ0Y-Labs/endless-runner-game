@@ -1,6 +1,23 @@
 import "./story-mode.css";
 
 const STORAGE_KEY = "relic-rush:japa-rush:progress:v1";
+const STORY_SEEN_KEY = "relic-rush:japa-rush:seen-intros:v1";
+const CHAPTER_STORIES = {
+  "lagos-hustle": "The bus stop is behind you. Your route slip is in your pocket, and the expressway is the only way out. But the Big Man has noticed your plans. Keep your eyes on the road.",
+  "emilokan-expressway": "The city noise fades, but the road ahead is not empty. Your travel folder is somewhere along this stretch. The convoy is still behind you, and every kilometre feels longer.",
+  "the-system": "A quiet district. Endless paperwork. Three approvals stand between you and the next road. The signs say the process is simple. The queues disagree.",
+  "japa-terminal": "You can see the terminal lights now. One boarding pass, one final run, and a gate at the end of the road. The Big Man has saved his loudest announcement for last."
+};
+function readSeenIntros() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORY_SEEN_KEY) || "[]");
+    return new Set(Array.isArray(saved) ? saved.filter((id) => CHAPTERS.some((chapter) => chapter.id === id)) : []);
+  } catch {
+    return new Set();
+  }
+}
+const seenIntros = readSeenIntros();
+
 const CHAPTERS = [
   { id: "lagos-hustle", number: 1, title: "Lagos Hustle", subtitle: "One last stop before the open road.", description: "Escape the traffic and reach the expressway exit.", objective: "Reach the expressway exit", hazards: "Danfo buses, okadas, potholes and barricades", requiredCount: 0, itemName: "No required item", image: "./assets/environment/lagos-hustle.jpg" },
   { id: "emilokan-expressway", number: 2, title: "The Emilokan Expressway", subtitle: "The road gets longer. The problems get bigger.", description: "Find your travel folder and reach the checkpoint.", objective: "Collect the travel folder and reach the checkpoint", hazards: "Fuel tankers, broken-down trucks and road barriers", requiredCount: 1, itemName: "Travel folder", image: "./assets/environment/expressway.jpg" },
@@ -102,6 +119,7 @@ export function mountJapaRush(root) {
           <div><p class="japa-eyebrow">Chapter 0${chapter.number}</p><h1>${escapeHtml(chapter.title)}</h1><p class="japa-lede">${escapeHtml(chapter.subtitle)}</p></div>
         </div>
         <div class="japa-objective-panel">
+          ${seenIntros.has(chapter.id) ? "" : `<p class="japa-eyebrow">The story so far</p><p class="japa-chapter-story">${escapeHtml(CHAPTER_STORIES[chapter.id])}</p>`}
           <p class="japa-eyebrow">Mission briefing</p><h2>${escapeHtml(chapter.objective)}</h2>
           <p><strong>Watch out for:</strong> ${escapeHtml(chapter.hazards)}.</p>
           <p><strong>Controls:</strong> A / ← move left · D / → move right · use the on-screen arrows on mobile.</p>
@@ -155,7 +173,11 @@ export function mountJapaRush(root) {
     if (action === "chapters" || action === "quit") renderChapters();
     if (action === "start") {
       const chapter = CHAPTERS.find((item) => root.querySelector(".japa-intro-art h1")?.textContent === item.title);
-      if (chapter) renderRun(chapter);
+      if (chapter) {
+        seenIntros.add(chapter.id);
+        try { localStorage.setItem(STORY_SEEN_KEY, JSON.stringify([...seenIntros])); } catch { /* session remains playable */ }
+        renderRun(chapter);
+      }
     }
     if (action === "retry") {
       const chapter = CHAPTERS.find((item) => item.number <= progress.highestUnlocked && root.querySelector(".japa-intro-art h1")?.textContent === item.title);
