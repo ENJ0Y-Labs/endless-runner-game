@@ -3,7 +3,6 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 import "./style.css";
 import { mountJapaRush } from "./story-mode.js";
 import { GAME_CONFIG as CFG } from "./game/config.js";
-import { recycleSceneryChunks, resetSceneryChunks } from "./game/scenery-stream.js";
 
 const app = document.querySelector("#app");
 
@@ -477,9 +476,10 @@ for (const x of [-(CFG.trackWidth / 2 + 0.3), CFG.trackWidth / 2 + 0.3]) {
 // Seasonal color variants reuse the same merged geometry to keep mobile draw calls low.
 // ---------------------------------------------------------------------------
 const seasonalMeshes = [];
-const storyBackdropChunks = [];
-const storyBackdropInitialPositions = [];
-let storyBackdropBounds = null;
+const storyStreetSegments = [];
+const STORY_SEGMENT_SPACING = 9;
+const STORY_SEGMENT_COUNT = 15;
+const STORY_SEGMENT_SPAN = STORY_SEGMENT_SPACING * STORY_SEGMENT_COUNT;
 function registerSeasonalMesh(mesh) {
   const colors = mesh.geometry.getAttribute("color");
   if (colors) mesh.geometry.userData.baseVertexColors = colors.array.slice();
@@ -487,118 +487,109 @@ function registerSeasonalMesh(mesh) {
 }
 function buildBackdrop() {
   if (storyChapterId === "lagos-hustle") {
-    const parts = [];
+    // Chapter 1 deliberately uses the same small-section streaming model as
+    // Classic Mode: 15 sections, 9 units apart, recycled after passing the runner.
+    // This avoids the large overlapping merged chunks that caused empty roadside gaps.
     const rand = seeded(21);
-    const add = (geometry, color, position, rotation = [0,0,0], scale = [1,1,1]) => parts.push(part(geometry, color, position, rotation, scale));
     const shopColors = ["#b85b35", "#d69a48", "#557b72", "#8f4d38", "#c1a06a"];
-    for (const side of [-1, 1]) {
-      for (let i = 0; i < 7; i++) {
-        const z = -18 - i * 21, x = side * (7.5 + rand() * 1.0);
-        const w = 3.8 + rand() * 1.2, h = 3.2 + rand() * 2.1;
-        add(box(w,h,7.5), shopColors[i % shopColors.length], [x,h/2,z]);
-        add(box(w+.35,.35,7.8), "#4b3429", [x,h+.18,z]);
-        add(box(w+.4,.22,1.1), i%2 ? "#d8a34e" : "#397a78", [x,2.45,z+3.9]);
-        add(box(.16,1.5,.18), "#e5d1aa", [x-w*.28,1.05,z+4]);
-        add(box(.16,1.5,.18), "#e5d1aa", [x+w*.28,1.05,z+4]);
-        if (i%2===0) add(new THREE.CylinderGeometry(.48,.52,1.2,8), "#687276", [x+side*1.1,h+.85,z-1]);
-        if (i<4) {
-          add(box(3.8,.16,2.4), "#d9b77b", [x-side*1.4,2.25,z+5.2]);
-          add(box(3.3,1.1,.75), "#765039", [x-side*1.4,.75,z+6]);
+
+    for (let index = 0; index < STORY_SEGMENT_COUNT; index += 1) {
+      const parts = [];
+      const z = 0;
+      for (const side of [-1, 1]) {
+        const x = side * (8.25 + rand() * 0.35);
+        const shopIndex = (index + (side > 0 ? 2 : 0)) % shopColors.length;
+        const shopHeight = 3.2 + rand() * 1.1;
+
+        // Continuous roadside shop fronts and kiosks.
+        if (index % 2 === 0 || index < 3) {
+          parts.push(part(box(4.0, shopHeight, 7.2), shopColors[shopIndex],
+            [x, shopHeight / 2, z]));
+          parts.push(part(box(4.2, 0.32, 7.45), "#4b3429",
+            [x, shopHeight + 0.16, z]));
+          parts.push(part(box(4.25, 0.22, 1.05), index % 2 ? "#d8a34e" : "#397a78",
+            [x, 2.35, 3.72]));
+          // Awning and counter details face the road.
+          parts.push(part(box(4.35, 0.18, 1.55), side < 0 ? "#4c8b78" : "#b85a3c",
+            [x - side * 1.55, 2.75, 1.95]));
+          parts.push(part(box(2.8, 0.85, 0.65), "#765039",
+            [x - side * 1.55, 0.62, 2.5]));
+        }
+
+        // Utility poles at regular intervals, with short overlapping wire spans.
+        if (index % 3 === 0) {
+          const poleX = side * 9.55;
+          parts.push(part(box(0.22, 8.2, 0.22), "#493c35", [poleX, 4.1, z]));
+          parts.push(part(box(2.5, 0.18, 0.2), "#493c35",
+            [poleX - side * 0.55, 7.95, z]));
+          parts.push(part(box(0.08, 0.08, STORY_SEGMENT_SPACING + 1.5), "#28282a",
+            [side * 9.35, 8.25, z]));
+          parts.push(part(box(0.06, 0.06, STORY_SEGMENT_SPACING + 1.5), "#3b3030",
+            [side * 8.8, 7.9, z]));
+        }
+
+        // Streetlights alternate with the utility poles.
+        if (index % 4 === 1) {
+          parts.push(part(box(0.16, 4.8, 0.16), "#3d3835",
+            [side * 6.4, 2.4, z]));
+          parts.push(part(box(1.8, 0.14, 0.16), "#3d3835",
+            [side * 5.75, 4.75, z]));
+          parts.push(part(box(0.42, 0.12, 0.28), "#e2bd79",
+            [side * 5.0, 4.68, z]));
+        }
+
+        // Parked yellow Danfos are fixed roadside scenery, not active hitboxes.
+        if ((side < 0 && index === 4) || (side > 0 && index === 10)) {
+          const busX = side * 6.45;
+          parts.push(part(box(2.45, 1.65, 4.7), "#e7b928", [busX, 1.35, z]));
+          parts.push(part(box(2.3, 0.72, 1.65), "#252f34", [busX, 2.48, -0.85]));
+          parts.push(part(box(2.22, 0.58, 1.55), "#dce1d9", [busX, 2.42, 1.0]));
+          parts.push(part(box(2.5, 0.2, 4.75), "#202a2d", [busX, 0.48, z]));
+          for (const wx of [-1.02, 1.02]) {
+            for (const wz of [-1.35, 1.35]) {
+              parts.push(part(new THREE.CylinderGeometry(0.3, 0.3, 0.16, 10),
+                "#202326", [busX + wx, 0.35, wz], [Math.PI / 2, 0, 0]));
+            }
+          }
+        }
+
+        // Small roadside stalls, stools and market clutter.
+        if (index % 2 === 1) {
+          parts.push(part(box(1.6, 0.16, 1.25), "#d9b77b",
+            [side * 6.25, 1.0, z + 1.5]));
+          parts.push(part(box(0.12, 0.8, 0.12), "#59402f",
+            [side * 6.25, 0.45, z + 1.5]));
+          parts.push(part(box(0.9, 0.75, 0.75), "#687276",
+            [side * 7.05, 0.4, z - 2.1]));
         }
       }
-      for (let i=0;i<5;i++) {
-        const z=-18-i*27, x=side*(7.4+(i%2)*.4);
-        add(new THREE.CylinderGeometry(.09,.13,8,6), "#393b39", [x,4,z]);
-        add(box(3.5,.12,.12), "#393b39", [x-side*1.5,7.4,z]);
-        add(box(.08,.08,2.2), "#252b2c", [x-side*.7,7.1,z+.8]);
-      }
+
+      const group = new THREE.Group();
+      const mesh = new THREE.Mesh(mergeParts(parts), vertexMaterial);
+      mesh.castShadow = false;
+      mesh.receiveShadow = true;
+      group.add(mesh);
+      group.position.set(0, 0, 6 - index * STORY_SEGMENT_SPACING);
+      scene.add(group);
+      storyStreetSegments.push({ group, startZ: group.position.z });
     }
-    // Distant lagoon flyover and exit landmark: the reference image's main vanishing-point silhouette.
-    add(box(34,.38,2.0), "#8d806f", [0,7.2,-142]);
-    add(box(34,.16,2.1), "#c49a70", [0,6.94,-142]);
-    add(box(.7,6.6,1.6), "#75624f", [-12.8,3.3,-142]);
-    add(box(.7,6.6,1.6), "#75624f", [12.8,3.3,-142]);
-    // Green overhead EXIT sign, kept as geometry so it remains legible in perspective.
-    add(box(3.8,1.65,.18), "#315d39", [0,5.9,-139.8]);
-    add(box(3.58,1.43,.06), "#6c9860", [0,5.9,-139.66]);
-    add(box(.06,1.18,.04), "#f1e8c8", [-1.48,5.9,-139.59]);
-    add(box(.06,1.18,.04), "#f1e8c8", [1.48,5.9,-139.59]);
-    add(box(2.5,.06,.04), "#f1e8c8", [0,6.28,-139.56]);
-    // Utility poles, crossarms and sagging-looking cable runs on both verges.
-    for (const side of [-1, 1]) {
-      for (let i=0;i<5;i++) {
-        const z=-13-i*25;
-        const x=side*(9.25+(i%2)*.25);
-        add(box(.24,8.8,.24), "#493c35", [x,4.4,z]);
-        add(box(2.6,.18,.2), "#493c35", [x-side*.55,8.35,z]);
-        add(box(.12,.55,.12), "#302b29", [x-side*1.05,8.55,z]);
-      }
-      for (let i=0;i<4;i++) {
-        const z=-25-i*25;
-        add(box(.075,.075,25.5), "#28282a", [side*9.25,8.45,z], [0,0,side*.025]);
-        add(box(.055,.055,25.5), "#3b3030", [side*8.55,8.05,z], [0,0,-side*.018]);
-      }
-    }
-    // Roadside stall details: striped awnings, signboards and stools reinforce the busy street.
-    for (const side of [-1,1]) {
-      for (let i=0;i<5;i++) {
-        const z=-18-i*25;
-        const x=side*(8.1+(i%2)*.3);
-        add(box(3.7,.22,2.1), i%2 ? "#4c8b78" : "#d5a34f", [x,3.0,z]);
-        for(let stripe=0;stripe<5;stripe++) {
-          add(box(.68,.24,2.12), stripe%2 ? "#e5d1a0" : "#b85a3c", [x-1.48+stripe*.74,3.02,z]);
-        }
-        add(box(2.6,1.5,.18), "#e7d2a3", [x,4.05,z-1.25]);
-        add(box(2.35,1.22,.08), "#7a4b35", [x,4.05,z-1.13]);
-        add(box(.62,.12,.62), "#6c4935", [x-side*.8,.62,z+1.5]);
-        add(box(.12,.58,.12), "#59402f", [x-side*.8,.32,z+1.5]);
-      }
-    }
-    // Parked danfos sit beyond the curb as environmental set dressing, never as surprise hitboxes.
-    for (const [x,z,body] of [[-6.25,-38,"#e7b928"],[6.25,-82,"#d6a52b"]]) {
-      add(box(2.55,1.65,4.9), body, [x,1.45,z]);
-      add(box(2.42,.72,2.15), "#252f34", [x,2.58,z-1.02]);
-      add(box(2.25,.62,1.65), "#dce1d9", [x,2.52,z+.95]);
-      add(box(2.7,.22,4.95), "#202a2d", [x,.62,z]);
-      add(box(2.62,.2,4.9), "#f1d7a0", [x,2.33,z]);
-      for (const wx of [-1.12,1.12]) for (const wz of [-1.45,1.45])
-        add(new THREE.CylinderGeometry(.34,.34,.18,10), "#202326", [x+wx,.42,z+wz], [Math.PI/2,0,0]);
-    }
-    // A small okada silhouette and generator complete the roadside clutter.
-    for (const [x,z] of [[-5.9,-58],[6.0,-104]]) {
-      add(new THREE.CylinderGeometry(.28,.28,.14,10), "#24282a", [x-.65,.34,z], [Math.PI/2,0,0]);
-      add(new THREE.CylinderGeometry(.28,.28,.14,10), "#24282a", [x+.65,.34,z], [Math.PI/2,0,0]);
-      add(box(1.35,.22,.3), "#b94f2d", [x,.72,z]);
-      add(box(.42,.42,.42), "#343b3d", [x+.1,1.02,z-.1]);
-    }
-    add(box(1.5,1.1,1.1), "#4c5550", [-7.1,.55,-68]);
-    add(box(.12,.16,1.25), "#d7b15e", [-7.1,1.18,-68]);
-    for (const side of [-1,1]) {
-      add(box(2.0,.22,130), "#c9a27a", [side*6.5,.02,-74]);
-      add(box(.16,.12,130), "#e4c28e", [side*5.45,.13,-74]);
-    }
-    const mesh = new THREE.Mesh(mergeParts(parts), vertexMaterial);
-    mesh.castShadow = false; mesh.receiveShadow = true;
-    // Use the authored mesh bounds to know when the nearest edge has passed
-    // the runner. The 130-unit spacing is the existing streetscape module pitch.
-    mesh.geometry.computeBoundingBox();
-    const localBounds = mesh.geometry.boundingBox;
-    for (let i = 0; i < 3; i++) {
-      const chunk = new THREE.Group();
-      const copy = mesh.clone();
-      copy.position.z = 0;
-      chunk.add(copy);
-      const initialZ = -i * 130;
-      chunk.position.z = initialZ;
-      storyBackdropInitialPositions.push(initialZ);
-      scene.add(chunk);
-      storyBackdropChunks.push(chunk);
-    }
-    storyBackdropBounds = {
-      minZ: localBounds.min.z,
-      maxZ: localBounds.max.z,
-      spacing: Math.abs(storyBackdropInitialPositions[0] - storyBackdropInitialPositions[1]),
-    };
+
+    // The flyover and EXIT sign are distant horizon landmarks, not streamed props.
+    const landmarkParts = [
+      part(box(34, 0.38, 2.0), "#8d806f", [0, 7.2, -142]),
+      part(box(34, 0.16, 2.1), "#c49a70", [0, 6.94, -142]),
+      part(box(0.7, 6.6, 1.6), "#75624f", [-12.8, 3.3, -142]),
+      part(box(0.7, 6.6, 1.6), "#75624f", [12.8, 3.3, -142]),
+      part(box(3.8, 1.65, 0.18), "#315d39", [0, 5.9, -139.8]),
+      part(box(3.58, 1.43, 0.06), "#6c9860", [0, 5.9, -139.66]),
+      part(box(0.06, 1.18, 0.04), "#f1e8c8", [-1.48, 5.9, -139.59]),
+      part(box(0.06, 1.18, 0.04), "#f1e8c8", [1.48, 5.9, -139.59]),
+      part(box(2.5, 0.06, 0.04), "#f1e8c8", [0, 6.28, -139.56]),
+    ];
+    const landmark = new THREE.Mesh(mergeParts(landmarkParts), vertexMaterial);
+    landmark.castShadow = false;
+    landmark.receiveShadow = true;
+    scene.add(landmark);
     return;
   }
   const parts = [];
@@ -2276,7 +2267,7 @@ function resetRun() {
   menuShift = 0;
   shake = 0;
   for (const item of scenery) item.group.position.z = item.startZ;
-  resetSceneryChunks(storyBackdropChunks, storyBackdropInitialPositions);
+  for (const item of storyStreetSegments) item.group.position.z = item.startZ;
   resetWorldObjects(false);
   updateHud();
 }
@@ -2422,9 +2413,12 @@ function animate() {
       item.group.position.z += dz;
       if (item.group.position.z > 12) item.group.position.z -= SEGMENT_SPAN;
     }
-    // Move the entire Chapter 1 streetscape with the road, then recycle it
-    // behind the camera so buildings and roadside props never stay frozen.
-    recycleSceneryChunks(storyBackdropChunks, storyBackdropBounds, CFG.playerZ, dz);
+    // Match Classic Mode exactly: advance each small section and wrap it by the
+    // full ring span once it passes the player. Chapter 1 keeps its own segments.
+    for (const item of storyStreetSegments) {
+      item.group.position.z += dz;
+      if (item.group.position.z > 12) item.group.position.z -= STORY_SEGMENT_SPAN;
+    }
     spawn.frontier += dz;
     streamWorld(attract ? 0 : state.elapsed, attract);
   }
