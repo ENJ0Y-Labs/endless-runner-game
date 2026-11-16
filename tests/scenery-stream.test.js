@@ -6,25 +6,24 @@ function chunksAt(positions) {
   return positions.map((z) => ({ position: { z } }));
 }
 
-test("scenery sections stay at the authored pitch when a section passes the player", () => {
-  const chunks = chunksAt([12, -118, -248]);
-  const recycled = recycleSceneryChunks(chunks, { minZ: -143, maxZ: -9, spacing: 130 }, 2.2);
+test("scenery sections advance with the road and recycle behind the furthest section", () => {
+  const chunks = chunksAt([0, -130, -260]);
+  const recycled = recycleSceneryChunks(chunks, { minZ: -143, maxZ: -9, spacing: 130 }, 2.2, 12);
   assert.equal(recycled, 1);
   assert.deepEqual(chunks.map((chunk) => chunk.position.z), [-378, -118, -248]);
-  const ordered = chunks.map((chunk) => chunk.position.z).sort((a, b) => b - a);
-  assert.deepEqual(ordered, [-118, -248, -378]);
+  assert.deepEqual(chunks.map((chunk) => chunk.position.z).sort((a, b) => b - a), [-118, -248, -378]);
 });
 
-test("scenery is not recycled before its actual nearest bound passes the player", () => {
-  const chunks = chunksAt([10, -120, -250]);
-  const recycled = recycleSceneryChunks(chunks, { minZ: -143, maxZ: -9, spacing: 130 }, 2.2);
+test("scenery advances without recycling before its actual nearest bound passes the player", () => {
+  const chunks = chunksAt([0, -130, -260]);
+  const recycled = recycleSceneryChunks(chunks, { minZ: -143, maxZ: -9, spacing: 130 }, 2.2, 10);
   assert.equal(recycled, 0);
   assert.deepEqual(chunks.map((chunk) => chunk.position.z), [10, -120, -250]);
 });
 
 test("large movement recycles every section that has passed the player", () => {
-  const chunks = chunksAt([300, 170, 40]);
-  recycleSceneryChunks(chunks, { minZ: -143, maxZ: -9, spacing: 130 }, 2.2);
+  const chunks = chunksAt([0, -130, -260]);
+  recycleSceneryChunks(chunks, { minZ: -143, maxZ: -9, spacing: 130 }, 2.2, 300);
   const positions = chunks.map((chunk) => chunk.position.z).sort((a, b) => b - a);
   assert.deepEqual(positions, [-90, -220, -350]);
 });
