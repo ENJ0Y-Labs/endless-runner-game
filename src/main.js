@@ -87,7 +87,7 @@ app.innerHTML = `
       <span class="startng-hud-label">START.NG</span>
       <div class="hud-stats">
         <span>DISTANCE <strong id="distance">0 m</strong></span>
-        <span>RELICS <strong id="relics">0</strong></span>
+        <span>${storySkin ? "NAIRA" : "RELICS"} <strong id="relics">0</strong></span>
         <span>BEST <strong id="best-score">0</strong></span>
       </div>
     </header>
