@@ -23,7 +23,7 @@
     <script type="module" src="./src/router.js"></script>
     <script type="module">
       if (window.location.pathname.replace(/\/+$/, "") === "/backyard") {
-        import("../src/beta-feedback.js").then(({ mountBackyardFeedback }) => {
+        import("./src/beta-feedback.js").then(({ mountBackyardFeedback }) => {
           const mount = () => {
             if (!document.querySelector(".game-shell")) return false;
             mountBackyardFeedback(document);
@@ -35,6 +35,8 @@
             });
             observer.observe(document.body, { childList: true, subtree: true });
           }
+        }).catch((error) => {
+          console.error("Could not load Backyard feedback form:", error);
         });
       }
     </script>
