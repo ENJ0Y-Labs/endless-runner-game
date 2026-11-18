@@ -2512,6 +2512,13 @@ app.querySelector("#left-button").addEventListener("click", () => moveLane(-1));
 app.querySelector("#jump-button").addEventListener("click", jump);
 app.querySelector("#right-button").addEventListener("click", () => moveLane(1));
 window.addEventListener("keydown", (event) => {
+  // Let people type (space, a/d/p, Enter) in the feedback form and other fields.
+  const target = event.target;
+  if (
+    target instanceof HTMLElement &&
+    (target.isContentEditable || target.closest("input, textarea, select"))
+  )
+    return;
   unlockAudio();
   const key = event.key.toLowerCase();
   if (["arrowleft", "arrowright", "arrowup", " "].includes(key))
