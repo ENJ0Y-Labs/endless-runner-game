@@ -31,3 +31,13 @@ jobs:
 
       - name: Build production game
         run: npm run build
+        
+      - name: Validate game with Start.ng
+        env:
+          START_GAME_NAME: Relic Rush 3D
+        run: |
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --url https://api.start.ng/games/check \
+            --header "Content-Type: application/json" \
+            --data "{\"repo_url\":\"https://github.com/ENJ0Y-Labs/endless-runner-game\",\"name\":\"${START_GAME_NAME}\"}"
