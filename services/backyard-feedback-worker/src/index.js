@@ -100,7 +100,7 @@ export default {
           "x-github-api-version": "2022-11-28",
           "user-agent": "Relic-Rush-Backyard-Feedback",
         },
-        body: JSON.stringify({ title: `[Backyard Beta] ${title}`, body, labels: ["beta-feedback"] }),
+        body: JSON.stringify({ title: `[Backyard Beta] ${title}`, body }),
       });
       const issue = await response.json().catch(() => ({}));
       if (!response.ok) {
