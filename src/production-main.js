@@ -102,7 +102,7 @@ app.innerHTML = `
         <p>Final score: <strong id="final-score">0</strong> · Distance: <strong id="final-distance">0 m</strong> · Relics: <strong id="final-relics">0</strong></p><p class="best-run-summary">Best run: <strong id="final-best-score">0</strong></p>
         <p class="startng-branding">Play more on start.ng</p>
         <div class="overlay-actions">
-          <a class="secondary-button" id="share-result-button" href="https://twitter.com/intent/tweet" target="_blank" rel="noopener noreferrer">Share result on X</a>
+          <a class="secondary-button" id="share-result-button" href="https://twitter.com/intent/tweet?text=I%20scored%20a%20new%20Relic%20Rush%203D%20result&url=https%3A%2F%2Frelic-rush-3d.start.ng" target="_blank" rel="noopener noreferrer">Share result on X</a>
           <button class="primary-button" id="restart-button" type="button">Run again</button>
         </div>
       </section>
