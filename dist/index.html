@@ -11,14 +11,15 @@
     <title>Relic Rush 3D</title>
   
 <style>body[data-page=play]>footer{display:none!important}</style>
-  <script type="module" crossorigin src="./assets/index-C9Dd574y.js"></script>
+  <script type="module" crossorigin src="./assets/index-C_1Y593h.js"></script>
 </head>
   <body>
     <div id="app"></div>
-    <footer style="display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;padding:12px;background:#1a110a;color:#ffd37a;font:600 14px system-ui">
+    <template id="startng-share-result-template"><a href="https://twitter.com/intent/tweet?text=I%20played%20Relic%20Rush%203D&url=https%3A%2F%2Frelic-rush-3d.start.ng" target="_blank" rel="noopener noreferrer">Share result on X</a></template>
+    <footer style="display:flex;justify-content:center;align-items:center;gap:1rem;flex-wrap:wrap;padding:12px;background:#1a110a;color:#ffd37a;font:600 14px system-ui">
       <a href="https://start.ng" style="color:inherit">← Back to start.ng</a>
       <span>Play more on start.ng</span>
-      <a href="https://twitter.com/intent/tweet?text=I%20played%20Relic%20Rush%203D%20on%20start.ng&amp;url=https%3A%2F%2Fstart.ng%2Fgames%2Frelic-rush-3d" target="_blank" rel="noopener noreferrer" style="color:inherit">Share result on X</a>
+      <button id="startng-share-result" type="button" style="border:1px solid currentColor;border-radius:999px;background:transparent;color:inherit;padding:8px 14px;font:inherit;cursor:pointer" onclick="window.open('https://twitter.com/intent/tweet?text=I%20played%20Relic%20Rush%203D%20on%20start.ng%20-%20can%20you%20beat%20my%20run%3F&amp;url=https%3A%2F%2Fstart.ng%2Fgames%2Frelic-rush-3d','_blank','noopener,noreferrer')">Share result on X</button>
     </footer>
     <script src="./admin-config.js"></script>
     <script src="../feedback-config.js"></script>
