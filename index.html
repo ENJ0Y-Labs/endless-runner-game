@@ -20,5 +20,22 @@
     </footer>
     <script src="./admin-config.js"></script>
     <script type="module" src="./src/router.js"></script>
+    <script type="module">
+      if (window.location.pathname.replace(/\\/+$/, "") === "/backyard") {
+        import("./src/beta-feedback.js").then(({ mountBackyardFeedback }) => {
+          const mount = () => {
+            if (!document.querySelector(".game-shell")) return false;
+            mountBackyardFeedback(document);
+            return true;
+          };
+          if (!mount()) {
+            const observer = new MutationObserver(() => {
+              if (mount()) observer.disconnect();
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+          }
+        });
+      }
+    </script>
   </body>
 </html>
