@@ -85,7 +85,7 @@ export function mountJapaRush(root) {
         </section>
         <div class="japa-chapter-heading">
           <div><p class="japa-eyebrow">Your journey</p><h2>Choose a chapter</h2><p class="japa-progress-copy">${progress.completed.length} of 4 chapters completed</p></div>
-          <a class="japa-back-link" href="./">Back to Relic Rush</a>
+          <a class="japa-back-link" href="/backyard">Back to Relic Rush</a>
         </div>
         <div class="japa-chapter-grid">
           ${CHAPTERS.map((chapter) => {
@@ -138,7 +138,7 @@ export function mountJapaRush(root) {
   const renderRun = (chapter) => {
     // Story chapters deliberately launch the original Relic Rush runner.
     // The chapter identifier selects its visual skin; movement and physics stay untouched.
-    window.location.href = `./?page=play&storyChapter=${encodeURIComponent(chapter.id)}`;
+    window.location.href = `/backyard?page=play&storyChapter=${encodeURIComponent(chapter.id)}`;
   };
 
   const renderResult = (chapter, result) => {
