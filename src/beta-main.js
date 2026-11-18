@@ -52,12 +52,12 @@ document.body.dataset.storyChapter = storyChapterId || "";
 app.innerHTML = `
   <main class="game-shell">
     <nav class="page-nav" aria-label="Main navigation">
-      <a class="page-nav-brand" href="./">RELIC RUSH <b>3D</b></a>
+      <a class="page-nav-brand" href="/backyard">RELIC RUSH <b>3D</b></a>
       <div class="page-nav-links">
-        <a href="./?page=play" ${page === "play" ? 'aria-current="page"' : ""}>Play</a>
-        <a href="./?page=leaderboard" ${page === "leaderboard" ? 'aria-current="page"' : ""}>Leaderboard</a>
-        <a href="./?page=story" ${page === "story" ? 'aria-current="page"' : ""}>Story</a>
-        <a id="admin-nav-link" href="./admin/" hidden>Admin</a>
+        <a href="/backyard?page=play" ${page === "play" ? 'aria-current="page"' : ""}>Play</a>
+        <a href="/backyard?page=leaderboard" ${page === "leaderboard" ? 'aria-current="page"' : ""}>Leaderboard</a>
+        <a href="/backyard?page=story" ${page === "story" ? 'aria-current="page"' : ""}>Story</a>
+        <a id="admin-nav-link" href="/backyard/admin/" hidden>Admin</a>
       </div>
     </nav>
     <section class="welcome-page mode-selection-page" aria-labelledby="welcome-title">
@@ -67,20 +67,20 @@ app.innerHTML = `
         <h1 id="welcome-title" class="title-art">RELIC RUSH <span class="t-3d">3D</span></h1>
         <p class="mode-selection-intro">Two ways to run. Choose your escape.</p>
         <div class="mode-selection-grid">
-          <a class="mode-choice mode-choice-classic" href="./?page=play">
+          <a class="mode-choice mode-choice-classic" href="/backyard?page=play">
             <span class="mode-choice-kicker">ENDLESS SURVIVAL</span>
             <strong>CLASSIC MODE</strong>
             <span>Run, dodge obstacles, collect relics, and chase your best score.</span>
             <span class="mode-choice-action">PLAY CLASSIC <b aria-hidden="true">→</b></span>
           </a>
-          <a class="mode-choice mode-choice-story" href="./?page=story">\n            <img class="mode-choice-image" src="./assets/environment/lagos-hustle.jpg" alt="" loading="eager" onerror="this.hidden=true">
+          <a class="mode-choice mode-choice-story" href="/backyard?page=story">\n            <img class="mode-choice-image" src="./assets/environment/lagos-hustle.jpg" alt="" loading="eager" onerror="this.hidden=true">
             <span class="mode-choice-kicker">THE GREAT ESCAPE</span>
             <strong>JAPA RUSH <em>STORY MODE</em></strong>
             <span>Outrun the Big Man across Lagos, the expressway, the system, and the terminal.</span>
             <span class="mode-choice-action">ENTER STORY <b aria-hidden="true">→</b></span>
           </a>
         </div>
-        <a class="mode-leaderboard-link" href="./?page=leaderboard">View leaderboard</a>
+        <a class="mode-leaderboard-link" href="/backyard?page=leaderboard">View leaderboard</a>
       </div>
     </section>
     <header class="game-hud" id="game-hud" hidden>
@@ -125,7 +125,7 @@ app.innerHTML = `
         <p class="eyebrow">Run paused</p><h2>Take a breather.</h2>
         <div class="overlay-actions pause-actions">
           <button class="primary-button" id="resume-button" type="button">Resume</button>
-          <a class="secondary-button" href="./">Main menu</a>
+          <a class="secondary-button" href="/backyard">Main menu</a>
           <button class="quiet-button" id="pause-restart-button" type="button">Restart run</button>
         </div>
       </section>
@@ -166,7 +166,7 @@ app.innerHTML = `
         <h2 id="story-teaser-title">Japa Rush <span>Story Mode</span></h2>
         <p class="story-hook">“You think you can Japa? The Big Man is coming for you!” One suitcase. One-way ticket. A never-ending highway. Dodge the country’s problems as they come flying at you, and try to reach the terminal before the system catches up.</p>
         <p class="story-teaser-detail">Race through Lagos Hustle, survive the Emilokan Expressway, face the system, and make a final dash for the Japa Terminal.</p>
-        <a class="primary-button japa-teaser-button" href="./?page=story">Enter Japa Rush</a>
+        <a class="primary-button japa-teaser-button" href="/backyard?page=story">Enter Japa Rush</a>
         <div class="story-credit"><span class="credit-mark" aria-hidden="true">✦</span><span><strong>Story concept by ambh4ck3r</strong><small>Fam-submitted story concept</small></span></div>
       </div>
     </section>
