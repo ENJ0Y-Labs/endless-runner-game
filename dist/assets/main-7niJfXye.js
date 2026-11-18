@@ -1,2 +1,0 @@
-const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./beta-main-gNLIC6b-.js","./BufferGeometryUtils-C6d7fqlS.js","./beta-main-Ce0VPEri.css","./production-main-mzFi-EAS.js","./main-DcohH97c.css"])))=>i.map(i=>d[i]);
-import{t as e}from"./index-b4kEpEMv.js";window.location.pathname.replace(/\/+$/,``)===`/backyard`?e(()=>import(`./beta-main-gNLIC6b-.js`),__vite__mapDeps([0,1,2]),import.meta.url):e(()=>import(`./production-main-mzFi-EAS.js`),__vite__mapDeps([3,1,4]),import.meta.url);

@@ -1,7 +1,8 @@
 import "./beta-feedback.css";
 
-const MAX_SCREENSHOT_BYTES = 5 * 1024 * 1024;
-const ACCEPTED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp"];
+// No server involved: submitting opens a pre-filled "new issue" page on GitHub.
+// Testers need a GitHub account; they can paste screenshots there.
+const ISSUES_URL = "https://github.com/ENJ0Y-Labs/endless-runner-game/issues/new";
 
 export function mountBackyardFeedback(root = document) {
   if (!root.querySelector("#backyard-feedback-dialog")) {
@@ -10,7 +11,7 @@ export function mountBackyardFeedback(root = document) {
       <section class="backyard-feedback-dialog" id="backyard-feedback-dialog" role="dialog" aria-modal="true" aria-labelledby="backyard-feedback-heading" hidden>
         <div class="backyard-feedback-panel">
           <div class="backyard-feedback-head">
-            <div><p class="eyebrow">BACKYARD BETA</p><h2 id="backyard-feedback-heading">Report a bug</h2><p>Tell us what went wrong. Your report goes straight to the development team.</p></div>
+            <div><p class="eyebrow">BACKYARD BETA</p><h2 id="backyard-feedback-heading">Report a bug</h2><p>Tell us what went wrong. Submitting opens a pre-filled report on GitHub (a free GitHub account is needed). You can paste a screenshot there.</p></div>
             <button class="backyard-feedback-close" type="button" data-feedback-close aria-label="Close feedback form">×</button>
           </div>
           <form class="backyard-feedback-form" id="backyard-feedback-form">
@@ -18,15 +19,10 @@ export function mountBackyardFeedback(root = document) {
               <input id="backyard-feedback-title" name="title" type="text" minlength="5" maxlength="120" placeholder="A short summary of the problem" required>
             </label>
             <label>Description
-              <textarea name="description" minlength="15" maxlength="10000" placeholder="What happened? What did you expect to happen? Include steps to reproduce it if possible." required></textarea>
+              <textarea name="description" minlength="15" maxlength="4000" placeholder="What happened? What did you expect to happen? Include steps to reproduce it if possible." required></textarea>
             </label>
-            <label>Screenshot <span class="backyard-feedback-hint">Optional · PNG, JPG or WebP · up to 5 MB</span>
-              <input id="backyard-feedback-screenshot" name="screenshot" type="file" accept="image/png,image/jpeg,image/webp">
-            </label>
-            <div class="backyard-feedback-preview" id="backyard-feedback-preview" hidden><span>Screenshot preview</span><img id="backyard-feedback-preview-image" alt="Screenshot attached to your report"></div>
-            <label class="backyard-feedback-trap" aria-hidden="true">Leave this field empty<input name="website" tabindex="-1" autocomplete="off"></label>
             <p class="backyard-feedback-status" id="backyard-feedback-status" role="status" aria-live="polite"></p>
-            <button class="backyard-feedback-submit" id="backyard-feedback-submit" type="submit">Submit feedback</button>
+            <button class="backyard-feedback-submit" id="backyard-feedback-submit" type="submit">Continue to GitHub</button>
             <button class="backyard-feedback-close" type="button" data-feedback-close>Cancel</button>
           </form>
         </div>
@@ -36,15 +32,10 @@ export function mountBackyardFeedback(root = document) {
   const dialog = root.querySelector("#backyard-feedback-dialog");
   const form = root.querySelector("#backyard-feedback-form");
   const status = root.querySelector("#backyard-feedback-status");
-  const submit = root.querySelector("#backyard-feedback-submit");
-  const screenshot = root.querySelector("#backyard-feedback-screenshot");
-  const preview = root.querySelector("#backyard-feedback-preview");
-  const previewImage = root.querySelector("#backyard-feedback-preview-image");
   const closeButtons = root.querySelectorAll("[data-feedback-close]");
 
-  if (!trigger || !dialog || !form || !status || !submit) return;
+  if (!trigger || !dialog || !form || !status) return;
 
-  let previewUrl = null;
   const setStatus = (message, kind = "") => {
     status.textContent = message;
     status.dataset.kind = kind;
@@ -68,69 +59,35 @@ export function mountBackyardFeedback(root = document) {
     if (event.key === "Escape" && !dialog.hidden) close();
   });
 
-  screenshot?.addEventListener("change", () => {
-    const file = screenshot.files?.[0];
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    previewUrl = null;
-    preview.hidden = true;
-    if (!file) return;
-    if (!ACCEPTED_IMAGE_TYPES.includes(file.type) || file.size > MAX_SCREENSHOT_BYTES) {
-      screenshot.value = "";
-      setStatus("Choose a PNG, JPG or WebP screenshot under 5 MB.", "error");
-      return;
-    }
-    previewUrl = URL.createObjectURL(file);
-    previewImage.src = previewUrl;
-    preview.hidden = false;
-    setStatus("");
-  });
-
-  form.addEventListener("submit", async (event) => {
+  form.addEventListener("submit", (event) => {
     event.preventDefault();
-    const endpoint = window.RELIC_RUSH_FEEDBACK_API;
-    if (!endpoint) {
-      setStatus("Feedback submission is not connected yet. Please try again later.", "error");
-      return;
-    }
-
     const title = form.elements.namedItem("title").value.trim();
     const description = form.elements.namedItem("description").value.trim();
-    const file = screenshot?.files?.[0];
     if (title.length < 5 || description.length < 15) {
       setStatus("Add a clear title and at least 15 characters describing the issue.", "error");
       return;
     }
-    if (file && (!ACCEPTED_IMAGE_TYPES.includes(file.type) || file.size > MAX_SCREENSHOT_BYTES)) {
-      setStatus("Choose a PNG, JPG or WebP screenshot under 5 MB.", "error");
+
+    const body = [
+      "## Beta tester report",
+      description,
+      "",
+      "## Environment",
+      `- Page: ${location.href}`,
+      `- Build: ${document.documentElement.dataset.gameVersion || "backyard-beta"}`,
+      `- Browser: ${navigator.userAgent}`,
+      "",
+      "_Submitted from the in-game Backyard feedback form._",
+    ].join("\n");
+
+    const url = `${ISSUES_URL}?${new URLSearchParams({ title: `[Backyard Beta] ${title}`, body })}`;
+    // Opened synchronously from the submit event so popup blockers allow it.
+    const win = window.open(url, "_blank", "noopener,noreferrer");
+    if (!win) {
+      setStatus("Your browser blocked the new tab. Allow pop-ups for this site and try again.", "error");
       return;
     }
-
-    const payload = new FormData();
-    payload.set("title", title);
-    payload.set("description", description);
-    payload.set("page", location.href);
-    payload.set("userAgent", navigator.userAgent);
-    payload.set("gameVersion", document.documentElement.dataset.gameVersion || "backyard-beta");
-    payload.set("website", form.elements.namedItem("website").value); // honeypot
-    if (file) payload.set("screenshot", file, file.name);
-
-    submit.disabled = true;
-    submit.textContent = "Submitting…";
-    setStatus("Sending your report…");
-    try {
-      const response = await fetch(endpoint, { method: "POST", body: payload });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result.error || "Your report could not be submitted.");
-      form.reset();
-      preview.hidden = true;
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      previewUrl = null;
-      setStatus(result.issueNumber ? `Thanks. Report #${result.issueNumber} has been created.` : "Thanks. Your report has been submitted.", "success");
-    } catch (error) {
-      setStatus(error.message || "Network error. Please try again.", "error");
-    } finally {
-      submit.disabled = false;
-      submit.textContent = "Submit feedback";
-    }
+    form.reset();
+    setStatus("GitHub opened in a new tab. Review the report there and press “Submit new issue”.", "success");
   });
 }

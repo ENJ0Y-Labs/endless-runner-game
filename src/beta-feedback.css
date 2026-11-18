@@ -36,14 +36,11 @@
 }
 .backyard-feedback-form input[type=file] { color:#d9cbbb; font-size:.85rem; }
 .backyard-feedback-hint { color:#a99a89; font-size:.75rem; font-weight:500; }
-.backyard-feedback-preview { display:grid; gap:.4rem; color:#c4b7a8; font-size:.8rem; }
-.backyard-feedback-preview img { max-width:100%; max-height:220px; object-fit:contain; border:1px solid #62513f; border-radius:10px; }
 .backyard-feedback-status { min-height:1.3rem; margin:0; color:#c4b7a8; font-size:.85rem; }
 .backyard-feedback-status[data-kind="error"] { color:#ff9d91; }
 .backyard-feedback-status[data-kind="success"] { color:#a8d6a2; }
 .backyard-feedback-submit { justify-self:start; min-height:46px; padding:.7rem 1.2rem; border:1px solid #ffd17a; border-radius:999px; color:#2b1b0e; background:linear-gradient(180deg,#ffd77e,#e9a83e); font-weight:900; }
 .backyard-feedback-submit:disabled { opacity:.6; cursor:wait; }
-.backyard-feedback-trap { position:absolute !important; width:1px !important; height:1px !important; overflow:hidden !important; clip:rect(0,0,0,0) !important; }
 @media (max-width:600px) {
   .backyard-feedback-launch { right: .75rem; bottom: max(.75rem, env(safe-area-inset-bottom)); }
   .backyard-feedback-dialog { align-items:end; padding:.5rem; }
