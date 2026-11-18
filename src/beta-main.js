@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import "./beta-style.css";
 import { mountJapaRush } from "./story-mode.js";
-import { GAME_CONFIG as CFG } from "./game/config.js";
+import { GAME_CONFIG as CFG } from "./beta-config.js";
 
 const app = document.querySelector("#app");
 
