@@ -3,7 +3,7 @@ main = "src/index.js"
 compatibility_date = "2026-11-18"
 
 [vars]
-ALLOWED_ORIGIN = "https://REPLACE-WITH-YOUR-START-NG-GAME-DOMAIN"
+ALLOWED_ORIGIN = "https://relic-rush-3d.start.ng"
 R2_PUBLIC_BASE_URL = "https://REPLACE-WITH-YOUR-R2-PUBLIC-DOMAIN"
 
 [[r2_buckets]]
