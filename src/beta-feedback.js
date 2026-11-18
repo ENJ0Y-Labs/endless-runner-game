@@ -4,6 +4,34 @@ const MAX_SCREENSHOT_BYTES = 5 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp"];
 
 export function mountBackyardFeedback(root = document) {
+  if (!root.querySelector("#backyard-feedback-dialog")) {
+    root.body.insertAdjacentHTML("beforeend", `
+      <button class="backyard-feedback-launch" id="backyard-feedback-open" type="button">Report a bug</button>
+      <section class="backyard-feedback-dialog" id="backyard-feedback-dialog" role="dialog" aria-modal="true" aria-labelledby="backyard-feedback-heading" hidden>
+        <div class="backyard-feedback-panel">
+          <div class="backyard-feedback-head">
+            <div><p class="eyebrow">BACKYARD BETA</p><h2 id="backyard-feedback-heading">Report a bug</h2><p>Tell us what went wrong. Your report goes straight to the development team.</p></div>
+            <button class="backyard-feedback-close" type="button" data-feedback-close aria-label="Close feedback form">×</button>
+          </div>
+          <form class="backyard-feedback-form" id="backyard-feedback-form">
+            <label>Title
+              <input id="backyard-feedback-title" name="title" type="text" minlength="5" maxlength="120" placeholder="A short summary of the problem" required>
+            </label>
+            <label>Description
+              <textarea name="description" minlength="15" maxlength="10000" placeholder="What happened? What did you expect to happen? Include steps to reproduce it if possible." required></textarea>
+            </label>
+            <label>Screenshot <span class="backyard-feedback-hint">Optional · PNG, JPG or WebP · up to 5 MB</span>
+              <input id="backyard-feedback-screenshot" name="screenshot" type="file" accept="image/png,image/jpeg,image/webp">
+            </label>
+            <div class="backyard-feedback-preview" id="backyard-feedback-preview" hidden><span>Screenshot preview</span><img id="backyard-feedback-preview-image" alt="Screenshot attached to your report"></div>
+            <label class="backyard-feedback-trap" aria-hidden="true">Leave this field empty<input name="website" tabindex="-1" autocomplete="off"></label>
+            <p class="backyard-feedback-status" id="backyard-feedback-status" role="status" aria-live="polite"></p>
+            <button class="backyard-feedback-submit" id="backyard-feedback-submit" type="submit">Submit feedback</button>
+            <button class="backyard-feedback-close" type="button" data-feedback-close>Cancel</button>
+          </form>
+        </div>
+      </section>`);
+  }
   const trigger = root.querySelector("#backyard-feedback-open");
   const dialog = root.querySelector("#backyard-feedback-dialog");
   const form = root.querySelector("#backyard-feedback-form");
