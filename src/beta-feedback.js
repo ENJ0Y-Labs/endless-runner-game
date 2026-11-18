@@ -1,3 +1,5 @@
+import "./beta-feedback.css";
+
 const MAX_SCREENSHOT_BYTES = 5 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp"];
 
