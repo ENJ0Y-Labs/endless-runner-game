@@ -135,13 +135,16 @@ app.innerHTML = `
               <p class="story-gameover-line story-gameover-line-one">You have been caught by The System.</p>
               <p class="story-gameover-line story-gameover-line-two">Your Naira has been devalued. Your hope has been taxed. Your future has been outsourced.</p>
               <p class="story-gameover-line story-gameover-line-three">But the hustle continues...</p>
-              <button class="primary-button story-gameover-retry" id="restart-button" type="button">Retry chapter</button>
+              <div class="overlay-actions">
+                <a class="secondary-button" id="share-result-button" href="https://twitter.com/intent/tweet?text=I%20survived%20a%20Japa%20Rush%20chapter&url=https%3A%2F%2Frelic-rush-3d.start.ng" target="_blank" rel="noopener noreferrer">Share result on X</a>
+                <button class="primary-button story-gameover-retry" id="restart-button" type="button">Retry chapter</button>
+              </div>
             </div>`
           : `<p class="eyebrow">Run complete</p><h2>Game over</h2>
               <p>Final score: <strong id="final-score">0</strong> · Distance: <strong id="final-distance">0 m</strong> · Relics: <strong id="final-relics">0</strong></p><p class="best-run-summary">Best run: <strong id="final-best-score">0</strong></p>
               <p class="startng-branding">Play more on start.ng</p>
               <div class="overlay-actions">
-                <a class="secondary-button" id="share-result-button" href="https://twitter.com/intent/tweet" target="_blank" rel="noopener noreferrer">Share result on X</a>
+                <a class="secondary-button" id="share-result-button" href="https://twitter.com/intent/tweet?text=I%20scored%20a%20new%20Relic%20Rush%203D%20result&url=https%3A%2F%2Frelic-rush-3d.start.ng" target="_blank" rel="noopener noreferrer">Share result on X</a>
                 <button class="primary-button" id="restart-button" type="button">Run again</button>
               </div>`}
       </section>
@@ -2493,7 +2496,9 @@ if (shareResultButton) {
       distance: Math.floor(state.distance),
       relics: state.relics,
     };
-    const text = `I scored ${result.score} points, ran ${result.distance}m, and collected ${result.relics} relics in Relic Rush 3D!`;
+    const text = storySkin
+      ? `I scored ${result.score} points, ran ${result.distance}m, and collected ${result.relics} Naira notes in Japa Rush!`
+      : `I scored ${result.score} points, ran ${result.distance}m, and collected ${result.relics} relics in Relic Rush 3D!`;
     const shareUrl = new URL("https://twitter.com/intent/tweet");
     shareUrl.searchParams.set("text", text);
     shareUrl.searchParams.set("url", "https://relic-rush-3d.start.ng");
