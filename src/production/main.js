@@ -102,7 +102,7 @@ app.innerHTML = `
         <p>Final score: <strong id="final-score">0</strong> · Distance: <strong id="final-distance">0 m</strong> · Relics: <strong id="final-relics">0</strong></p><p class="best-run-summary">Best run: <strong id="final-best-score">0</strong></p>
         <p class="startng-branding">Play more on start.ng</p>
         <div class="overlay-actions">
-          <a class="secondary-button" id="share-result-button" href="https://twitter.com/intent/tweet" target="_blank" rel="noopener noreferrer">Share result on X</a>
+          <a class="secondary-button" id="share-result-button" href="https://twitter.com/intent/tweet?text=I%20played%20Relic%20Rush%203D&url=https%3A%2F%2Frelic-rush-3d.start.ng" target="_blank" rel="noopener noreferrer">Share result on X</a>
           <button class="primary-button" id="restart-button" type="button">Run again</button>
         </div>
       </section>
@@ -2046,7 +2046,6 @@ window.addEventListener("pointerdown", unlockAudio);
 app.querySelector("#play-button").addEventListener("click", () => startRun(false));
 app.querySelector("#restart-button").addEventListener("click", () => startRun(false));
 app.querySelector("#share-result-button").addEventListener("click", (event) => {
-  event.preventDefault();
   const result = state.lastRun ?? {
     score: state.score,
     distance: Math.floor(state.distance),
@@ -2056,7 +2055,8 @@ app.querySelector("#share-result-button").addEventListener("click", (event) => {
   const shareUrl = new URL("https://twitter.com/intent/tweet");
   shareUrl.searchParams.set("text", text);
   shareUrl.searchParams.set("url", "https://relic-rush-3d.start.ng");
-  window.open(shareUrl.toString(), "_blank", "noopener,noreferrer");
+  // Keep this a real, crawlable X intent link; the browser opens the updated href.
+  event.currentTarget.href = shareUrl.toString();
 });
 app.querySelector("#resume-button").addEventListener("click", togglePause);
 app.querySelector("#pause-restart-button").addEventListener("click", () => startRun(false));
