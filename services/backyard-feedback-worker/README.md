@@ -49,11 +49,7 @@ window.RELIC_RUSH_FEEDBACK_API = "https://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev
 
 This URL is public and is not a secret. The GitHub token remains only in the Worker secret.
 
-## 4. GitHub label
-
-Create the repository label `beta-feedback` (any colour, description: "Feedback submitted from the Backyard beta"). The issue API requires labels to exist before it can apply them.
-
-## 5. Behaviour and safeguards
+## 4. Behaviour and safeguards
 
 - The form is loaded only on `/backyard`; the production route does not import it.
 - The Worker accepts requests only from the configured exact Origin.
