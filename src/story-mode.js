@@ -149,6 +149,12 @@ export function mountJapaRush(root) {
       saveProgress(progress);
     }
     const campaignComplete = result.success && chapter.number === CHAPTERS.length;
+    const shareText = result.success
+      ? `I completed ${chapter.title} in Japa Rush! I collected ${result.collected} ${chapter.itemName.toLowerCase()} and ${result.optional} bonus Naira notes. Can you make it out?`
+      : `My Japa Rush run ended in ${chapter.title}. The hustle continues. Can you do better?`;
+    const shareUrl = new URL("https://twitter.com/intent/tweet");
+    shareUrl.searchParams.set("text", shareText);
+    shareUrl.searchParams.set("url", "https://start.ng/games/relic-rush-3d");
     root.innerHTML = `
       <div class="japa-shell japa-result-shell ${result.success ? "is-success" : "is-failure"}">
         <p class="japa-eyebrow">${result.success ? campaignComplete ? "THE GREAT ESCAPE" : "CHAPTER COMPLETE" : "MISSION FAILED"}</p>
@@ -159,6 +165,7 @@ export function mountJapaRush(root) {
           <div><span>Optional Naira</span><strong>${result.optional}</strong></div>
         </div>
         <div class="japa-result-actions">
+          <a class="japa-secondary-button" href="${escapeHtml(shareUrl.toString())}" target="_blank" rel="noopener noreferrer">Share result on X</a>
           ${result.success && !campaignComplete ? '<button class="japa-primary-button" type="button" data-action="chapters">Continue journey</button>' : ""}
           ${campaignComplete ? '<button class="japa-primary-button" type="button" data-action="chapters">Replay campaign chapters</button>' : ""}
           ${!result.success ? '<button class="japa-primary-button" type="button" data-action="retry">Retry chapter</button>' : ""}
