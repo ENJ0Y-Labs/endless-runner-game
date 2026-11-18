@@ -1,8 +1,7 @@
 # Dependencies
 node_modules/
 
-# Build output
-dist/
+# Build output (dist/ is committed on purpose: Start.ng serves it as-is, so it must be complete)
 dist-ssr/
 *.local
 
