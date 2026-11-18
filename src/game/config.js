@@ -12,9 +12,6 @@ export const GAME_CONFIG = Object.freeze({
   attractSpeed: 6, // gentle scroll behind the start screen
 
   relicScore: 100,
-
-  // Story traffic travels at 4 world units for every 6 runner units.
-  storyTrafficSpeedRatio: 4 / 6,
   playerZ: 2.2,
 
   // Single-jump tuning. Adjust after testing the jump against real obstacle timing.
